@@ -9,6 +9,5 @@ final readonly class CustomerData
     public function __construct(
         public string $name,
         public string $email,
-    ) {
-    }
+    ) {}
 }

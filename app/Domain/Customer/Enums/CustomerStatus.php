@@ -8,4 +8,5 @@ enum CustomerStatus: string
 {
     case Active = 'active';
     case Suspended = 'suspended';
+    case Disabled = 'disabled';
 }

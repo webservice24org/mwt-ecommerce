@@ -1,0 +1,28 @@
+<?php
+
+use App\Domain\Auth\Admin\Enums\AdminRole;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('admins', function (Blueprint $table): void {
+            $table
+                ->string('role')
+                ->default(AdminRole::Admin->value)
+                ->index()
+                ->after('password');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('admins', function (Blueprint $table): void {
+            $table->dropIndex(['role']);
+            $table->dropColumn('role');
+        });
+    }
+};

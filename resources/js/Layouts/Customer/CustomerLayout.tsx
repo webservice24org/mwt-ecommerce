@@ -1,0 +1,50 @@
+import AppFlashToaster from '@/Components/AppFlashToaster'
+import CustomerHeader from '@/Components/Customer/CustomerHeader'
+import CustomerSidebar from '@/Components/Customer/CustomerSidebar'
+import { Head } from '@inertiajs/react'
+import { PropsWithChildren, ReactNode, useState } from 'react'
+
+type Props = PropsWithChildren<{
+    title: string
+    description?: string
+    actions?: ReactNode
+}>
+
+export default function CustomerLayout({ title, description, actions, children }: Props) {
+    const [sidebarOpen, setSidebarOpen] = useState(false)
+
+    return (
+        <>
+            <Head title={title} />
+            <AppFlashToaster />
+
+            <div className="min-h-screen overflow-x-hidden bg-neutral-50">
+                <CustomerSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+                <div className="min-w-0 lg:pl-72">
+                    <CustomerHeader title={title} onMenuClick={() => setSidebarOpen(true)} />
+
+                    <main className="min-w-0">
+                        <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+                            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                <div className="min-w-0">
+                                    <h2 className="text-2xl font-bold text-neutral-900">{title}</h2>
+
+                                    {description && (
+                                        <p className="mt-1 text-sm text-neutral-500">
+                                            {description}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {actions && <div className="shrink-0">{actions}</div>}
+                            </div>
+
+                            <div className="min-w-0">{children}</div>
+                        </div>
+                    </main>
+                </div>
+            </div>
+        </>
+    )
+}

@@ -1,52 +1,53 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Auth;
 
+use App\Domain\Auth\Customer\Actions\RegisterCustomerAction;
+use App\Domain\Auth\Customer\Data\RegisterCustomerData;
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use Illuminate\Auth\Events\Registered;
+use App\Http\Requests\Auth\RegisterCustomerRequest;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class RegisteredUserController extends Controller
+final class RegisteredUserController extends Controller
 {
-    /**
-     * Display the registration view.
-     */
     public function create(): Response
     {
-        return Inertia::render('Auth/Register');
+        return Inertia::render(
+            'Auth/Register',
+        );
     }
 
-    /**
-     * Handle an incoming registration request.
-     *
-     * @throws ValidationException
-     */
-    public function store(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
+    public function store(
+        RegisterCustomerRequest $request,
+        RegisterCustomerAction $action,
+    ): RedirectResponse {
+        $user = $action->execute(
+            new RegisterCustomerData(
+                name: $request
+                    ->string('name')
+                    ->toString(),
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+                email: $request
+                    ->string('email')
+                    ->toString(),
 
-        event(new Registered($user));
+                password: $request
+                    ->string('password')
+                    ->toString(),
+            ),
+        );
 
-        Auth::login($user);
+        Auth::guard('web')->login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        $request->session()->regenerate();
+
+        return redirect()->route(
+            'customer.dashboard',
+        );
     }
 }

@@ -1,52 +1,70 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Auth;
 
+use App\Domain\Auth\Customer\Actions\LoginCustomerAction;
+use App\Domain\Auth\Customer\Actions\LogoutCustomerAction;
+use App\Domain\Auth\Customer\Data\LoginCustomerData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class AuthenticatedSessionController extends Controller
+final class AuthenticatedSessionController extends Controller
 {
-    /**
-     * Display the login view.
-     */
     public function create(): Response
     {
         return Inertia::render('Auth/Login', [
-            'canResetPassword' => Route::has('password.request'),
-            'status' => session('status'),
+            'canResetPassword' => true,
         ]);
     }
 
-    /**
-     * Handle an incoming authentication request.
-     */
-    public function store(LoginRequest $request): RedirectResponse
-    {
-        $request->authenticate();
+    public function store(
+        LoginRequest $request,
+        LoginCustomerAction $action,
+    ): RedirectResponse {
+        try {
+            $action->execute(
+                new LoginCustomerData(
+                    email: $request
+                        ->string('email')
+                        ->toString(),
+
+                    password: $request
+                        ->string('password')
+                        ->toString(),
+
+                    remember: $request
+                        ->boolean('remember'),
+                ),
+            );
+        } catch (AuthenticationException) {
+            throw ValidationException::withMessages([
+                'email' => __('auth.failed'),
+            ]);
+        }
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->intended(
+            route('customer.dashboard'),
+        );
     }
 
-    /**
-     * Destroy an authenticated session.
-     */
-    public function destroy(Request $request): RedirectResponse
-    {
-        Auth::guard('web')->logout();
+    public function destroy(
+        Request $request,
+        LogoutCustomerAction $action,
+    ): RedirectResponse {
+        $action->execute(
+            $request->session(),
+        );
 
-        $request->session()->invalidate();
-
-        $request->session()->regenerateToken();
-
-        return redirect('/');
+        return redirect()->route('home');
     }
 }

@@ -1,8 +1,15 @@
 <?php
 
+use App\Http\Middleware\EnsureAdminHasRole;
+use App\Http\Middleware\EnsureAdminIsActive;
+use App\Http\Middleware\EnsureCustomerIsActive;
+use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 return Application::configure(
     basePath: dirname(__DIR__)
@@ -25,12 +32,33 @@ return Application::configure(
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
-            \App\Http\Middleware\HandleInertiaRequests::class,
-            \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
+            HandleInertiaRequests::class,
+            AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        //
+        $middleware->alias([
+            'customer.active' => EnsureCustomerIsActive::class,
+        ]);
+
+        $middleware->redirectGuestsTo(
+            fn (Request $request): string => $request->routeIs('admin.*')
+                ? route('admin.login')
+                : route('login'),
+        );
+
+        $middleware->alias([
+            'customer.active' => EnsureCustomerIsActive::class,
+            'admin.role' => EnsureAdminHasRole::class,
+        ]);
+
+        $middleware->alias([
+            'customer.active' => EnsureCustomerIsActive::class,
+            'admin.active' => EnsureAdminIsActive::class,
+            'admin.role' => EnsureAdminHasRole::class,
+        ]);
+
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
-    })->create();
+    })
+    ->create();
