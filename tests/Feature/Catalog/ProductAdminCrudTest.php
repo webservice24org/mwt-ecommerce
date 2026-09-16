@@ -6,11 +6,15 @@ namespace Tests\Feature\Catalog;
 
 use App\Domain\Auth\Admin\Enums\AdminRole;
 use App\Domain\Catalog\Enums\ProductStatus;
+use App\Domain\Catalog\Enums\ProductVideoType;
 use App\Models\Admin;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductImage;
+use App\Models\ProductVideo;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 final class ProductAdminCrudTest extends TestCase
@@ -347,6 +351,167 @@ final class ProductAdminCrudTest extends TestCase
 
         $this->assertFalse(
             $product->isPublished(),
+        );
+    }
+
+    public function test_invalid_category_id_is_rejected(): void
+    {
+        $admin = Admin::factory()->create([
+            'role' => AdminRole::Admin,
+        ]);
+
+        $this
+            ->actingAs($admin, 'admin')
+            ->post(
+                route('admin.products.store'),
+                [
+                    'name' => 'Invalid Category Product',
+                    'status' => ProductStatus::Draft->value,
+                    'is_featured' => false,
+                    'position' => 0,
+                    'category_ids' => [
+                        999999,
+                    ],
+                ],
+            )
+            ->assertSessionHasErrors(
+                'category_ids.0',
+            );
+
+        $this->assertDatabaseMissing(
+            'products',
+            [
+                'name' => 'Invalid Category Product',
+            ],
+        );
+    }
+
+    public function test_duplicate_category_ids_are_rejected(): void
+    {
+        $admin = Admin::factory()->create([
+            'role' => AdminRole::Admin,
+        ]);
+
+        $category = Category::factory()->create();
+
+        $this
+            ->actingAs($admin, 'admin')
+            ->post(
+                route('admin.products.store'),
+                [
+                    'name' => 'Duplicate Category Product',
+                    'status' => ProductStatus::Draft->value,
+                    'is_featured' => false,
+                    'position' => 0,
+                    'category_ids' => [
+                        $category->id,
+                        $category->id,
+                    ],
+                ],
+            )
+            ->assertSessionHasErrors(
+                'category_ids.0',
+            );
+    }
+
+    public function test_deleting_product_removes_physical_media_files(): void
+    {
+        Storage::fake('public');
+
+        $manager = Admin::factory()->create([
+            'role' => AdminRole::Manager,
+        ]);
+
+        $product = Product::factory()->create();
+
+        $imagePath =
+            "catalog/products/{$product->id}/images/product.jpg";
+
+        $videoPath =
+            "catalog/products/{$product->id}/videos/product.mp4";
+
+        Storage::disk('public')->put(
+            $imagePath,
+            'fake-image-content',
+        );
+
+        Storage::disk('public')->put(
+            $videoPath,
+            'fake-video-content',
+        );
+
+        ProductImage::factory()->create([
+            'product_id' => $product->id,
+            'path' => $imagePath,
+            'is_primary' => true,
+        ]);
+
+        ProductVideo::query()->create([
+            'product_id' => $product->id,
+            'type' => ProductVideoType::Upload,
+            'path' => $videoPath,
+            'url' => null,
+            'original_name' => 'product.mp4',
+            'mime_type' => 'video/mp4',
+            'file_size' => 1024,
+            'title' => 'Product Video',
+        ]);
+
+        $this->assertTrue(
+            Storage::disk('public')->exists(
+                $imagePath,
+            ),
+        );
+
+        $this->assertTrue(
+            Storage::disk('public')->exists(
+                $videoPath,
+            ),
+        );
+
+        $this
+            ->actingAs($manager, 'admin')
+            ->delete(
+                route(
+                    'admin.products.destroy',
+                    $product,
+                ),
+            )
+            ->assertRedirect(
+                route('admin.products.index'),
+            );
+
+        $this->assertDatabaseMissing(
+            'products',
+            [
+                'id' => $product->id,
+            ],
+        );
+
+        $this->assertDatabaseMissing(
+            'product_images',
+            [
+                'product_id' => $product->id,
+            ],
+        );
+
+        $this->assertDatabaseMissing(
+            'product_videos',
+            [
+                'product_id' => $product->id,
+            ],
+        );
+
+        $this->assertFalse(
+            Storage::disk('public')->exists(
+                $imagePath,
+            ),
+        );
+
+        $this->assertFalse(
+            Storage::disk('public')->exists(
+                $videoPath,
+            ),
         );
     }
 }

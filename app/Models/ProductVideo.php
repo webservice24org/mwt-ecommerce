@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Database\Factories\ProductImageFactory;
+use App\Domain\Catalog\Enums\ProductVideoType;
+use Database\Factories\ProductVideoFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,19 +13,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * @property int $id
  * @property int $product_id
- * @property string $path
+ * @property ProductVideoType $type
+ * @property string|null $path
+ * @property string|null $url
  * @property string|null $original_name
  * @property string|null $mime_type
  * @property int|null $file_size
- * @property int|null $width
- * @property int|null $height
- * @property string|null $alt_text
- * @property int $position
- * @property bool $is_primary
+ * @property string|null $title
  */
-final class ProductImage extends Model
+final class ProductVideo extends Model
 {
-    /** @use HasFactory<ProductImageFactory> */
+    /** @use HasFactory<ProductVideoFactory> */
     use HasFactory;
 
     /**
@@ -32,15 +31,13 @@ final class ProductImage extends Model
      */
     protected $fillable = [
         'product_id',
+        'type',
         'path',
+        'url',
         'original_name',
         'mime_type',
         'file_size',
-        'width',
-        'height',
-        'alt_text',
-        'position',
-        'is_primary',
+        'title',
     ];
 
     /**
@@ -49,11 +46,8 @@ final class ProductImage extends Model
     protected function casts(): array
     {
         return [
+            'type' => ProductVideoType::class,
             'file_size' => 'integer',
-            'width' => 'integer',
-            'height' => 'integer',
-            'position' => 'integer',
-            'is_primary' => 'boolean',
         ];
     }
 

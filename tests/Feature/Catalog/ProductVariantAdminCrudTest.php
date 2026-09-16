@@ -663,4 +663,191 @@ final class ProductVariantAdminCrudTest extends TestCase
             ],
         );
     }
+
+    public function test_variant_cannot_be_deleted_through_wrong_product(): void
+    {
+        $admin = Admin::factory()->create([
+            'role' => AdminRole::Admin,
+        ]);
+
+        $firstProduct = Product::factory()->create();
+        $secondProduct = Product::factory()->create();
+
+        $variant = ProductVariant::factory()->create([
+            'product_id' => $firstProduct->id,
+        ]);
+
+        $this
+            ->actingAs($admin, 'admin')
+            ->delete(
+                route(
+                    'admin.products.variants.destroy',
+                    [
+                        $secondProduct,
+                        $variant,
+                    ],
+                ),
+            )
+            ->assertNotFound();
+
+        $this->assertDatabaseHas(
+            'product_variants',
+            [
+                'id' => $variant->id,
+                'product_id' => $firstProduct->id,
+            ],
+        );
+    }
+
+    public function test_inactive_variant_cannot_be_selected_as_default(): void
+    {
+        $admin = Admin::factory()->create([
+            'role' => AdminRole::Admin,
+        ]);
+
+        $product = Product::factory()->create();
+
+        ProductVariant::factory()->create([
+            'product_id' => $product->id,
+            'is_active' => true,
+            'is_default' => true,
+        ]);
+
+        $response = $this
+            ->actingAs($admin, 'admin')
+            ->post(
+                route(
+                    'admin.products.variants.store',
+                    $product,
+                ),
+                [
+                    'sku' => 'INACTIVE-DEFAULT',
+                    'price' => 1000,
+                    'position' => 1,
+                    'is_active' => false,
+                    'is_default' => true,
+                    'attribute_value_ids' => [],
+                ],
+            );
+
+        $response->assertSessionHasErrors(
+            'is_default',
+        );
+
+        $this->assertDatabaseMissing(
+            'product_variants',
+            [
+                'sku' => 'INACTIVE-DEFAULT',
+            ],
+        );
+    }
+
+    public function test_deactivating_default_variant_promotes_active_replacement(): void
+    {
+        $admin = Admin::factory()->create([
+            'role' => AdminRole::Admin,
+        ]);
+        $product = Product::factory()->create();
+
+        $default = ProductVariant::factory()->create([
+            'product_id' => $product->id,
+            'sku' => 'DEFAULT-001',
+            'is_active' => true,
+            'is_default' => true,
+            'position' => 0,
+        ]);
+
+        $replacement = ProductVariant::factory()->create([
+            'product_id' => $product->id,
+            'sku' => 'ACTIVE-002',
+            'is_active' => true,
+            'is_default' => false,
+            'position' => 1,
+        ]);
+
+        $this
+            ->actingAs($admin, 'admin')
+            ->put(
+                route(
+                    'admin.products.variants.update',
+                    [$product, $default],
+                ),
+                [
+                    'sku' => $default->sku,
+                    'price' => $default->price,
+                    'position' => $default->position,
+                    'is_active' => false,
+                    'is_default' => false,
+                    'attribute_value_ids' => [],
+                ],
+            )
+            ->assertSessionHasNoErrors();
+
+        $this->assertFalse(
+            $default->refresh()->is_default,
+        );
+
+        $this->assertFalse(
+            $default->is_active,
+        );
+
+        $this->assertTrue(
+            $replacement->refresh()->is_default,
+        );
+
+        $this->assertTrue(
+            $replacement->is_active,
+        );
+    }
+
+    public function test_deactivating_only_active_default_keeps_it_default_when_no_active_replacement_exists(): void
+    {
+        $admin = Admin::factory()->create([
+            'role' => AdminRole::Admin,
+        ]);
+
+        $product = Product::factory()->create();
+
+        $default = ProductVariant::factory()->create([
+            'product_id' => $product->id,
+            'sku' => 'DEFAULT-ONLY-ACTIVE',
+            'is_active' => true,
+            'is_default' => true,
+        ]);
+
+        ProductVariant::factory()->create([
+            'product_id' => $product->id,
+            'sku' => 'INACTIVE-OTHER',
+            'is_active' => false,
+            'is_default' => false,
+        ]);
+
+        $this
+            ->actingAs($admin, 'admin')
+            ->put(
+                route(
+                    'admin.products.variants.update',
+                    [$product, $default],
+                ),
+                [
+                    'sku' => $default->sku,
+                    'price' => $default->price,
+                    'position' => $default->position,
+                    'is_active' => false,
+                    'is_default' => false,
+                    'attribute_value_ids' => [],
+                ],
+            )
+            ->assertSessionHasNoErrors();
+
+        $default->refresh();
+
+        $this->assertFalse(
+            $default->is_active,
+        );
+
+        $this->assertTrue(
+            $default->is_default,
+        );
+    }
 }

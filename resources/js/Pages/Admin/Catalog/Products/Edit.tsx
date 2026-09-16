@@ -1,4 +1,5 @@
 import ProductForm, { type ProductFormData } from '@/Components/Admin/Catalog/ProductForm'
+import ProductMediaPanel from '@/Components/Admin/Catalog/ProductMediaPanel'
 import AdminLayout from '@/Layouts/Admin/AdminLayout'
 import ProductVariantsPanel from '@/Components/Admin/Catalog/ProductVariantsPanel'
 import type {
@@ -9,7 +10,12 @@ import type {
 } from '@/types/catalog'
 import { Link, useForm } from '@inertiajs/react'
 import type { FormEvent } from 'react'
-import type { ProductVariant, VariantAttributeOption } from '@/types/catalog'
+import type {
+    ProductVariant,
+    VariantAttributeOption,
+    ProductImage,
+    ProductVideo,
+} from '@/types/catalog'
 
 type Props = {
     product: ProductFormProduct
@@ -18,6 +24,8 @@ type Props = {
     statuses: ProductStatusOption[]
     variants: ProductVariant[]
     variantAttributes: VariantAttributeOption[]
+    images: ProductImage[]
+    video: ProductVideo | null
 }
 
 export default function Edit({
@@ -27,6 +35,8 @@ export default function Edit({
     statuses,
     variants,
     variantAttributes,
+    images,
+    video,
 }: Props) {
     const form = useForm<ProductFormData>(`EditProduct:${product.id}`, {
         brand_id: product.brand_id ?? null,
@@ -72,6 +82,9 @@ export default function Edit({
                 submitLabel="Update Product"
                 onSubmit={submit}
             />
+            <div className="mt-8">
+                <ProductMediaPanel productId={product.id} images={images} video={video} />
+            </div>
             <div className="mt-6">
                 <ProductVariantsPanel
                     productId={product.id}

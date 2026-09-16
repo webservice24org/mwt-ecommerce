@@ -194,6 +194,57 @@ final class ProductVariantIntegrityService
         ]);
     }
 
+    public function assertInactiveVariantCannotBecomeDefault(
+        bool $isActive,
+        bool $isDefault,
+    ): void {
+        if (
+            $isActive
+            || ! $isDefault
+        ) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'is_default' => 'An inactive variant cannot be selected as the default variant.',
+        ]);
+    }
+
+    public function promoteActiveReplacementDefault(
+        Product $product,
+        ProductVariant $currentDefault,
+    ): bool {
+        $replacement = $product
+            ->variants()
+            ->where(
+                'id',
+                '!=',
+                $currentDefault->id,
+            )
+            ->where(
+                'is_active',
+                true,
+            )
+            ->orderBy('position')
+            ->orderBy('id')
+            ->first();
+
+        if ($replacement === null) {
+            return false;
+        }
+
+        $this->clearOtherDefaults(
+            product: $product,
+            except: $replacement,
+        );
+
+        $replacement->update([
+            'is_default' => true,
+        ]);
+
+        return true;
+    }
+
     public function promoteReplacementDefault(
         Product $product,
     ): void {

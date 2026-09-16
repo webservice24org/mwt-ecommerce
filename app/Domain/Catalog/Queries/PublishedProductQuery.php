@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\Queries;
 
-use App\Domain\Catalog\Enums\ProductStatus;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -17,23 +16,7 @@ final class PublishedProductQuery
     private function query(): Builder
     {
         return Product::query()
-            ->where(
-                'status',
-                ProductStatus::Published->value,
-            )
-            ->where(
-                static function (
-                    Builder $query,
-                ): void {
-                    $query
-                        ->whereNull('published_at')
-                        ->orWhere(
-                            'published_at',
-                            '<=',
-                            now(),
-                        );
-                },
-            );
+            ->published();
     }
 
     public function findBySlug(

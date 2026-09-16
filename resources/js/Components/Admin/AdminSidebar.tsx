@@ -1,21 +1,19 @@
 import { Link, usePage } from '@inertiajs/react'
 import {
-    //Boxes,
     ChevronDown,
     CircleUserRound,
     ExternalLink,
     FolderTree,
     Gauge,
     Layers3,
+    ListTree,
     Package,
     PlusCircle,
-    //Settings2,
     ShieldCheck,
     Store,
     Tag,
     Tags,
     X,
-    ListTree,
     type LucideIcon,
 } from 'lucide-react'
 
@@ -30,6 +28,7 @@ type NavigationItem = {
     label: string
     href?: string
     match?: string
+    exact?: boolean
     icon: LucideIcon
     disabled?: boolean
 }
@@ -65,10 +64,11 @@ const productNavigation: NavigationGroup = {
             label: 'All Products',
             href: route('admin.products.index'),
             match: '/admin/products',
+            exact: true,
             icon: Package,
         },
         {
-            label: 'Add new products',
+            label: 'Add New Product',
             href: route('admin.products.create'),
             match: '/admin/products/create',
             icon: PlusCircle,
@@ -118,8 +118,8 @@ export default function AdminSidebar({ open, onClose }: Props) {
             return false
         }
 
-        if (item.match === '/admin') {
-            return url === '/admin'
+        if (item.exact) {
+            return url === item.match
         }
 
         return url.startsWith(item.match)

@@ -112,6 +112,7 @@ final class UpdateProductRequest extends FormRequest
             ],
 
             'category_ids' => [
+                'sometimes',
                 'array',
             ],
 
@@ -125,6 +126,19 @@ final class UpdateProductRequest extends FormRequest
 
     public function toData(): UpdateProductData
     {
+        /** @var array<int, mixed> $categoryIds */
+        $categoryIds = $this->validated(
+            'category_ids',
+            [],
+        );
+
+        $categoryIds = array_values(
+            array_map(
+                static fn (mixed $id): int => (int) $id,
+                $categoryIds,
+            ),
+        );
+
         return new UpdateProductData(
             brandId: $this->nullableInteger('brand_id'),
             name: (string) $this->input('name'),
@@ -154,7 +168,7 @@ final class UpdateProductRequest extends FormRequest
             metaDescription: $this->nullableString(
                 'meta_description',
             ),
-            categoryIds: $this->categoryIds(),
+            categoryIds: $categoryIds,
         );
     }
 
@@ -212,27 +226,5 @@ final class UpdateProductRequest extends FormRequest
         return $value === null
             ? null
             : CarbonImmutable::parse($value);
-    }
-
-    /**
-     * @return list<int>
-     */
-    private function categoryIds(): array
-    {
-        $values = $this->input(
-            'category_ids',
-            [],
-        );
-
-        if (! is_array($values)) {
-            return [];
-        }
-
-        return array_values(
-            array_map(
-                static fn (mixed $value): int => (int) $value,
-                $values,
-            ),
-        );
     }
 }

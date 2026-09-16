@@ -17,6 +17,7 @@ use App\Http\Requests\Admin\Catalog\UpdateProductRequest;
 use App\Models\AttributeValue;
 use App\Models\Product;
 use App\Models\ProductAttribute;
+use App\Models\ProductImage;
 use App\Models\ProductVariant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -166,63 +167,61 @@ final class ProductController extends Controller
     }
 
     public function edit(
-    Product $product,
-    ProductVariantOptionsQuery $variantOptions,
-    ProductFormOptionsQuery $options,
-): Response {
-    $this->authorize(
-        'update',
-        $product,
-    );
+        Product $product,
+        ProductVariantOptionsQuery $variantOptions,
+        ProductFormOptionsQuery $options,
+    ): Response {
+        $this->authorize(
+            'update',
+            $product,
+        );
 
-    $product->load([
-        'brand:id,name',
+        $product->load([
+            'brand:id,name',
+            'categories:id,name',
 
-        'categories:id,name',
+            'images' => static function ($query): void {
+                $query
+                    ->orderBy('position')
+                    ->orderBy('id');
+            },
 
-        'variants' => static function ($query): void {
-            $query
-                ->with([
-                    'attributeValues.attribute:id,name',
-                ])
-                ->orderBy('position')
-                ->orderBy('id');
-        },
-    ]);
+            'video',
 
-    $attributes = $variantOptions->get();
+            'variants' => static function ($query): void {
+                $query
+                    ->with([
+                        'attributeValues.attribute:id,name',
+                    ])
+                    ->orderBy('position')
+                    ->orderBy('id');
+            },
+        ]);
 
-    return Inertia::render(
-        'Admin/Catalog/Products/Edit',
-        [
-            'product' => [
-                'id' => $product->id,
-                'brand_id' => $product->brand_id,
-                'name' => $product->name,
-                'slug' => $product->slug,
-                'short_description' =>
-                    $product->short_description,
-                'description' =>
-                    $product->description,
-                'status' =>
-                    $product->status->value,
-                'is_featured' =>
-                    $product->is_featured,
-                'position' =>
-                    $product->position,
-                'published_at' =>
-                    $product
+        $attributes = $variantOptions->get();
+
+        return Inertia::render(
+            'Admin/Catalog/Products/Edit',
+            [
+                'product' => [
+                    'id' => $product->id,
+                    'brand_id' => $product->brand_id,
+                    'name' => $product->name,
+                    'slug' => $product->slug,
+                    'short_description' => $product->short_description,
+                    'description' => $product->description,
+                    'status' => $product->status->value,
+                    'is_featured' => $product->is_featured,
+                    'position' => $product->position,
+                    'published_at' => $product
                         ->published_at
                         ?->format(
                             'Y-m-d\TH:i',
                         ),
-                'meta_title' =>
-                    $product->meta_title,
-                'meta_description' =>
-                    $product->meta_description,
+                    'meta_title' => $product->meta_title,
+                    'meta_description' => $product->meta_description,
 
-                'category_ids' =>
-                    $product
+                    'category_ids' => $product
                         ->categories
                         ->pluck('id')
                         ->map(
@@ -232,131 +231,185 @@ final class ProductController extends Controller
                         )
                         ->values()
                         ->all(),
-            ],
+                ],
+                'images' => $product
+                    ->images
+                    ->map(
+                        static fn (
+                            ProductImage $image,
+                        ): array => [
+                            'id' => $image->id,
 
-            'variants' =>
-                $product
+                            'path' => $image->path,
+
+                            'url' => asset(
+                                'storage/'
+                                .$image->path,
+                            ),
+
+                            'original_name' => $image->original_name,
+
+                            'mime_type' => $image->mime_type,
+
+                            'file_size' => $image->file_size,
+
+                            'width' => $image->width,
+
+                            'height' => $image->height,
+
+                            'alt_text' => $image->alt_text,
+
+                            'position' => $image->position,
+
+                            'is_primary' => $image->is_primary,
+                        ],
+                    )
+                    ->values()
+                    ->all(),
+
+                'video' => $product->video === null
+                        ? null
+                        : [
+                            'id' => $product->video->id,
+
+                            'type' => $product
+                                ->video
+                                ->type
+                                ->value,
+
+                            'path' => $product
+                                ->video
+                                ->path,
+
+                            'url' => $product
+                                ->video
+                                ->url,
+
+                            'file_url' => $product
+                                ->video
+                                ->path !== null
+                                    ? asset(
+                                        'storage/'
+                                        .$product
+                                            ->video
+                                            ->path,
+                                    )
+                                    : null,
+
+                            'title' => $product
+                                ->video
+                                ->title,
+
+                            'original_name' => $product
+                                ->video
+                                ->original_name,
+
+                            'mime_type' => $product
+                                ->video
+                                ->mime_type,
+
+                            'file_size' => $product
+                                ->video
+                                ->file_size,
+                        ],
+
+                'variants' => $product
                     ->variants
                     ->map(
                         static fn (
                             ProductVariant $variant,
                         ): array => [
-                            'id' =>
-                                $variant->id,
+                            'id' => $variant->id,
 
-                            'sku' =>
-                                $variant->sku,
+                            'sku' => $variant->sku,
 
-                            'name' =>
-                                $variant->name,
+                            'name' => $variant->name,
 
-                            'price' =>
-                                $variant->price,
+                            'price' => $variant->price,
 
-                            'compare_at_price' =>
-                                $variant
-                                    ->compare_at_price,
+                            'compare_at_price' => $variant
+                                ->compare_at_price,
 
-                            'cost_price' =>
-                                $variant
-                                    ->cost_price,
+                            'cost_price' => $variant
+                                ->cost_price,
 
-                            'barcode' =>
-                                $variant->barcode,
+                            'barcode' => $variant->barcode,
 
-                            'position' =>
-                                $variant
-                                    ->position,
+                            'position' => $variant
+                                ->position,
 
-                            'is_active' =>
-                                $variant
-                                    ->is_active,
+                            'is_active' => $variant
+                                ->is_active,
 
-                            'is_default' =>
-                                $variant
-                                    ->is_default,
+                            'is_default' => $variant
+                                ->is_default,
 
-                            'weight' =>
-                                $variant->weight,
+                            'weight' => $variant->weight,
 
-                            'attribute_values' =>
-                                $variant
-                                    ->attributeValues
-                                    ->map(
-                                        static fn (
-                                            AttributeValue $value,
-                                        ): array => [
-                                            'id' =>
-                                                $value->id,
+                            'attribute_values' => $variant
+                                ->attributeValues
+                                ->map(
+                                    static fn (
+                                        AttributeValue $value,
+                                    ): array => [
+                                        'id' => $value->id,
 
-                                            'name' =>
-                                                $value->name,
+                                        'name' => $value->name,
 
-                                            'attribute_id' =>
-                                                $value
-                                                    ->attribute_id,
+                                        'attribute_id' => $value
+                                            ->attribute_id,
 
-                                            'attribute_name' =>
-                                                $value
-                                                    ->attribute
-                                                    ->name,
-                                        ],
-                                    )
-                                    ->values()
-                                    ->all(),
+                                        'attribute_name' => $value
+                                            ->attribute
+                                            ->name,
+                                    ],
+                                )
+                                ->values()
+                                ->all(),
                         ],
                     )
                     ->values()
                     ->all(),
 
-            'variantAttributes' =>
-                $attributes
+                'variantAttributes' => $attributes
                     ->map(
                         static fn (
                             ProductAttribute $attribute,
                         ): array => [
-                            'id' =>
-                                $attribute->id,
+                            'id' => $attribute->id,
 
-                            'name' =>
-                                $attribute->name,
+                            'name' => $attribute->name,
 
-                            'is_active' =>
-                                $attribute
-                                    ->is_active,
+                            'is_active' => $attribute
+                                ->is_active,
 
-                            'values' =>
-                                $attribute
-                                    ->values
-                                    ->map(
-                                        static fn (
-                                            AttributeValue $value,
-                                        ): array => [
-                                            'id' =>
-                                                $value->id,
+                            'values' => $attribute
+                                ->values
+                                ->map(
+                                    static fn (
+                                        AttributeValue $value,
+                                    ): array => [
+                                        'id' => $value->id,
 
-                                            'name' =>
-                                                $value->name,
+                                        'name' => $value->name,
 
-                                            'is_active' =>
-                                                $value
-                                                    ->is_active,
-                                        ],
-                                    )
-                                    ->values()
-                                    ->all(),
+                                        'is_active' => $value
+                                            ->is_active,
+                                    ],
+                                )
+                                ->values()
+                                ->all(),
                         ],
                     )
                     ->values()
                     ->all(),
 
-            ...$options->get(),
+                ...$options->get(),
 
-            'statuses' =>
-                $this->statuses(),
-        ],
-    );
-}
+                'statuses' => $this->statuses(),
+            ],
+        );
+    }
 
     public function update(
         UpdateProductRequest $request,

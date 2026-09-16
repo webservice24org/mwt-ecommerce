@@ -6,11 +6,13 @@ namespace App\Models;
 
 use App\Domain\Catalog\Enums\ProductStatus;
 use Database\Factories\ProductFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
@@ -86,8 +88,57 @@ final class Product extends Model
      */
     public function images(): HasMany
     {
-        return $this->hasMany(ProductImage::class)
-            ->orderBy('position');
+        return $this
+            ->hasMany(ProductImage::class)
+            ->orderBy('position')
+            ->orderBy('id');
+    }
+
+    /**
+     * @return HasOne<ProductImage, $this>
+     */
+    public function featuredImage(): HasOne
+    {
+        return $this
+            ->hasOne(ProductImage::class)
+            ->where('is_primary', true);
+    }
+
+    /**
+     * @return HasOne<ProductVideo, $this>
+     */
+    public function video(): HasOne
+    {
+        return $this->hasOne(
+            ProductVideo::class,
+        );
+    }
+
+    /**
+     * @param  Builder<Product>  $query
+     * @return Builder<Product>
+     */
+    public function scopePublished(
+        Builder $query,
+    ): Builder {
+        return $query
+            ->where(
+                'status',
+                ProductStatus::Published->value,
+            )
+            ->where(
+                static function (
+                    Builder $query,
+                ): void {
+                    $query
+                        ->whereNull('published_at')
+                        ->orWhere(
+                            'published_at',
+                            '<=',
+                            now(),
+                        );
+                },
+            );
     }
 
     public function isPublished(): bool
@@ -97,6 +148,8 @@ final class Product extends Model
         }
 
         return $this->published_at === null
-            || $this->published_at->isPast();
+            || $this->published_at->lessThanOrEqualTo(
+                now(),
+            );
     }
 }

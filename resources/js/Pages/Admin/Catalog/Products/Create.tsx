@@ -59,6 +59,15 @@ export default function Create({ brands, categories, statuses }: Props) {
                 submitLabel="Create Product"
                 onSubmit={submit}
             />
+
+            <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-5">
+                <h3 className="font-medium text-neutral-900">Media & Variants</h3>
+
+                <p className="mt-1 text-sm text-neutral-500">
+                    Save the product first. You can then add the featured image, gallery, video,
+                    pricing, SKU and product variants.
+                </p>
+            </div>
         </AdminLayout>
     )
 }

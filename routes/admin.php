@@ -11,7 +11,9 @@ use App\Http\Controllers\Admin\Catalog\AttributeValueController;
 use App\Http\Controllers\Admin\Catalog\BrandController;
 use App\Http\Controllers\Admin\Catalog\CategoryController;
 use App\Http\Controllers\Admin\Catalog\ProductController;
+use App\Http\Controllers\Admin\Catalog\ProductImageController;
 use App\Http\Controllers\Admin\Catalog\ProductVariantController;
+use App\Http\Controllers\Admin\Catalog\ProductVideoController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -75,6 +77,13 @@ Route::middleware([
     Route::put('products/{product}/variants/{variant}', [ProductVariantController::class, 'update'])->name('products.variants.update');
     Route::delete('products/{product}/variants/{variant}', [ProductVariantController::class, 'destroy'])->name('products.variants.destroy');
 
+    Route::post('products/{product}/images', [ProductImageController::class, 'store'])->name('products.images.store');
+    Route::put('products/{product}/images/reorder', [ProductImageController::class, 'reorder'])->name('products.images.reorder');
+    Route::put('products/{product}/images/{image}/featured', [ProductImageController::class, 'featured'])->whereNumber('image')->name('products.images.featured');
+    Route::put('products/{product}/images/{image}', [ProductImageController::class, 'update'])->whereNumber('image')->name('products.images.update');
+    Route::delete('products/{product}/images/{image}', [ProductImageController::class, 'destroy'])->whereNumber('image')->name('products.images.destroy');
+    Route::post('products/{product}/video', [ProductVideoController::class, 'store'])->name('products.video.store');
+    Route::delete('products/{product}/video', [ProductVideoController::class, 'destroy'])->name('products.video.destroy');
 });
 
 Route::middleware([

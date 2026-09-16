@@ -6,6 +6,8 @@ namespace App\Domain\Catalog\Queries;
 
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Product;
+use Illuminate\Database\Eloquent\Builder;
 
 final class ProductFormOptionsQuery
 {
@@ -22,10 +24,34 @@ final class ProductFormOptionsQuery
      *     }>
      * }
      */
-    public function get(): array
-    {
+    public function get(
+        ?Product $product = null,
+    ): array {
+        $brandId = $product?->brand_id;
+
+        $categoryIds = $product === null
+            ? []
+            : $product
+                ->categories()
+                ->pluck('categories.id')
+                ->map(
+                    static fn (mixed $id): int => (int) $id,
+                )
+                ->all();
+
         $brands = Brand::query()
-            ->where('is_active', true)
+            ->where(
+                static function (Builder $query) use ($brandId): void {
+                    $query->where('is_active', true);
+
+                    if ($brandId !== null) {
+                        $query->orWhere(
+                            'id',
+                            $brandId,
+                        );
+                    }
+                },
+            )
             ->orderBy('position')
             ->orderBy('name')
             ->get([
@@ -42,7 +68,18 @@ final class ProductFormOptionsQuery
             ->all();
 
         $categories = Category::query()
-            ->where('is_active', true)
+            ->where(
+                static function (Builder $query) use ($categoryIds): void {
+                    $query->where('is_active', true);
+
+                    if ($categoryIds !== []) {
+                        $query->orWhereIn(
+                            'id',
+                            $categoryIds,
+                        );
+                    }
+                },
+            )
             ->orderBy('position')
             ->orderBy('name')
             ->get([

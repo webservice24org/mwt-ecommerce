@@ -43,6 +43,14 @@ final readonly class CreateProductVariantAction
                 $isDefault = $isFirstVariant
                     || $data->isDefault;
 
+                if (! $isFirstVariant) {
+                    $this->integrity
+                        ->assertInactiveVariantCannotBecomeDefault(
+                            isActive: $data->isActive,
+                            isDefault: $data->isDefault,
+                        );
+                }
+
                 if ($isDefault) {
                     $this->integrity->clearOtherDefaults(
                         $lockedProduct,

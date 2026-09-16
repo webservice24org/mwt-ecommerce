@@ -66,11 +66,11 @@ final class AttributeController extends Controller
                 ),
 
                 'filters' => [
-                'search' => $search,
-                'status' => $request->query(
-                    'status',
-                    '',
-                ),
+                    'search' => $search,
+                    'status' => $request->query(
+                        'status',
+                        '',
+                    ),
                 ],
             ],
         );

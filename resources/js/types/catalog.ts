@@ -19,10 +19,7 @@ export type Category = {
     created_at?: string | null
 }
 
-export type CategoryParentOption = {
-    id: number
-    name: string
-}
+export type CategoryParentOption = CategoryParent
 
 export type PaginationLink = {
     url: string | null
@@ -172,4 +169,32 @@ export type VariantAttributeOption = {
     name: string
     is_active: boolean
     values: VariantAttributeValueOption[]
+}
+
+export type ProductImage = {
+    id: number
+    path: string
+    url: string
+    original_name: string | null
+    mime_type: string | null
+    file_size: number | null
+    width: number | null
+    height: number | null
+    alt_text: string | null
+    position: number
+    is_primary: boolean
+}
+
+export type ProductVideoType = 'upload' | 'youtube' | 'vimeo'
+
+export type ProductVideo = {
+    id: number
+    type: ProductVideoType
+    path: string | null
+    url: string | null
+    file_url: string | null
+    title: string | null
+    original_name: string | null
+    mime_type: string | null
+    file_size: number | null
 }

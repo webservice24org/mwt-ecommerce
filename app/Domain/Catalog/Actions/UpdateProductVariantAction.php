@@ -51,11 +51,25 @@ final readonly class UpdateProductVariantAction
                     ignoreVariant: $lockedVariant,
                 );
 
-                $this->integrity
-                    ->assertDefaultCanBeUnset(
-                        $lockedVariant,
-                        $data->isDefault,
-                    );
+                if (
+                    $data->isDefault
+                    && ! $data->isActive
+                    && ! $lockedVariant->is_default
+                ) {
+                    $this->integrity
+                        ->assertInactiveVariantCannotBecomeDefault(
+                            isActive: $data->isActive,
+                            isDefault: $data->isDefault,
+                        );
+                }
+
+                if ($data->isActive) {
+                    $this->integrity
+                        ->assertDefaultCanBeUnset(
+                            $lockedVariant,
+                            $data->isDefault,
+                        );
+                }
 
                 if ($data->isDefault) {
                     $this->integrity
@@ -64,6 +78,8 @@ final readonly class UpdateProductVariantAction
                             except: $lockedVariant,
                         );
                 }
+
+                $wasDefault = $lockedVariant->is_default;
 
                 $lockedVariant->update([
                     'sku' => $data->sku,
@@ -83,6 +99,23 @@ final readonly class UpdateProductVariantAction
                     ->sync(
                         $data->attributeValueIds,
                     );
+
+                if (
+                    $wasDefault
+                    && ! $data->isActive
+                ) {
+                    $promoted = $this->integrity
+                        ->promoteActiveReplacementDefault(
+                            product: $product,
+                            currentDefault: $lockedVariant,
+                        );
+
+                    if (! $promoted) {
+                        $lockedVariant->update([
+                            'is_default' => true,
+                        ]);
+                    }
+                }
 
                 return $lockedVariant
                     ->refresh()
