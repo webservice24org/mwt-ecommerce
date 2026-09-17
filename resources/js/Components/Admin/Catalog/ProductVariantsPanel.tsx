@@ -1,4 +1,5 @@
 import ConfirmDialog from '@/Components/Admin/ConfirmDialog'
+import MoneyInput from '@/Components/Admin/Catalog/MoneyInput'
 import type { ProductVariant, VariantAttributeOption } from '@/types/catalog'
 import { router, useForm } from '@inertiajs/react'
 import { CheckCircle2, Edit3, PackagePlus, Trash2, X } from 'lucide-react'
@@ -7,6 +8,9 @@ import type { FormEvent, ReactNode } from 'react'
 
 type Props = {
     productId: number
+    productPrice: number | null
+    productCompareAtPrice: number | null
+    productCostPrice: number | null
     variants: ProductVariant[]
     attributes: VariantAttributeOption[]
 }
@@ -14,9 +18,9 @@ type Props = {
 type VariantFormData = {
     sku: string
     name: string
-    price: string
-    compare_at_price: string
-    cost_price: string
+    price: number | null
+    compare_at_price: number | null
+    cost_price: number | null
     barcode: string
     position: number
     is_active: boolean
@@ -28,9 +32,9 @@ type VariantFormData = {
 const emptyForm: VariantFormData = {
     sku: '',
     name: '',
-    price: '',
-    compare_at_price: '',
-    cost_price: '',
+    price: null,
+    compare_at_price: null,
+    cost_price: null,
     barcode: '',
     position: 0,
     is_active: true,
@@ -39,31 +43,25 @@ const emptyForm: VariantFormData = {
     attribute_value_ids: [],
 }
 
-function minorToMajor(value: number | null): string {
+function formatMoney(value: number | null): string {
     if (value === null) {
-        return ''
+        return 'Not set'
     }
 
-    return (value / 100).toFixed(2)
+    const whole = Math.floor(value / 100)
+    const fraction = value % 100
+
+    return `${whole}.${fraction.toString().padStart(2, '0')}`
 }
 
-function majorToMinor(value: string): number | null {
-    const normalized = value.trim()
-
-    if (normalized === '') {
-        return null
-    }
-
-    const number = Number(normalized)
-
-    if (!Number.isFinite(number)) {
-        return null
-    }
-
-    return Math.round(number * 100)
-}
-
-export default function ProductVariantsPanel({ productId, variants, attributes }: Props) {
+export default function ProductVariantsPanel({
+    productId,
+    productPrice,
+    productCompareAtPrice,
+    productCostPrice,
+    variants,
+    attributes,
+}: Props) {
     const [editingVariant, setEditingVariant] = useState<ProductVariant | null>(null)
 
     const [variantToDelete, setVariantToDelete] = useState<ProductVariant | null>(null)
@@ -98,9 +96,9 @@ export default function ProductVariantsPanel({ productId, variants, attributes }
         form.setData({
             sku: variant.sku,
             name: variant.name ?? '',
-            price: minorToMajor(variant.price),
-            compare_at_price: minorToMajor(variant.compare_at_price),
-            cost_price: minorToMajor(variant.cost_price),
+            price: variant.price,
+            compare_at_price: variant.compare_at_price,
+            cost_price: variant.cost_price,
             barcode: variant.barcode ?? '',
             position: variant.position,
             is_active: variant.is_active,
@@ -144,25 +142,10 @@ export default function ProductVariantsPanel({ productId, variants, attributes }
     const submit = (event: FormEvent) => {
         event.preventDefault()
 
-        const price = majorToMinor(form.data.price)
-
-        const compareAtPrice = majorToMinor(form.data.compare_at_price)
-
-        const costPrice = majorToMinor(form.data.cost_price)
-
         form.transform((data) => ({
             ...data,
-
-            price: price === null ? data.price : price,
-
-            compare_at_price: data.compare_at_price.trim() === '' ? null : compareAtPrice,
-
-            cost_price: data.cost_price.trim() === '' ? null : costPrice,
-
             name: data.name.trim() || null,
-
             barcode: data.barcode.trim() || null,
-
             weight: data.weight.trim() || null,
         }))
 
@@ -199,7 +182,7 @@ export default function ProductVariantsPanel({ productId, variants, attributes }
                     <h2 className="font-semibold text-neutral-900">Product Variants</h2>
 
                     <p className="mt-1 text-sm text-neutral-500">
-                        Manage SKU, pricing and attribute combinations.
+                        Manage SKU, pricing overrides and attribute combinations.
                     </p>
                 </div>
 
@@ -225,7 +208,8 @@ export default function ProductVariantsPanel({ productId, variants, attributes }
                             </h3>
 
                             <p className="mt-1 text-sm text-neutral-500">
-                                Prices are entered in normal currency units.
+                                Set only the values this variant should override. Blank pricing
+                                fields inherit from the product.
                             </p>
                         </div>
 
@@ -233,9 +217,55 @@ export default function ProductVariantsPanel({ productId, variants, attributes }
                             type="button"
                             onClick={closeForm}
                             className="rounded-lg p-2 text-neutral-500 hover:bg-neutral-200"
+                            aria-label="Close variant form"
                         >
                             <X className="h-4 w-4" />
                         </button>
+                    </div>
+
+                    <div className="mb-5 rounded-lg border border-neutral-200 bg-white p-4">
+                        <div>
+                            <h4 className="text-sm font-semibold text-neutral-900">
+                                Product pricing defaults
+                            </h4>
+
+                            <p className="mt-1 text-xs text-neutral-500">
+                                Leave a variant pricing field blank to inherit its corresponding
+                                product value.
+                            </p>
+                        </div>
+
+                        <dl className="mt-4 grid gap-4 sm:grid-cols-3">
+                            <div>
+                                <dt className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+                                    Base price
+                                </dt>
+
+                                <dd className="mt-1 text-sm font-semibold text-neutral-900">
+                                    {formatMoney(productPrice)}
+                                </dd>
+                            </div>
+
+                            <div>
+                                <dt className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+                                    Compare-at
+                                </dt>
+
+                                <dd className="mt-1 text-sm font-semibold text-neutral-900">
+                                    {formatMoney(productCompareAtPrice)}
+                                </dd>
+                            </div>
+
+                            <div>
+                                <dt className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+                                    Cost
+                                </dt>
+
+                                <dd className="mt-1 text-sm font-semibold text-neutral-900">
+                                    {formatMoney(productCostPrice)}
+                                </dd>
+                            </div>
+                        </dl>
                     </div>
 
                     <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -264,40 +294,44 @@ export default function ProductVariantsPanel({ productId, variants, attributes }
                             />
                         </Field>
 
-                        <Field label="Price" required error={form.errors.price}>
-                            <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={form.data.price}
-                                onChange={(event) => form.setData('price', event.target.value)}
-                                className={inputClass}
-                            />
-                        </Field>
+                        <MoneyInput
+                            id="variant-price"
+                            label="Price override"
+                            value={form.data.price}
+                            onChange={(value) => form.setData('price', value)}
+                            error={form.errors.price}
+                            helpText={
+                                productPrice === null
+                                    ? 'Leave blank to inherit the product base price. The product base price is currently not set.'
+                                    : `Leave blank to use product base price (${formatMoney(productPrice)}).`
+                            }
+                        />
 
-                        <Field label="Compare-at price" error={form.errors.compare_at_price}>
-                            <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={form.data.compare_at_price}
-                                onChange={(event) =>
-                                    form.setData('compare_at_price', event.target.value)
-                                }
-                                className={inputClass}
-                            />
-                        </Field>
+                        <MoneyInput
+                            id="variant-compare-at-price"
+                            label="Compare-at price override"
+                            value={form.data.compare_at_price}
+                            onChange={(value) => form.setData('compare_at_price', value)}
+                            error={form.errors.compare_at_price}
+                            helpText={
+                                productCompareAtPrice === null
+                                    ? 'Leave blank to inherit the product compare-at price. It is currently not set.'
+                                    : `Leave blank to use product compare-at price (${formatMoney(productCompareAtPrice)}).`
+                            }
+                        />
 
-                        <Field label="Cost price" error={form.errors.cost_price}>
-                            <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={form.data.cost_price}
-                                onChange={(event) => form.setData('cost_price', event.target.value)}
-                                className={inputClass}
-                            />
-                        </Field>
+                        <MoneyInput
+                            id="variant-cost-price"
+                            label="Cost price override"
+                            value={form.data.cost_price}
+                            onChange={(value) => form.setData('cost_price', value)}
+                            error={form.errors.cost_price}
+                            helpText={
+                                productCostPrice === null
+                                    ? 'Leave blank to inherit the product cost price. It is currently not set.'
+                                    : `Leave blank to use product cost price (${formatMoney(productCostPrice)}).`
+                            }
+                        />
 
                         <Field label="Weight" error={form.errors.weight}>
                             <input
@@ -452,85 +486,97 @@ export default function ProductVariantsPanel({ productId, variants, attributes }
                         </thead>
 
                         <tbody className="divide-y divide-neutral-100">
-                            {variants.map((variant) => (
-                                <tr key={variant.id} className="hover:bg-neutral-50">
-                                    <td className="px-5 py-4">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-medium text-neutral-900">
-                                                {variant.sku}
-                                            </span>
+                            {variants.map((variant) => {
+                                const effectivePrice = variant.price ?? productPrice
 
-                                            {variant.is_default && (
-                                                <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
-                                                    <CheckCircle2 className="h-3 w-3" />
-                                                    Default
+                                return (
+                                    <tr key={variant.id} className="hover:bg-neutral-50">
+                                        <td className="px-5 py-4">
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-medium text-neutral-900">
+                                                    {variant.sku}
+                                                </span>
+
+                                                {variant.is_default && (
+                                                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
+                                                        <CheckCircle2 className="h-3 w-3" />
+                                                        Default
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {variant.name && (
+                                                <p className="mt-1 text-xs text-neutral-500">
+                                                    {variant.name}
+                                                </p>
+                                            )}
+                                        </td>
+
+                                        <td className="px-5 py-4">
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {variant.attribute_values.length === 0 ? (
+                                                    <span className="text-sm text-neutral-400">
+                                                        —
+                                                    </span>
+                                                ) : (
+                                                    variant.attribute_values.map((value) => (
+                                                        <span
+                                                            key={value.id}
+                                                            className="rounded-md bg-neutral-100 px-2 py-1 text-xs text-neutral-700"
+                                                        >
+                                                            {value.attribute_name}: {value.name}
+                                                        </span>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </td>
+
+                                        <td className="px-5 py-4">
+                                            <div className="text-sm font-medium text-neutral-900">
+                                                {formatMoney(effectivePrice)}
+                                            </div>
+
+                                            <div className="mt-1 text-xs text-neutral-500">
+                                                {variant.price === null ? 'Inherited' : 'Override'}
+                                            </div>
+                                        </td>
+
+                                        <td className="px-5 py-4">
+                                            {variant.is_active ? (
+                                                <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
+                                                    Active
+                                                </span>
+                                            ) : (
+                                                <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-medium text-neutral-600">
+                                                    Inactive
                                                 </span>
                                             )}
-                                        </div>
+                                        </td>
 
-                                        {variant.name && (
-                                            <p className="mt-1 text-xs text-neutral-500">
-                                                {variant.name}
-                                            </p>
-                                        )}
-                                    </td>
+                                        <td className="px-5 py-4">
+                                            <div className="flex justify-end gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openEdit(variant)}
+                                                    className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700"
+                                                >
+                                                    <Edit3 className="h-3.5 w-3.5" />
+                                                    Edit
+                                                </button>
 
-                                    <td className="px-5 py-4">
-                                        <div className="flex flex-wrap gap-1.5">
-                                            {variant.attribute_values.length === 0 ? (
-                                                <span className="text-sm text-neutral-400">—</span>
-                                            ) : (
-                                                variant.attribute_values.map((value) => (
-                                                    <span
-                                                        key={value.id}
-                                                        className="rounded-md bg-neutral-100 px-2 py-1 text-xs text-neutral-700"
-                                                    >
-                                                        {value.attribute_name}: {value.name}
-                                                    </span>
-                                                ))
-                                            )}
-                                        </div>
-                                    </td>
-
-                                    <td className="px-5 py-4 text-sm font-medium text-neutral-900">
-                                        {minorToMajor(variant.price)}
-                                    </td>
-
-                                    <td className="px-5 py-4">
-                                        {variant.is_active ? (
-                                            <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
-                                                Active
-                                            </span>
-                                        ) : (
-                                            <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-medium text-neutral-600">
-                                                Inactive
-                                            </span>
-                                        )}
-                                    </td>
-
-                                    <td className="px-5 py-4">
-                                        <div className="flex justify-end gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => openEdit(variant)}
-                                                className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700"
-                                            >
-                                                <Edit3 className="h-3.5 w-3.5" />
-                                                Edit
-                                            </button>
-
-                                            <button
-                                                type="button"
-                                                onClick={() => setVariantToDelete(variant)}
-                                                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600"
-                                            >
-                                                <Trash2 className="h-3.5 w-3.5" />
-                                                Delete
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setVariantToDelete(variant)}
+                                                    className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600"
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )
+                            })}
                         </tbody>
                     </table>
                 </div>

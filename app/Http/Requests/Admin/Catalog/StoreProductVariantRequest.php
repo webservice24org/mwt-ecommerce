@@ -53,7 +53,7 @@ final class StoreProductVariantRequest extends FormRequest
             ],
 
             'price' => [
-                'required',
+                'nullable',
                 'integer',
                 'min:0',
             ],
@@ -62,7 +62,6 @@ final class StoreProductVariantRequest extends FormRequest
                 'nullable',
                 'integer',
                 'min:0',
-                'gte:price',
             ],
 
             'cost_price' => [
@@ -134,7 +133,7 @@ final class StoreProductVariantRequest extends FormRequest
         return new CreateProductVariantData(
             sku: (string) $this->validated('sku'),
             name: $this->nullableString('name'),
-            price: (int) $this->validated('price'),
+            price: $this->nullableInt('price'),
             compareAtPrice: $this->nullableInt(
                 'compare_at_price',
             ),

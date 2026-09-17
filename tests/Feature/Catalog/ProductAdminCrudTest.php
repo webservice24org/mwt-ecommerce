@@ -6,6 +6,7 @@ namespace Tests\Feature\Catalog;
 
 use App\Domain\Auth\Admin\Enums\AdminRole;
 use App\Domain\Catalog\Enums\ProductStatus;
+use App\Domain\Catalog\Enums\ProductType;
 use App\Domain\Catalog\Enums\ProductVideoType;
 use App\Models\Admin;
 use App\Models\Brand;
@@ -73,6 +74,11 @@ final class ProductAdminCrudTest extends TestCase
                 ),
                 [
                     'brand_id' => $brand->id,
+                    'type' => ProductType::Simple->value,
+                    'sku' => 'MACBOOK-PRO-001',
+                    'price' => 199900,
+                    'compare_at_price' => 219900,
+                    'cost_price' => 150000,
                     'name' => 'MacBook Pro',
                     'slug' => '',
                     'short_description' => 'Laptop',
@@ -108,6 +114,31 @@ final class ProductAdminCrudTest extends TestCase
             $product->slug,
         );
 
+        $this->assertSame(
+            ProductType::Simple,
+            $product->type,
+        );
+
+        $this->assertSame(
+            'MACBOOK-PRO-001',
+            $product->sku,
+        );
+
+        $this->assertSame(
+            199900,
+            $product->price,
+        );
+
+        $this->assertSame(
+            219900,
+            $product->compare_at_price,
+        );
+
+        $this->assertSame(
+            150000,
+            $product->cost_price,
+        );
+
         $this->assertCount(
             2,
             $product->categories,
@@ -134,6 +165,11 @@ final class ProductAdminCrudTest extends TestCase
                 ),
                 [
                     'brand_id' => null,
+                    'type' => ProductType::Simple->value,
+                    'sku' => 'UPDATED-PRODUCT-001',
+                    'price' => 25000,
+                    'compare_at_price' => 30000,
+                    'cost_price' => 18000,
                     'name' => 'Updated Product',
                     'slug' => $product->slug,
                     'short_description' => null,
@@ -153,6 +189,11 @@ final class ProductAdminCrudTest extends TestCase
             'products',
             [
                 'id' => $product->id,
+                'type' => ProductType::Simple->value,
+                'sku' => 'UPDATED-PRODUCT-001',
+                'price' => 25000,
+                'compare_at_price' => 30000,
+                'cost_price' => 18000,
                 'name' => 'Updated Product',
             ],
         );
@@ -164,8 +205,7 @@ final class ProductAdminCrudTest extends TestCase
             'role' => AdminRole::Editor,
         ]);
 
-        $product =
-            Product::factory()->create();
+        $product = Product::factory()->create();
 
         $this->actingAs(
             $editor,
@@ -250,6 +290,11 @@ final class ProductAdminCrudTest extends TestCase
                 ),
                 [
                     'brand_id' => null,
+                    'type' => ProductType::Simple->value,
+                    'sku' => $product->sku,
+                    'price' => $product->price ?? 1000,
+                    'compare_at_price' => null,
+                    'cost_price' => null,
                     'name' => $product->name,
                     'slug' => $product->slug,
                     'short_description' => null,
@@ -332,6 +377,11 @@ final class ProductAdminCrudTest extends TestCase
                     'admin.products.store',
                 ),
                 [
+                    'type' => ProductType::Simple->value,
+                    'sku' => 'SCHEDULED-PRODUCT-001',
+                    'price' => 10000,
+                    'compare_at_price' => null,
+                    'cost_price' => null,
                     'name' => 'Scheduled Product',
                     'status' => ProductStatus::Published->value,
                     'is_featured' => false,

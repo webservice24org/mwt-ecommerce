@@ -4,12 +4,19 @@ import type {
     ProductCategoryOption,
     ProductStatus,
     ProductStatusOption,
+    ProductType,
 } from '@/types/catalog'
 import type { InertiaFormProps } from '@inertiajs/react'
 import type { FormEvent } from 'react'
+import MoneyInput from '@/Components/Admin/Catalog/MoneyInput'
 
 export type ProductFormData = {
     brand_id: number | null
+    type: ProductType
+    sku: string
+    price: number | null
+    compare_at_price: number | null
+    cost_price: number | null
     name: string
     slug: string
     short_description: string
@@ -162,6 +169,171 @@ export default function ProductForm({
                             )}
                         </div>
                     </div>
+                </section>
+
+                <section className="rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
+                    <div className="mb-6">
+                        <h2 className="text-base font-semibold text-neutral-900">
+                            Product type & pricing
+                        </h2>
+
+                        <p className="mt-1 text-sm text-neutral-500">
+                            Configure how this product is sold and its default pricing.
+                        </p>
+                    </div>
+
+                    <div>
+                        <span className="text-sm font-medium text-neutral-900">Product type</span>
+
+                        <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                            <label
+                                className={`cursor-pointer rounded-lg border p-4 transition ${
+                                    form.data.type === 'simple'
+                                        ? 'border-neutral-900 bg-neutral-50 ring-1 ring-neutral-900'
+                                        : 'border-neutral-200 hover:border-neutral-300'
+                                }`}
+                            >
+                                <div className="flex items-start gap-3">
+                                    <input
+                                        type="radio"
+                                        name="type"
+                                        value="simple"
+                                        checked={form.data.type === 'simple'}
+                                        onChange={() => form.setData('type', 'simple')}
+                                        className="mt-1 h-4 w-4 border-neutral-300"
+                                    />
+
+                                    <span>
+                                        <span className="block text-sm font-medium text-neutral-900">
+                                            Simple product
+                                        </span>
+
+                                        <span className="mt-1 block text-xs leading-5 text-neutral-500">
+                                            One product with its own SKU and price.
+                                        </span>
+                                    </span>
+                                </div>
+                            </label>
+
+                            <label
+                                className={`cursor-pointer rounded-lg border p-4 transition ${
+                                    form.data.type === 'variable'
+                                        ? 'border-neutral-900 bg-neutral-50 ring-1 ring-neutral-900'
+                                        : 'border-neutral-200 hover:border-neutral-300'
+                                }`}
+                            >
+                                <div className="flex items-start gap-3">
+                                    <input
+                                        type="radio"
+                                        name="type"
+                                        value="variable"
+                                        checked={form.data.type === 'variable'}
+                                        onChange={() => form.setData('type', 'variable')}
+                                        className="mt-1 h-4 w-4 border-neutral-300"
+                                    />
+
+                                    <span>
+                                        <span className="block text-sm font-medium text-neutral-900">
+                                            Variable product
+                                        </span>
+
+                                        <span className="mt-1 block text-xs leading-5 text-neutral-500">
+                                            A product with variants such as size, color or other
+                                            options.
+                                        </span>
+                                    </span>
+                                </div>
+                            </label>
+                        </div>
+
+                        {form.errors.type && (
+                            <p className="mt-2 text-sm text-red-600">{form.errors.type}</p>
+                        )}
+                    </div>
+
+                    <div className="mt-6 grid gap-5 md:grid-cols-2">
+                        <div>
+                            <label htmlFor="sku" className="text-sm font-medium text-neutral-900">
+                                {form.data.type === 'simple' ? 'SKU' : 'Product SKU'}
+                            </label>
+
+                            <input
+                                id="sku"
+                                type="text"
+                                value={form.data.sku}
+                                onChange={(event) => form.setData('sku', event.target.value)}
+                                maxLength={100}
+                                placeholder={
+                                    form.data.type === 'simple'
+                                        ? 'e.g. PRODUCT-001'
+                                        : 'Optional product reference SKU'
+                                }
+                                className="mt-1 block w-full rounded-lg border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500"
+                            />
+
+                            <p className="mt-1 text-xs text-neutral-500">
+                                {form.data.type === 'simple'
+                                    ? 'Optional unique SKU for this product.'
+                                    : 'Optional product-level reference SKU. Variants use their own SKUs.'}
+                            </p>
+
+                            {form.errors.sku && (
+                                <p className="mt-1 text-sm text-red-600">{form.errors.sku}</p>
+                            )}
+                        </div>
+
+                        <MoneyInput
+                            id="price"
+                            label={form.data.type === 'simple' ? 'Price' : 'Base price'}
+                            value={form.data.price}
+                            onChange={(value) => form.setData('price', value)}
+                            error={form.errors.price}
+                            required={form.data.type === 'simple'}
+                            helpText={
+                                form.data.type === 'simple'
+                                    ? 'The selling price of this product.'
+                                    : 'Default selling price. Variants can override this price.'
+                            }
+                        />
+
+                        <MoneyInput
+                            id="compare_at_price"
+                            label="Compare-at price"
+                            value={form.data.compare_at_price}
+                            onChange={(value) => form.setData('compare_at_price', value)}
+                            error={form.errors.compare_at_price}
+                            helpText={
+                                form.data.type === 'simple'
+                                    ? 'Optional original price shown when the product is discounted.'
+                                    : 'Default compare-at price inherited by variants without an override.'
+                            }
+                        />
+
+                        <MoneyInput
+                            id="cost_price"
+                            label="Cost price"
+                            value={form.data.cost_price}
+                            onChange={(value) => form.setData('cost_price', value)}
+                            error={form.errors.cost_price}
+                            helpText={
+                                form.data.type === 'simple'
+                                    ? 'Optional internal product cost.'
+                                    : 'Default internal cost inherited by variants without an override.'
+                            }
+                        />
+                    </div>
+
+                    {form.data.type === 'variable' && (
+                        <div className="mt-6 rounded-lg border border-neutral-200 bg-neutral-50 p-4">
+                            <p className="text-sm font-medium text-neutral-900">Variant pricing</p>
+
+                            <p className="mt-1 text-sm leading-6 text-neutral-600">
+                                These values are the product defaults. Individual variants can use
+                                their own SKU and pricing. Variant price inheritance will be enabled
+                                in the next pricing step.
+                            </p>
+                        </div>
+                    )}
                 </section>
 
                 <SeoFields

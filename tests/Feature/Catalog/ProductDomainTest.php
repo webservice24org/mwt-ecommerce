@@ -10,6 +10,7 @@ use App\Domain\Catalog\Actions\UpdateProductAction;
 use App\Domain\Catalog\Data\CreateProductData;
 use App\Domain\Catalog\Data\UpdateProductData;
 use App\Domain\Catalog\Enums\ProductStatus;
+use App\Domain\Catalog\Enums\ProductType;
 use App\Domain\Catalog\Queries\ProductIndexQuery;
 use App\Domain\Catalog\Queries\PublishedProductQuery;
 use App\Models\Brand;
@@ -36,6 +37,11 @@ final class ProductDomainTest extends TestCase
         )->execute(
             new CreateProductData(
                 brandId: $brand->id,
+                type: ProductType::Simple,
+                sku: null,
+                price: 1000,
+                compareAtPrice: null,
+                costPrice: null,
                 name: 'Test Product',
                 slug: null,
                 shortDescription: 'Short description',
@@ -78,6 +84,11 @@ final class ProductDomainTest extends TestCase
         )->execute(
             new CreateProductData(
                 brandId: null,
+                type: ProductType::Simple,
+                sku: null,
+                price: 1000,
+                compareAtPrice: null,
+                costPrice: null,
                 name: 'Test Product',
                 slug: null,
                 shortDescription: null,
@@ -117,6 +128,11 @@ final class ProductDomainTest extends TestCase
             $product,
             new UpdateProductData(
                 brandId: null,
+                type: ProductType::Simple,
+                sku: null,
+                price: 1000,
+                compareAtPrice: null,
+                costPrice: null,
                 name: 'Updated Product',
                 slug: null,
                 shortDescription: null,

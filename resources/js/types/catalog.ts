@@ -61,6 +61,7 @@ export type BrandListItem = {
 }
 
 export type ProductStatus = 'draft' | 'published' | 'archived'
+export type ProductType = 'simple' | 'variable'
 
 export type ProductStatusOption = {
     value: ProductStatus
@@ -97,6 +98,11 @@ export type ProductListItem = {
 export type ProductFormProduct = {
     id: number
     brand_id: number | null
+    type: ProductType
+    sku: string | null
+    price: number | null
+    compare_at_price: number | null
+    cost_price: number | null
     name: string
     slug: string
     short_description: string | null
@@ -147,7 +153,7 @@ export type ProductVariant = {
     id: number
     sku: string
     name: string | null
-    price: number
+    price: number | null
     compare_at_price: number | null
     cost_price: number | null
     barcode: string | null

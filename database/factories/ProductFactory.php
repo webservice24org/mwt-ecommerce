@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Domain\Catalog\Enums\ProductStatus;
+use App\Domain\Catalog\Enums\ProductType;
 use App\Models\Brand;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -42,6 +43,11 @@ final class ProductFactory extends Factory
             'published_at' => null,
             'meta_title' => null,
             'meta_description' => null,
+            'type' => ProductType::Simple,
+            'sku' => null,
+            'price' => 1000,
+            'compare_at_price' => null,
+            'cost_price' => null,
         ];
     }
 
@@ -69,6 +75,16 @@ final class ProductFactory extends Factory
         return $this->state(
             fn (): array => [
                 'brand_id' => Brand::factory(),
+            ],
+        );
+    }
+
+    public function variable(): static
+    {
+        return $this->state(
+            fn (): array => [
+                'type' => ProductType::Variable,
+                'sku' => null,
             ],
         );
     }

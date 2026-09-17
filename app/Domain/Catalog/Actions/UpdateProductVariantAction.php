@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Catalog\Actions;
 
 use App\Domain\Catalog\Data\UpdateProductVariantData;
+use App\Domain\Catalog\Services\ProductCommercialIntegrityService;
 use App\Domain\Catalog\Services\ProductVariantIntegrityService;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -14,6 +15,7 @@ final readonly class UpdateProductVariantAction
 {
     public function __construct(
         private ProductVariantIntegrityService $integrity,
+        private ProductCommercialIntegrityService $commercialIntegrity,
     ) {}
 
     public function execute(
@@ -27,6 +29,10 @@ final readonly class UpdateProductVariantAction
                     ->lockForUpdate()
                     ->firstOrFail();
 
+                $this->integrity->assertProductSupportsVariants(
+                    $product,
+                );
+
                 $lockedVariant = ProductVariant::query()
                     ->whereKey($variant->id)
                     ->where(
@@ -36,9 +42,26 @@ final readonly class UpdateProductVariantAction
                     ->lockForUpdate()
                     ->firstOrFail();
 
+                $this->integrity->assertCommercialDataIsValid(
+                    price: $data->price,
+                    compareAtPrice: $data->compareAtPrice,
+                );
+
+                $this->commercialIntegrity
+                    ->assertVariantEffectivePricingIsValid(
+                        product: $product,
+                        variantPrice: $data->price,
+                        variantCompareAtPrice: $data->compareAtPrice,
+                    );
+
                 $lockedVariant->setRelation(
                     'product',
                     $product,
+                );
+
+                $this->integrity->assertCommercialDataIsValid(
+                    price: $data->price,
+                    compareAtPrice: $data->compareAtPrice,
                 );
 
                 $this->integrity->validateAttributeValues(

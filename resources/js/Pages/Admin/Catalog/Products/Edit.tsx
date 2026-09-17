@@ -40,6 +40,11 @@ export default function Edit({
 }: Props) {
     const form = useForm<ProductFormData>(`EditProduct:${product.id}`, {
         brand_id: product.brand_id ?? null,
+        type: product.type,
+        sku: product.sku ?? '',
+        price: product.price,
+        compare_at_price: product.compare_at_price,
+        cost_price: product.cost_price,
         name: product.name ?? '',
         slug: product.slug ?? '',
         short_description: product.short_description ?? '',
@@ -86,11 +91,25 @@ export default function Edit({
                 <ProductMediaPanel productId={product.id} images={images} video={video} />
             </div>
             <div className="mt-6">
-                <ProductVariantsPanel
-                    productId={product.id}
-                    variants={variants}
-                    attributes={variantAttributes}
-                />
+                {product.type === 'variable' ? (
+                    <ProductVariantsPanel
+                        productId={product.id}
+                        productPrice={product.price}
+                        productCompareAtPrice={product.compare_at_price}
+                        productCostPrice={product.cost_price}
+                        variants={variants}
+                        attributes={variantAttributes}
+                    />
+                ) : (
+                    <section className="rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
+                        <h2 className="font-semibold text-neutral-900">Product Variants</h2>
+
+                        <p className="mt-2 text-sm text-neutral-500">
+                            Variants are available only for variable products. Change the product
+                            type to Variable and save the product before adding variants.
+                        </p>
+                    </section>
+                )}
             </div>
         </AdminLayout>
     )

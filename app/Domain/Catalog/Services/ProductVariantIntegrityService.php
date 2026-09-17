@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\Services;
 
+use App\Domain\Catalog\Enums\ProductType;
 use App\Models\AttributeValue;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -11,6 +12,33 @@ use Illuminate\Validation\ValidationException;
 
 final class ProductVariantIntegrityService
 {
+    public function assertCommercialDataIsValid(
+        ?int $price,
+        ?int $compareAtPrice,
+    ): void {
+        if (
+            $price !== null
+            && $compareAtPrice !== null
+            && $compareAtPrice < $price
+        ) {
+            throw ValidationException::withMessages([
+                'compare_at_price' => 'The compare-at price must be greater than or equal to the variant price.',
+            ]);
+        }
+    }
+
+    public function assertProductSupportsVariants(
+        Product $product,
+    ): void {
+        if ($product->type === ProductType::Variable) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'type' => 'Variants can only be managed for variable products.',
+        ]);
+    }
+
     /**
      * @param  list<int>  $attributeValueIds
      */

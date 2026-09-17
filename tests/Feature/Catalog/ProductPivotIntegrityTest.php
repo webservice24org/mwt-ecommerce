@@ -9,6 +9,7 @@ use App\Domain\Catalog\Actions\UpdateProductAction;
 use App\Domain\Catalog\Data\CreateProductData;
 use App\Domain\Catalog\Data\UpdateProductData;
 use App\Domain\Catalog\Enums\ProductStatus;
+use App\Domain\Catalog\Enums\ProductType;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -26,6 +27,11 @@ final class ProductPivotIntegrityTest extends TestCase
 
         $data = new CreateProductData(
             brandId: null,
+            type: ProductType::Simple,
+            sku: null,
+            price: 1000,
+            compareAtPrice: null,
+            costPrice: null,
             name: 'Test Product',
             slug: null,
             shortDescription: null,
@@ -73,6 +79,11 @@ final class ProductPivotIntegrityTest extends TestCase
 
         $data = new UpdateProductData(
             brandId: $product->brand_id,
+            type: ProductType::Simple,
+            sku: null,
+            price: 1000,
+            compareAtPrice: null,
+            costPrice: null,
             name: $product->name,
             slug: $product->slug,
             shortDescription: $product->short_description,
@@ -136,6 +147,11 @@ final class ProductPivotIntegrityTest extends TestCase
 
         $data = new UpdateProductData(
             brandId: $product->brand_id,
+            type: ProductType::Simple,
+            sku: null,
+            price: 1000,
+            compareAtPrice: null,
+            costPrice: null,
             name: $product->name,
             slug: $product->slug,
             shortDescription: $product->short_description,

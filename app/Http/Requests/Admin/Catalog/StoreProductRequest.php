@@ -6,6 +6,7 @@ namespace App\Http\Requests\Admin\Catalog;
 
 use App\Domain\Catalog\Data\CreateProductData;
 use App\Domain\Catalog\Enums\ProductStatus;
+use App\Domain\Catalog\Enums\ProductType;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -40,6 +41,12 @@ final class StoreProductRequest extends FormRequest
             ),
             'published_at' => $this->normalizeNullableString(
                 $this->input('published_at'),
+            ),
+            'sku' => $this->normalizeNullableString(
+                $this->input('sku'),
+            ),
+            'type' => $this->normalizeNullableString(
+                $this->input('type'),
             ),
         ]);
     }
@@ -141,6 +148,24 @@ final class StoreProductRequest extends FormRequest
 
         return new CreateProductData(
             brandId: $this->nullableInteger('brand_id'),
+            type: ProductType::from(
+                (string) $this->input('type'),
+            ),
+
+            sku: $this->nullableString('sku'),
+
+            price: $this->nullableInteger(
+                'price',
+            ),
+
+            compareAtPrice: $this->nullableInteger(
+                'compare_at_price',
+            ),
+
+            costPrice: $this->nullableInteger(
+                'cost_price',
+            ),
+
             name: (string) $this->input('name'),
             slug: $this->nullableString('slug'),
             shortDescription: $this->nullableString(

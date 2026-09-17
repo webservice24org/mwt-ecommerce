@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Catalog\Actions;
 
 use App\Domain\Catalog\Data\CreateProductVariantData;
+use App\Domain\Catalog\Services\ProductCommercialIntegrityService;
 use App\Domain\Catalog\Services\ProductVariantIntegrityService;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -14,6 +15,7 @@ final readonly class CreateProductVariantAction
 {
     public function __construct(
         private ProductVariantIntegrityService $integrity,
+        private ProductCommercialIntegrityService $commercialIntegrity,
     ) {}
 
     public function execute(
@@ -26,6 +28,26 @@ final readonly class CreateProductVariantAction
                     ->whereKey($product->id)
                     ->lockForUpdate()
                     ->firstOrFail();
+
+                $this->integrity->assertProductSupportsVariants(
+                    $lockedProduct,
+                );
+
+                $this->commercialIntegrity->assertSkuIsAvailable(
+                    sku: $data->sku,
+                );
+
+                $this->integrity->assertCommercialDataIsValid(
+                    price: $data->price,
+                    compareAtPrice: $data->compareAtPrice,
+                );
+
+                $this->commercialIntegrity
+                    ->assertVariantEffectivePricingIsValid(
+                        product: $lockedProduct,
+                        variantPrice: $data->price,
+                        variantCompareAtPrice: $data->compareAtPrice,
+                    );
 
                 $this->integrity->validateAttributeValues(
                     $data->attributeValueIds,

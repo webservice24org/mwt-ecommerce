@@ -17,6 +17,11 @@ type Props = {
 export default function Create({ brands, categories, statuses }: Props) {
     const form = useForm<ProductFormData>({
         brand_id: null,
+        type: 'simple',
+        sku: '',
+        price: null,
+        compare_at_price: null,
+        cost_price: null,
         name: '',
         slug: '',
         short_description: '',
@@ -64,8 +69,8 @@ export default function Create({ brands, categories, statuses }: Props) {
                 <h3 className="font-medium text-neutral-900">Media & Variants</h3>
 
                 <p className="mt-1 text-sm text-neutral-500">
-                    Save the product first. You can then add the featured image, gallery, video,
-                    pricing, SKU and product variants.
+                    Save the product first. You can then add the featured image, gallery, video and
+                    product variants.
                 </p>
             </div>
         </AdminLayout>

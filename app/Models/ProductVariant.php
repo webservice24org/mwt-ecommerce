@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property int $product_id
  * @property string $sku
  * @property string|null $name
- * @property int $price
+ * @property int|null $price
  * @property int|null $compare_at_price
  * @property int|null $cost_price
  * @property string|null $barcode

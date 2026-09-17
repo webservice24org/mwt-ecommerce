@@ -6,6 +6,7 @@ namespace App\Http\Requests\Admin\Catalog;
 
 use App\Domain\Catalog\Data\UpdateProductData;
 use App\Domain\Catalog\Enums\ProductStatus;
+use App\Domain\Catalog\Enums\ProductType;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -23,21 +24,31 @@ final class UpdateProductRequest extends FormRequest
             'name' => $this->normalizeString(
                 $this->input('name'),
             ),
+
             'slug' => $this->normalizeNullableString(
                 $this->input('slug'),
             ),
+
+            'sku' => $this->normalizeNullableString(
+                $this->input('sku'),
+            ),
+
             'short_description' => $this->normalizeNullableString(
                 $this->input('short_description'),
             ),
+
             'description' => $this->normalizeNullableString(
                 $this->input('description'),
             ),
+
             'meta_title' => $this->normalizeNullableString(
                 $this->input('meta_title'),
             ),
+
             'meta_description' => $this->normalizeNullableString(
                 $this->input('meta_description'),
             ),
+
             'published_at' => $this->normalizeNullableString(
                 $this->input('published_at'),
             ),
@@ -54,6 +65,36 @@ final class UpdateProductRequest extends FormRequest
                 'nullable',
                 'integer',
                 'exists:brands,id',
+            ],
+
+            'type' => [
+                'required',
+                Rule::enum(ProductType::class),
+            ],
+
+            'sku' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
+
+            'price' => [
+                'nullable',
+                'integer',
+                'min:0',
+            ],
+
+            'compare_at_price' => [
+                'nullable',
+                'integer',
+                'min:0',
+                'gte:price',
+            ],
+
+            'cost_price' => [
+                'nullable',
+                'integer',
+                'min:0',
             ],
 
             'name' => [
@@ -140,34 +181,69 @@ final class UpdateProductRequest extends FormRequest
         );
 
         return new UpdateProductData(
-            brandId: $this->nullableInteger('brand_id'),
+            brandId: $this->nullableInteger(
+                'brand_id',
+            ),
+
+            type: ProductType::from(
+                (string) $this->input('type'),
+            ),
+
+            sku: $this->nullableString(
+                'sku',
+            ),
+
+            price: $this->nullableInteger(
+                'price',
+            ),
+
+            compareAtPrice: $this->nullableInteger(
+                'compare_at_price',
+            ),
+
+            costPrice: $this->nullableInteger(
+                'cost_price',
+            ),
+
             name: (string) $this->input('name'),
-            slug: $this->nullableString('slug'),
+
+            slug: $this->nullableString(
+                'slug',
+            ),
+
             shortDescription: $this->nullableString(
                 'short_description',
             ),
+
             description: $this->nullableString(
                 'description',
             ),
+
             status: ProductStatus::from(
                 (string) $this->input('status'),
             ),
+
             isFeatured: $this->boolean(
                 'is_featured',
             ),
+
             position: (int) $this->input(
                 'position',
                 0,
             ),
+
             publishedAt: $this->nullableDate(
                 'published_at',
             ),
+
             metaTitle: $this->nullableString(
                 'meta_title',
             ),
+
             metaDescription: $this->nullableString(
                 'meta_description',
             ),
+
             categoryIds: $categoryIds,
         );
     }

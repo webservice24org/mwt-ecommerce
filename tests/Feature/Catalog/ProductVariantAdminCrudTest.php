@@ -23,7 +23,9 @@ final class ProductVariantAdminCrudTest extends TestCase
             'role' => AdminRole::Admin,
         ]);
 
-        $product = Product::factory()->create();
+        $product = Product::factory()
+            ->variable()
+            ->create();
 
         $color = ProductAttribute::factory()->create();
 
@@ -81,7 +83,9 @@ final class ProductVariantAdminCrudTest extends TestCase
             'role' => AdminRole::Admin,
         ]);
 
-        $product = Product::factory()->create();
+        $product = Product::factory()
+            ->variable()
+            ->create();
 
         $this
             ->actingAs($admin, 'admin')
@@ -121,7 +125,9 @@ final class ProductVariantAdminCrudTest extends TestCase
             'sku' => 'UNIQUE-SKU',
         ]);
 
-        $product = Product::factory()->create();
+        $product = Product::factory()
+            ->variable()
+            ->create();
 
         $this
             ->actingAs($admin, 'admin')
@@ -152,7 +158,9 @@ final class ProductVariantAdminCrudTest extends TestCase
             'barcode' => 'ABC123',
         ]);
 
-        $product = Product::factory()->create();
+        $product = Product::factory()
+            ->variable()
+            ->create();
 
         $this
             ->actingAs($admin, 'admin')
@@ -180,7 +188,9 @@ final class ProductVariantAdminCrudTest extends TestCase
             'role' => AdminRole::Admin,
         ]);
 
-        $product = Product::factory()->create();
+        $product = Product::factory()
+            ->variable()
+            ->create();
 
         $this
             ->actingAs($admin, 'admin')
@@ -210,7 +220,9 @@ final class ProductVariantAdminCrudTest extends TestCase
             'role' => AdminRole::Admin,
         ]);
 
-        $product = Product::factory()->create();
+        $product = Product::factory()
+            ->variable()
+            ->create();
 
         $color = ProductAttribute::factory()->create();
 
@@ -259,7 +271,9 @@ final class ProductVariantAdminCrudTest extends TestCase
             'role' => AdminRole::Admin,
         ]);
 
-        $product = Product::factory()->create();
+        $product = Product::factory()
+            ->variable()
+            ->create();
 
         $color = ProductAttribute::factory()->create();
 
@@ -314,11 +328,13 @@ final class ProductVariantAdminCrudTest extends TestCase
             'role' => AdminRole::Admin,
         ]);
 
-        $firstProduct =
-            Product::factory()->create();
+        $firstProduct = Product::factory()
+            ->variable()
+            ->create();
 
-        $secondProduct =
-            Product::factory()->create();
+        $secondProduct = Product::factory()
+            ->variable()
+            ->create();
 
         $color = ProductAttribute::factory()->create();
 
@@ -370,7 +386,9 @@ final class ProductVariantAdminCrudTest extends TestCase
             'role' => AdminRole::Admin,
         ]);
 
-        $product = Product::factory()->create();
+        $product = Product::factory()
+            ->variable()
+            ->create();
 
         $first = ProductVariant::factory()->create([
             'product_id' => $product->id,
@@ -424,7 +442,9 @@ final class ProductVariantAdminCrudTest extends TestCase
             'role' => AdminRole::Admin,
         ]);
 
-        $product = Product::factory()->create();
+        $product = Product::factory()
+            ->variable()
+            ->create();
 
         $default = ProductVariant::factory()->create([
             'product_id' => $product->id,
@@ -474,7 +494,9 @@ final class ProductVariantAdminCrudTest extends TestCase
             'role' => AdminRole::Admin,
         ]);
 
-        $product = Product::factory()->create();
+        $product = Product::factory()
+            ->variable()
+            ->create();
 
         $default = ProductVariant::factory()->create([
             'product_id' => $product->id,
@@ -561,7 +583,9 @@ final class ProductVariantAdminCrudTest extends TestCase
             'role' => AdminRole::Editor,
         ]);
 
-        $product = Product::factory()->create();
+        $product = Product::factory()
+            ->variable()
+            ->create();
 
         $variant = ProductVariant::factory()->create([
             'product_id' => $product->id,
@@ -705,7 +729,9 @@ final class ProductVariantAdminCrudTest extends TestCase
             'role' => AdminRole::Admin,
         ]);
 
-        $product = Product::factory()->create();
+        $product = Product::factory()
+            ->variable()
+            ->create();
 
         ProductVariant::factory()->create([
             'product_id' => $product->id,
@@ -747,7 +773,10 @@ final class ProductVariantAdminCrudTest extends TestCase
         $admin = Admin::factory()->create([
             'role' => AdminRole::Admin,
         ]);
-        $product = Product::factory()->create();
+
+        $product = Product::factory()
+            ->variable()
+            ->create();
 
         $default = ProductVariant::factory()->create([
             'product_id' => $product->id,
@@ -806,7 +835,9 @@ final class ProductVariantAdminCrudTest extends TestCase
             'role' => AdminRole::Admin,
         ]);
 
-        $product = Product::factory()->create();
+        $product = Product::factory()
+            ->variable()
+            ->create();
 
         $default = ProductVariant::factory()->create([
             'product_id' => $product->id,
@@ -848,6 +879,182 @@ final class ProductVariantAdminCrudTest extends TestCase
 
         $this->assertTrue(
             $default->is_default,
+        );
+    }
+
+    public function test_variant_price_can_be_null_to_inherit_product_price(): void
+    {
+        $admin = Admin::factory()->create([
+            'role' => AdminRole::Admin,
+        ]);
+
+        $product = Product::factory()
+            ->variable()
+            ->create([
+                'price' => 20000,
+            ]);
+
+        $this
+            ->actingAs($admin, 'admin')
+            ->post(
+                route(
+                    'admin.products.variants.store',
+                    $product,
+                ),
+                [
+                    'sku' => 'INHERITED-PRICE',
+                    'price' => null,
+                    'position' => 0,
+                    'is_active' => true,
+                    'is_default' => false,
+                    'attribute_value_ids' => [],
+                ],
+            )
+            ->assertSessionHasNoErrors()
+            ->assertRedirect();
+
+        $this->assertDatabaseHas(
+            'product_variants',
+            [
+                'product_id' => $product->id,
+                'sku' => 'INHERITED-PRICE',
+                'price' => null,
+            ],
+        );
+    }
+
+    public function test_variant_price_override_can_be_cleared(): void
+    {
+        $admin = Admin::factory()->create([
+            'role' => AdminRole::Admin,
+        ]);
+
+        $product = Product::factory()
+            ->variable()
+            ->create([
+                'price' => 20000,
+            ]);
+
+        $variant = ProductVariant::factory()->create([
+            'product_id' => $product->id,
+            'sku' => 'CLEAR-PRICE',
+            'price' => 25000,
+            'is_active' => true,
+            'is_default' => true,
+        ]);
+
+        $this
+            ->actingAs($admin, 'admin')
+            ->put(
+                route(
+                    'admin.products.variants.update',
+                    [
+                        $product,
+                        $variant,
+                    ],
+                ),
+                [
+                    'sku' => $variant->sku,
+                    'price' => null,
+                    'position' => $variant->position,
+                    'is_active' => true,
+                    'is_default' => true,
+                    'attribute_value_ids' => [],
+                ],
+            )
+            ->assertSessionHasNoErrors()
+            ->assertRedirect();
+
+        $this->assertDatabaseHas(
+            'product_variants',
+            [
+                'id' => $variant->id,
+                'price' => null,
+            ],
+        );
+    }
+
+    public function test_variant_price_can_be_explicitly_zero(): void
+    {
+        $admin = Admin::factory()->create([
+            'role' => AdminRole::Admin,
+        ]);
+
+        $product = Product::factory()
+            ->variable()
+            ->create([
+                'price' => 20000,
+            ]);
+
+        $this
+            ->actingAs($admin, 'admin')
+            ->post(
+                route(
+                    'admin.products.variants.store',
+                    $product,
+                ),
+                [
+                    'sku' => 'ZERO-PRICE',
+                    'price' => 0,
+                    'position' => 0,
+                    'is_active' => true,
+                    'is_default' => false,
+                    'attribute_value_ids' => [],
+                ],
+            )
+            ->assertSessionHasNoErrors()
+            ->assertRedirect();
+
+        $variant = ProductVariant::query()
+            ->where('sku', 'ZERO-PRICE')
+            ->firstOrFail();
+
+        $this->assertSame(
+            0,
+            $variant->price,
+        );
+    }
+
+    public function test_variant_compare_at_price_can_exist_when_variant_price_is_null(): void
+    {
+        $admin = Admin::factory()->create([
+            'role' => AdminRole::Admin,
+        ]);
+
+        $product = Product::factory()
+            ->variable()
+            ->create([
+                'price' => 20000,
+            ]);
+
+        $this
+            ->actingAs($admin, 'admin')
+            ->post(
+                route(
+                    'admin.products.variants.store',
+                    $product,
+                ),
+                [
+                    'sku' => 'COMPARE-INHERIT',
+                    'price' => null,
+                    'compare_at_price' => 25000,
+                    'position' => 0,
+                    'is_active' => true,
+                    'is_default' => false,
+                    'attribute_value_ids' => [],
+                ],
+            )
+            ->assertSessionHasNoErrors()
+            ->assertRedirect();
+
+        $this->assertDatabaseHas(
+            'product_variants',
+            [
+                'product_id' => $product->id,
+                'sku' => 'COMPARE-INHERIT',
+                'price' => null,
+                'compare_at_price' => 25000,
+            ],
         );
     }
 }

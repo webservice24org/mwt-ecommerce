@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Domain\Catalog\Enums\ProductStatus;
+use App\Domain\Catalog\Enums\ProductType;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -28,6 +29,11 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $published_at
  * @property string|null $meta_title
  * @property string|null $meta_description
+ * @property ProductType $type
+ * @property string|null $sku
+ * @property int|null $price
+ * @property int|null $compare_at_price
+ * @property int|null $cost_price
  */
 final class Product extends Model
 {
@@ -36,6 +42,11 @@ final class Product extends Model
 
     protected $fillable = [
         'brand_id',
+        'type',
+        'sku',
+        'price',
+        'compare_at_price',
+        'cost_price',
         'name',
         'slug',
         'short_description',
@@ -51,7 +62,11 @@ final class Product extends Model
     protected function casts(): array
     {
         return [
+            'type' => ProductType::class,
             'status' => ProductStatus::class,
+            'price' => 'integer',
+            'compare_at_price' => 'integer',
+            'cost_price' => 'integer',
             'is_featured' => 'boolean',
             'position' => 'integer',
             'published_at' => 'datetime',

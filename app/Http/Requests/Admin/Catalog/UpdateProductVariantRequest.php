@@ -63,7 +63,7 @@ final class UpdateProductVariantRequest extends FormRequest
             ],
 
             'price' => [
-                'required',
+                'nullable',
                 'integer',
                 'min:0',
             ],
@@ -72,7 +72,6 @@ final class UpdateProductVariantRequest extends FormRequest
                 'nullable',
                 'integer',
                 'min:0',
-                'gte:price',
             ],
 
             'cost_price' => [
@@ -144,7 +143,7 @@ final class UpdateProductVariantRequest extends FormRequest
         return new UpdateProductVariantData(
             sku: (string) $this->validated('sku'),
             name: $this->nullableString('name'),
-            price: (int) $this->validated('price'),
+            price: $this->nullableInt('price'),
             compareAtPrice: $this->nullableInt(
                 'compare_at_price',
             ),

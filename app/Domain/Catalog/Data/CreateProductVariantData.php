@@ -12,7 +12,7 @@ final readonly class CreateProductVariantData
     public function __construct(
         public string $sku,
         public ?string $name,
-        public int $price,
+        public ?int $price,
         public ?int $compareAtPrice,
         public ?int $costPrice,
         public ?string $barcode,

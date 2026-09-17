@@ -206,6 +206,11 @@ final class ProductController extends Controller
                 'product' => [
                     'id' => $product->id,
                     'brand_id' => $product->brand_id,
+                    'type' => $product->type->value,
+                    'sku' => $product->sku,
+                    'price' => $product->price,
+                    'compare_at_price' => $product->compare_at_price,
+                    'cost_price' => $product->cost_price,
                     'name' => $product->name,
                     'slug' => $product->slug,
                     'short_description' => $product->short_description,
