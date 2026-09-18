@@ -1,0 +1,21 @@
+import ProductCard from '@/Components/Frontend/Catalog/ProductCard'
+import type { StorefrontProductCard } from '@/types/storefront'
+
+interface ProductGridProps {
+    products: StorefrontProductCard[]
+    eagerImageCount?: number
+}
+
+export default function ProductGrid({ products, eagerImageCount = 4 }: ProductGridProps) {
+    return (
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {products.map((product, index) => (
+                <ProductCard
+                    key={product.id}
+                    product={product}
+                    eagerImage={index < eagerImageCount}
+                />
+            ))}
+        </div>
+    )
+}
