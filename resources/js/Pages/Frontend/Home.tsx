@@ -1,27 +1,36 @@
+import HomeCategoryShowcase from '@/Components/Frontend/Home/HomeCategoryShowcase'
+import HomeHero from '@/Components/Frontend/Home/HomeHero'
+import HomeProductSection from '@/Components/Frontend/Home/HomeProductSection'
 import FrontendLayout from '@/Layouts/Frontend/FrontendLayout'
-import { Head } from '@inertiajs/react'
+import type { StorefrontHome } from '@/types/storefront'
 
-export default function Home() {
+interface Props {
+    home: StorefrontHome
+}
+
+export default function Home({ home }: Props) {
     return (
         <FrontendLayout>
-            <Head title="Home" />
+            <main className="min-w-0">
+                <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+                    <div className="space-y-14 sm:space-y-16">
+                        <HomeHero />
 
-            <section className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-                <div className="max-w-2xl">
-                    <p className="text-sm font-medium uppercase tracking-wider text-neutral-500">
-                        Laravel + React Ecommerce
-                    </p>
+                        <HomeCategoryShowcase categories={home.categories} />
 
-                    <h1 className="mt-3 text-3xl font-bold tracking-tight text-neutral-950 sm:text-4xl">
-                        MWT Ecommerce
-                    </h1>
+                        <HomeProductSection
+                            title="Featured products"
+                            products={home.featured_products}
+                        />
 
-                    <p className="mt-4 text-base leading-7 text-neutral-600">
-                        The storefront foundation is ready. Products, categories and dynamic
-                        homepage sections will be introduced throughout Phase 3.
-                    </p>
+                        <HomeProductSection
+                            title="New arrivals"
+                            products={home.new_arrivals}
+                            viewAllHref="/products?sort=newest"
+                        />
+                    </div>
                 </div>
-            </section>
+            </main>
         </FrontendLayout>
     )
 }

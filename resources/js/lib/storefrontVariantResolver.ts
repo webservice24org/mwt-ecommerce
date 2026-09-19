@@ -113,16 +113,15 @@ export function resolveSelectedVariant(
  */
 export function isVariantOptionAvailable(
     variants: StorefrontVariant[],
-    currentSelection: StorefrontVariantSelection,
+    _currentSelection: StorefrontVariantSelection,
     attributeSlug: string,
     valueSlug: string,
 ): boolean {
-    const candidateSelection: StorefrontVariantSelection = {
-        ...currentSelection,
-        [attributeSlug]: valueSlug,
-    }
+    return variants.some((variant) => {
+        const variantSelection = getVariantSelection(variant)
 
-    return variants.some((variant) => variantMatchesPartialSelection(variant, candidateSelection))
+        return variantSelection[attributeSlug] === valueSlug
+    })
 }
 
 /**

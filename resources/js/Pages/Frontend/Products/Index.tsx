@@ -3,6 +3,7 @@ import ProductListingHeader from '@/Components/Frontend/Catalog/ProductListingHe
 import ProductPagination from '@/Components/Frontend/Catalog/ProductPagination'
 import StorefrontFilterPanel from '@/Components/Frontend/Catalog/StorefrontFilterPanel'
 import StorefrontListingControls from '@/Components/Frontend/Catalog/StorefrontListingControls'
+import StorefrontBreadcrumbs from '@/Components/Frontend/Navigation/StorefrontBreadcrumbs'
 import FrontendLayout from '@/Layouts/Frontend/FrontendLayout'
 import { useStorefrontFilters } from '@/hooks/useStorefrontFilters'
 import type {
@@ -10,7 +11,9 @@ import type {
     StorefrontFilterOptions,
     StorefrontProductFilters,
 } from '@/types/storefront'
-import { Head } from '@inertiajs/react'
+//import { Head } from '@inertiajs/react'
+import { buildBreadcrumbJsonLd } from '@/lib/storefrontSeo'
+import StorefrontSeo from '@/Components/Frontend/Seo/StorefrontSeo'
 
 interface ProductsIndexProps {
     products: PaginatedStorefrontProducts
@@ -24,11 +27,30 @@ export default function Index({ products, filters, filterOptions }: ProductsInde
         filters,
     })
 
+    const breadcrumbs = [
+        {
+            label: 'Home',
+            href: '/',
+        },
+        {
+            label: 'Shop',
+        },
+    ]
+    const breadcrumbJsonLd = buildBreadcrumbJsonLd(breadcrumbs)
+
     return (
         <FrontendLayout>
-            <Head title="Shop" />
+            <StorefrontSeo
+                title="Shop"
+                description="Browse our products and discover available product options."
+                canonicalPath="/products"
+                jsonLd={breadcrumbJsonLd}
+            />
 
             <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+                <div className="mb-6">
+                    <StorefrontBreadcrumbs items={breadcrumbs} />
+                </div>
                 <ProductListingHeader title="Shop" total={products.total} />
 
                 <div className="mt-6">

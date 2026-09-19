@@ -3,6 +3,7 @@ import ProductListingHeader from '@/Components/Frontend/Catalog/ProductListingHe
 import ProductPagination from '@/Components/Frontend/Catalog/ProductPagination'
 import StorefrontFilterPanel from '@/Components/Frontend/Catalog/StorefrontFilterPanel'
 import StorefrontListingControls from '@/Components/Frontend/Catalog/StorefrontListingControls'
+import StorefrontBreadcrumbs from '@/Components/Frontend/Navigation/StorefrontBreadcrumbs'
 import FrontendLayout from '@/Layouts/Frontend/FrontendLayout'
 import { useStorefrontFilters } from '@/hooks/useStorefrontFilters'
 import type {
@@ -11,7 +12,8 @@ import type {
     StorefrontFilterOptions,
     StorefrontProductFilters,
 } from '@/types/storefront'
-import { Head } from '@inertiajs/react'
+import StorefrontSeo from '@/Components/Frontend/Seo/StorefrontSeo'
+import { buildBreadcrumbJsonLd } from '@/lib/storefrontSeo'
 
 interface Props {
     category: StorefrontCategoryDetail
@@ -28,21 +30,39 @@ export default function Show({ category, products, filters, filterOptions }: Pro
         filters,
     })
 
+    const metaDescription =
+        category.meta_description?.trim() || category.description?.trim() || null
+
+    const breadcrumbs = [
+        {
+            label: 'Home',
+            href: '/',
+        },
+        {
+            label: 'Shop',
+            href: '/products',
+        },
+        {
+            label: category.name,
+        },
+    ]
+
+    const breadcrumbJsonLd = buildBreadcrumbJsonLd(breadcrumbs)
+
     return (
         <FrontendLayout>
-            <Head title={pageTitle}>
-                {category.meta_description && (
-                    <meta
-                        head-key="description"
-                        name="description"
-                        content={category.meta_description}
-                    />
-                )}
-            </Head>
+            <StorefrontSeo
+                title={pageTitle}
+                description={metaDescription}
+                canonicalPath={`/category/${category.slug}`}
+                image={category.image_url}
+                jsonLd={breadcrumbJsonLd}
+            />
 
             <section className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+                <StorefrontBreadcrumbs items={breadcrumbs} />
                 {category.image_url && (
-                    <div className="mb-8 overflow-hidden rounded-xl bg-neutral-100">
+                    <div className="mb-8 mt-5 overflow-hidden rounded-xl bg-neutral-100">
                         <img
                             src={category.image_url}
                             alt=""

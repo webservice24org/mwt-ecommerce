@@ -1,10 +1,12 @@
 import ProductDescription from '@/Components/Frontend/Catalog/ProductDetails/ProductDescription'
 import ProductDetailsLayout from '@/Components/Frontend/Catalog/ProductDetails/ProductDetailsLayout'
-import ProductPrimaryMedia from '@/Components/Frontend/Catalog/ProductDetails/ProductPrimaryMedia'
+import ProductGallery from '@/Components/Frontend/Catalog/ProductDetails/ProductGallery'
 import ProductSummary from '@/Components/Frontend/Catalog/ProductDetails/ProductSummary'
+import StorefrontBreadcrumbs from '@/Components/Frontend/Navigation/StorefrontBreadcrumbs'
+import StorefrontSeo from '@/Components/Frontend/Seo/StorefrontSeo'
 import FrontendLayout from '@/Layouts/Frontend/FrontendLayout'
+import { buildBreadcrumbJsonLd } from '@/lib/storefrontSeo'
 import type { StorefrontProductDetail } from '@/types/storefront'
-import { Head } from '@inertiajs/react'
 
 interface Props {
     product: StorefrontProductDetail
@@ -16,18 +18,59 @@ export default function Show({ product }: Props) {
     const metaDescription =
         product.meta_description?.trim() || product.short_description?.trim() || null
 
+    const canonicalPath = `/products/${product.slug}`
+
+    const seoImage = product.images[0]?.url ?? null
+
+    const primaryCategory = product.categories[0] ?? null
+
+    const breadcrumbs = [
+        {
+            label: 'Home',
+            href: '/',
+        },
+        {
+            label: 'Shop',
+            href: '/products',
+        },
+        ...(primaryCategory
+            ? [
+                  {
+                      label: primaryCategory.name,
+                      href: `/category/${primaryCategory.slug}`,
+                  },
+              ]
+            : []),
+        {
+            label: product.name,
+        },
+    ]
+
+    const breadcrumbJsonLd = buildBreadcrumbJsonLd(breadcrumbs)
+
     return (
         <FrontendLayout>
-            <Head title={pageTitle}>
-                {metaDescription && (
-                    <meta head-key="description" name="description" content={metaDescription} />
-                )}
-            </Head>
+            <StorefrontSeo
+                title={pageTitle}
+                description={metaDescription}
+                canonicalPath={canonicalPath}
+                image={seoImage}
+                type="product"
+                jsonLd={breadcrumbJsonLd}
+            />
 
             <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+                <div className="mb-6">
+                    <StorefrontBreadcrumbs items={breadcrumbs} />
+                </div>
+
                 <ProductDetailsLayout
                     media={
-                        <ProductPrimaryMedia productName={product.name} images={product.images} />
+                        <ProductGallery
+                            productName={product.name}
+                            images={product.images}
+                            video={product.video}
+                        />
                     }
                     summary={<ProductSummary product={product} />}
                 />

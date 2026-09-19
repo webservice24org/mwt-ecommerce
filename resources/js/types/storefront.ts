@@ -80,6 +80,7 @@ export interface StorefrontProductDetail {
     brand: StorefrontBrand | null
     categories: StorefrontCategory[]
     images: StorefrontImage[]
+    video: StorefrontVideo | null
     variants: StorefrontVariant[]
     meta_title: string | null
     meta_description: string | null
@@ -154,6 +155,17 @@ export type StorefrontVideoType = 'upload' | 'youtube' | 'vimeo'
 export interface StorefrontVideo {
     type: StorefrontVideoType
     url: string | null
+}
+
+export interface StorefrontBreadcrumbItem {
+    label: string
+    href?: string
+}
+
+export interface StorefrontHome {
+    featured_products: StorefrontProductCard[]
+    new_arrivals: StorefrontProductCard[]
+    categories: StorefrontCategory[]
 }
 
 export type PaginatedStorefrontProducts = PaginatedData<StorefrontProductCard>
