@@ -9,6 +9,7 @@ use App\Domain\Catalog\Services\ProductImageStorageService;
 use App\Domain\Catalog\Services\ProductMediaIntegrityService;
 use App\Models\Product;
 use App\Models\ProductImage;
+use App\Support\Cache\StorefrontCatalogCache;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -17,6 +18,7 @@ final readonly class UploadProductImageAction
     public function __construct(
         private ProductImageStorageService $storage,
         private ProductMediaIntegrityService $integrity,
+        private StorefrontCatalogCache $storefrontCache,
     ) {}
 
     /**
@@ -32,7 +34,7 @@ final readonly class UploadProductImageAction
         );
 
         try {
-            return DB::transaction(
+            $image = DB::transaction(
                 function () use (
                     $product,
                     $data,
@@ -68,16 +70,16 @@ final readonly class UploadProductImageAction
                             'path' => $stored['path'],
 
                             'original_name' => $stored[
-                                    'original_name'
-                                ],
+                                'original_name'
+                            ],
 
                             'mime_type' => $stored[
-                                    'mime_type'
-                                ],
+                                'mime_type'
+                            ],
 
                             'file_size' => $stored[
-                                    'file_size'
-                                ],
+                                'file_size'
+                            ],
 
                             'width' => $stored['width'],
 
@@ -108,5 +110,9 @@ final readonly class UploadProductImageAction
 
             throw $exception;
         }
+
+        $this->storefrontCache->invalidate();
+
+        return $image;
     }
 }

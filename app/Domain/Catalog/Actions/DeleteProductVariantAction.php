@@ -7,12 +7,14 @@ namespace App\Domain\Catalog\Actions;
 use App\Domain\Catalog\Services\ProductVariantIntegrityService;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Support\Cache\StorefrontCatalogCache;
 use Illuminate\Support\Facades\DB;
 
 final readonly class DeleteProductVariantAction
 {
     public function __construct(
         private ProductVariantIntegrityService $integrity,
+        private StorefrontCatalogCache $storefrontCache,
     ) {}
 
     public function execute(
@@ -47,5 +49,7 @@ final readonly class DeleteProductVariantAction
                 }
             },
         );
+
+        $this->storefrontCache->invalidate();
     }
 }

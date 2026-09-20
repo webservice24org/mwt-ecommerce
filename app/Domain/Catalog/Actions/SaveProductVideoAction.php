@@ -10,6 +10,7 @@ use App\Domain\Catalog\Services\ProductVideoStorageService;
 use App\Domain\Catalog\Services\ProductVideoUrlService;
 use App\Models\Product;
 use App\Models\ProductVideo;
+use App\Support\Cache\StorefrontCatalogCache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Throwable;
@@ -19,6 +20,7 @@ final readonly class SaveProductVideoAction
     public function __construct(
         private ProductVideoStorageService $storage,
         private ProductVideoUrlService $urls,
+        private StorefrontCatalogCache $storefrontCache,
     ) {}
 
     /**
@@ -130,6 +132,8 @@ final readonly class SaveProductVideoAction
 
             throw $exception;
         }
+
+        $this->storefrontCache->invalidate();
 
         if (
             $oldUploadedPath !== null

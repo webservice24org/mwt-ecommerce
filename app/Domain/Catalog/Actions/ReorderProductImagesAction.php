@@ -6,12 +6,17 @@ namespace App\Domain\Catalog\Actions;
 
 use App\Models\Product;
 use App\Models\ProductImage;
+use App\Support\Cache\StorefrontCatalogCache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
 final class ReorderProductImagesAction
 {
+    public function __construct(
+        private readonly StorefrontCatalogCache $storefrontCache,
+    ) {}
+
     /**
      * @param  list<int>  $imageIds
      *
@@ -104,5 +109,7 @@ final class ReorderProductImagesAction
                 }
             },
         );
+
+        $this->storefrontCache->invalidate();
     }
 }

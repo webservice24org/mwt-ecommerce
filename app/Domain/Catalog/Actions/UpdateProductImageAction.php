@@ -7,11 +7,16 @@ namespace App\Domain\Catalog\Actions;
 use App\Domain\Catalog\Data\UpdateProductImageData;
 use App\Models\Product;
 use App\Models\ProductImage;
+use App\Support\Cache\StorefrontCatalogCache;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
 final class UpdateProductImageAction
 {
+    public function __construct(
+        private readonly StorefrontCatalogCache $storefrontCache,
+    ) {}
+
     /**
      * @throws Throwable
      */
@@ -20,7 +25,7 @@ final class UpdateProductImageAction
         ProductImage $image,
         UpdateProductImageData $data,
     ): ProductImage {
-        return DB::transaction(
+        $updatedImage = DB::transaction(
             function () use (
                 $product,
                 $image,
@@ -49,5 +54,9 @@ final class UpdateProductImageAction
                 return $lockedImage->refresh();
             },
         );
+
+        $this->storefrontCache->invalidate();
+
+        return $updatedImage;
     }
 }

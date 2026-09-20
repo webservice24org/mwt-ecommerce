@@ -6,6 +6,7 @@ namespace App\Domain\Catalog\Actions;
 
 use App\Domain\Catalog\Data\CreateBrandData;
 use App\Models\Brand;
+use App\Support\Cache\StorefrontCatalogCache;
 use App\Support\Media\ImageStorageService;
 use App\Support\Slugs\UniqueSlugGenerator;
 use Illuminate\Http\UploadedFile;
@@ -17,6 +18,7 @@ final readonly class CreateBrandAction
     public function __construct(
         private UniqueSlugGenerator $slugGenerator,
         private ImageStorageService $imageStorage,
+        private StorefrontCatalogCache $storefrontCache,
     ) {}
 
     public function execute(
@@ -33,7 +35,7 @@ final readonly class CreateBrandAction
                 );
             }
 
-            return DB::transaction(
+            $brand = DB::transaction(
                 function () use (
                     $data,
                     $logoPath,
@@ -65,5 +67,9 @@ final readonly class CreateBrandAction
 
             throw $exception;
         }
+
+        $this->storefrontCache->invalidate();
+
+        return $brand;
     }
 }

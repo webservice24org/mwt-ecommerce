@@ -63,6 +63,12 @@ final class StorefrontProductFilterRequest extends FormRequest
                 'string',
                 'max:180',
             ],
+
+            'page' => [
+                'nullable',
+                'integer',
+                'min:1',
+            ],
         ];
     }
 
@@ -86,40 +92,58 @@ final class StorefrontProductFilterRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $sort = $this->input('sort');
+        $brand = $this->input('brand');
+        $category = $this->input('category');
         $attributes = $this->input('attributes');
 
+        $normalizedAttributes = [];
+
         if (is_array($attributes)) {
-            $attributes = collect($attributes)
-                ->filter(
-                    static fn (mixed $value, mixed $key): bool => is_string($key)
-                        && preg_match('/^[a-z0-9-]{1,150}$/', $key) === 1
-                        && is_string($value),
-                )
-                ->map(
-                    static fn (string $value): string => trim($value),
-                )
-                ->filter(
-                    static fn (string $value): bool => $value !== '',
-                )
-                ->all();
+            foreach ($attributes as $key => $value) {
+                if (! is_string($key)) {
+                    continue;
+                }
+
+                if (
+                    preg_match(
+                        '/^[a-z0-9-]{1,150}$/',
+                        $key,
+                    ) !== 1
+                ) {
+                    continue;
+                }
+
+                if (! is_string($value)) {
+                    continue;
+                }
+
+                $value = trim($value);
+
+                if ($value === '') {
+                    continue;
+                }
+
+                $normalizedAttributes[$key] = $value;
+            }
         }
 
         $this->merge([
-            'sort' => $this->filled('sort')
-                ? $this->string('sort')->trim()->toString()
-                : null,
+            'sort' => is_string($sort)
+                ? trim($sort)
+                : $sort,
 
-            'brand' => $this->filled('brand')
-                ? $this->string('brand')->trim()->toString()
-                : null,
+            'brand' => is_string($brand)
+                ? trim($brand)
+                : $brand,
 
-            'category' => $this->filled('category')
-                ? $this->string('category')->trim()->toString()
-                : null,
+            'category' => is_string($category)
+                ? trim($category)
+                : $category,
 
             'attributes' => is_array($attributes)
-                ? $attributes
-                : null,
+                ? $normalizedAttributes
+                : $attributes,
         ]);
     }
 }

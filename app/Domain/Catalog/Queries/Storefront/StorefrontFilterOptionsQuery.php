@@ -12,13 +12,39 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductAttribute;
+use App\Support\Cache\StorefrontCatalogCache;
+use App\Support\Cache\StorefrontCatalogCacheKey;
+use App\Support\Cache\StorefrontCatalogCacheTtl;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 final readonly class StorefrontFilterOptionsQuery
 {
+    public function __construct(
+        private StorefrontCatalogCache $cache,
+        private StorefrontCatalogCacheTtl $cacheTtl,
+    ) {}
+
     public function get(
         ?Category $category = null,
         bool $includeCategories = true,
+    ): StorefrontFilterOptionsData {
+        return $this->cache->remember(
+            StorefrontCatalogCacheKey::filterOptions(
+                categorySlug: $category?->slug,
+                includeCategories: $includeCategories,
+            ),
+            fn (): StorefrontFilterOptionsData => $this->build(
+                category: $category,
+                includeCategories: $includeCategories,
+            ),
+            $this->cacheTtl->seconds(),
+        );
+    }
+
+    private function build(
+        ?Category $category,
+        bool $includeCategories,
     ): StorefrontFilterOptionsData {
         return new StorefrontFilterOptionsData(
             brands: $this->brands($category),
@@ -43,7 +69,10 @@ final readonly class StorefrontFilterOptionsQuery
                 'brands.name',
                 'brands.slug',
             ])
-            ->where('brands.is_active', true)
+            ->where(
+                'brands.is_active',
+                true,
+            )
             ->whereHas(
                 'products',
                 function (Builder $query) use ($category): void {
@@ -53,10 +82,14 @@ final readonly class StorefrontFilterOptionsQuery
                     );
                 },
             )
-            ->orderBy('brands.name')
+            ->orderBy(
+                'brands.name',
+            )
             ->get()
             ->map(
-                static fn (Brand $brand) => new StorefrontFilterOptionData(
+                static fn (
+                    Brand $brand,
+                ): StorefrontFilterOptionData => new StorefrontFilterOptionData(
                     id: $brand->id,
                     name: $brand->name,
                     slug: $brand->slug,
@@ -77,18 +110,27 @@ final readonly class StorefrontFilterOptionsQuery
                 'categories.name',
                 'categories.slug',
             ])
-            ->where('categories.is_active', true)
+            ->where(
+                'categories.is_active',
+                true,
+            )
             ->whereHas(
                 'products',
-                static fn (Builder $query) => $query->published(),
+                static fn (
+                    Builder $query,
+                ) => $query->published(),
             )
-            ->orderBy('categories.position')
-            ->orderBy('categories.name')
+            ->orderBy(
+                'categories.position',
+            )
+            ->orderBy(
+                'categories.name',
+            )
             ->get()
             ->map(
                 static fn (
                     Category $category,
-                ) => new StorefrontFilterOptionData(
+                ): StorefrontFilterOptionData => new StorefrontFilterOptionData(
                     id: $category->id,
                     name: $category->name,
                     slug: $category->slug,
@@ -110,53 +152,82 @@ final readonly class StorefrontFilterOptionsQuery
                 'attributes.name',
                 'attributes.slug',
             ])
-            ->where('attributes.is_active', true)
+            ->where(
+                'attributes.is_active',
+                true,
+            )
             ->whereHas(
                 'values',
                 function (Builder $valueQuery) use ($category): void {
-                    $valueQuery
-                        ->where(
-                            'attribute_values.is_active',
-                            true,
-                        )
-                        ->whereHas(
-                            'variants',
-                            function (Builder $variantQuery) use ($category): void {
-                                $variantQuery
-                                    ->where(
-                                        'product_variants.is_active',
-                                        true,
-                                    )
-                                    ->whereHas(
-                                        'product',
-                                        function (Builder $productQuery) use ($category): void {
-                                            $this->applyPublicProductScope(
-                                                $productQuery,
-                                                $category,
-                                            );
-                                        },
-                                    );
-                            },
-                        );
+                    $this->applyPublicAttributeValueScope(
+                        $valueQuery,
+                        $category,
+                    );
                 },
             )
-            ->orderBy('attributes.position')
-            ->orderBy('attributes.name')
+            ->with([
+                'values' => function (Relation $relation) use ($category): void {
+                    /*
+                    * ProductAttribute::values() is a HasMany relation.
+                    * Laravel's with() callback is statically typed as the
+                    * broader Relation contract, so we intentionally work
+                    * through that contract here.
+                    */
+
+                    /** @var Builder<AttributeValue> $valueQuery */
+                    $valueQuery = $relation->getQuery();
+
+                    $valueQuery
+                        ->select([
+                            'attribute_values.id',
+                            'attribute_values.attribute_id',
+                            'attribute_values.name',
+                            'attribute_values.slug',
+                        ]);
+
+                    $this->applyPublicAttributeValueScope(
+                        $valueQuery,
+                        $category,
+                    );
+
+                    $valueQuery
+                        ->orderBy(
+                            'attribute_values.position',
+                        )
+                        ->orderBy(
+                            'attribute_values.name',
+                        );
+                },
+            ])
+            ->orderBy(
+                'attributes.position',
+            )
+            ->orderBy(
+                'attributes.name',
+            )
             ->get();
 
         return $attributes
             ->map(
-                function (
+                static function (
                     ProductAttribute $attribute,
-                ) use ($category): StorefrontAttributeFilterData {
+                ): StorefrontAttributeFilterData {
                     return new StorefrontAttributeFilterData(
                         id: $attribute->id,
                         name: $attribute->name,
                         slug: $attribute->slug,
-                        values: $this->attributeValues(
-                            $attribute,
-                            $category,
-                        ),
+                        values: $attribute->values
+                            ->map(
+                                static fn (
+                                    AttributeValue $value,
+                                ): StorefrontFilterOptionData => new StorefrontFilterOptionData(
+                                    id: $value->id,
+                                    name: $value->name,
+                                    slug: $value->slug,
+                                ),
+                            )
+                            ->values()
+                            ->all(),
                     );
                 },
             )
@@ -170,22 +241,13 @@ final readonly class StorefrontFilterOptionsQuery
     }
 
     /**
-     * @return list<StorefrontFilterOptionData>
+     * @param  Builder<AttributeValue>  $query
      */
-    private function attributeValues(
-        ProductAttribute $attribute,
+    private function applyPublicAttributeValueScope(
+        Builder $query,
         ?Category $category,
-    ): array {
-        return AttributeValue::query()
-            ->select([
-                'attribute_values.id',
-                'attribute_values.name',
-                'attribute_values.slug',
-            ])
-            ->where(
-                'attribute_values.attribute_id',
-                $attribute->id,
-            )
+    ): void {
+        $query
             ->where(
                 'attribute_values.is_active',
                 true,
@@ -208,21 +270,7 @@ final readonly class StorefrontFilterOptionsQuery
                             },
                         );
                 },
-            )
-            ->orderBy('attribute_values.position')
-            ->orderBy('attribute_values.name')
-            ->get()
-            ->map(
-                static fn (
-                    AttributeValue $value,
-                ) => new StorefrontFilterOptionData(
-                    id: $value->id,
-                    name: $value->name,
-                    slug: $value->slug,
-                ),
-            )
-            ->values()
-            ->all();
+            );
     }
 
     private function minimumPrice(
@@ -286,7 +334,9 @@ SQL,
                 $aggregate,
                 $aggregate,
             ),
-        )->value('price_boundary');
+        )->value(
+            'price_boundary',
+        );
 
         return $value !== null
             ? (int) $value
@@ -321,11 +371,12 @@ SQL,
 
         $query->whereHas(
             'categories',
-            static fn (Builder $categoryQuery) => $categoryQuery
-                ->where(
-                    'categories.id',
-                    $category->id,
-                ),
+            static fn (
+                Builder $categoryQuery,
+            ) => $categoryQuery->where(
+                'categories.id',
+                $category->id,
+            ),
         );
     }
 }

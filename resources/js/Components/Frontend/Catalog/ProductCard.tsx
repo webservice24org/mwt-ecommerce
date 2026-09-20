@@ -5,10 +5,9 @@ import { Link } from '@inertiajs/react'
 
 interface ProductCardProps {
     product: ProductCardData
-    eagerImage?: boolean
 }
 
-export default function ProductCard({ product, eagerImage = false }: ProductCardProps) {
+export default function ProductCard({ product }: ProductCardProps) {
     const productUrl = `/products/${product.slug}`
 
     return (
@@ -18,13 +17,14 @@ export default function ProductCard({ product, eagerImage = false }: ProductCard
                 className="relative block overflow-hidden"
                 aria-label={`View ${product.name}`}
             >
-                <ProductImage
-                    image={product.image}
-                    productName={product.name}
-                    eager={eagerImage}
-                    sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                    className="transition-transform duration-300 group-hover:scale-[1.02]"
-                />
+                <div className="aspect-square overflow-hidden bg-neutral-100">
+                    <ProductImage
+                        image={product.image}
+                        alt={product.name}
+                        className="h-full w-full transition duration-300 group-hover:scale-[1.02]"
+                        sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+                    />
+                </div>
 
                 {product.is_featured && (
                     <span className="absolute left-3 top-3 rounded-full bg-neutral-950 px-2.5 py-1 text-xs font-medium text-white">

@@ -8,6 +8,7 @@ use App\Domain\Catalog\Services\ProductImageStorageService;
 use App\Domain\Catalog\Services\ProductMediaIntegrityService;
 use App\Models\Product;
 use App\Models\ProductImage;
+use App\Support\Cache\StorefrontCatalogCache;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -16,6 +17,7 @@ final readonly class DeleteProductImageAction
     public function __construct(
         private ProductImageStorageService $storage,
         private ProductMediaIntegrityService $integrity,
+        private StorefrontCatalogCache $storefrontCache,
     ) {}
 
     /**
@@ -67,6 +69,8 @@ final readonly class DeleteProductImageAction
                 return $path;
             },
         );
+
+        $this->storefrontCache->invalidate();
 
         /*
          * DB succeeds first.

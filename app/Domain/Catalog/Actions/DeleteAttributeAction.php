@@ -5,11 +5,16 @@ declare(strict_types=1);
 namespace App\Domain\Catalog\Actions;
 
 use App\Models\ProductAttribute;
+use App\Support\Cache\StorefrontCatalogCache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 final class DeleteAttributeAction
 {
+    public function __construct(
+        private readonly StorefrontCatalogCache $storefrontCache,
+    ) {}
+
     public function execute(
         ProductAttribute $attribute,
     ): void {
@@ -31,5 +36,7 @@ final class DeleteAttributeAction
                 $attribute->delete();
             },
         );
+
+        $this->storefrontCache->invalidate();
     }
 }

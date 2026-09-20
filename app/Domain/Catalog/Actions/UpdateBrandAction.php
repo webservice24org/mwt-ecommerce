@@ -6,6 +6,7 @@ namespace App\Domain\Catalog\Actions;
 
 use App\Domain\Catalog\Data\UpdateBrandData;
 use App\Models\Brand;
+use App\Support\Cache\StorefrontCatalogCache;
 use App\Support\Media\ImageStorageService;
 use App\Support\Slugs\UniqueSlugGenerator;
 use Illuminate\Http\UploadedFile;
@@ -17,6 +18,7 @@ final readonly class UpdateBrandAction
     public function __construct(
         private UniqueSlugGenerator $slugGenerator,
         private ImageStorageService $imageStorage,
+        private StorefrontCatalogCache $storefrontCache,
     ) {}
 
     public function execute(
@@ -80,9 +82,16 @@ final readonly class UpdateBrandAction
             throw $exception;
         }
 
+        /*
+         * The database mutation has successfully committed.
+         * Invalidate storefront caches before performing
+         * best-effort cleanup of the previous logo.
+         */
+        $this->storefrontCache->invalidate();
+
         if (
-            $oldLogoPath !== null &&
-            $oldLogoPath !== $updatedBrand->logo_path
+            $oldLogoPath !== null
+            && $oldLogoPath !== $updatedBrand->logo_path
         ) {
             $this->imageStorage->delete(
                 $oldLogoPath,

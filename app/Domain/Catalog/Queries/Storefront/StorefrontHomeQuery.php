@@ -9,6 +9,9 @@ use App\Domain\Catalog\Data\Storefront\StorefrontHomeData;
 use App\Domain\Catalog\Services\Storefront\StorefrontProductDataFactory;
 use App\Models\Category;
 use App\Models\Product;
+use App\Support\Cache\StorefrontCatalogCache;
+use App\Support\Cache\StorefrontCatalogCacheKey;
+use App\Support\Cache\StorefrontCatalogCacheTtl;
 
 final readonly class StorefrontHomeQuery
 {
@@ -20,9 +23,20 @@ final readonly class StorefrontHomeQuery
 
     public function __construct(
         private StorefrontProductDataFactory $productDataFactory,
+        private StorefrontCatalogCache $cache,
+        private StorefrontCatalogCacheTtl $cacheTtl,
     ) {}
 
     public function get(): StorefrontHomeData
+    {
+        return $this->cache->remember(
+            StorefrontCatalogCacheKey::home(),
+            fn (): StorefrontHomeData => $this->build(),
+            $this->cacheTtl->seconds(),
+        );
+    }
+
+    private function build(): StorefrontHomeData
     {
         $featuredProducts = Product::query()
             ->published()
@@ -88,11 +102,7 @@ final readonly class StorefrontHomeQuery
     {
         return [
             'brand',
-
-            'images' => static fn ($query) => $query
-                ->orderByDesc('is_primary')
-                ->orderBy('position')
-                ->orderBy('id'),
+            'primaryImage',
 
             'variants' => static fn ($query) => $query
                 ->where('is_active', true)

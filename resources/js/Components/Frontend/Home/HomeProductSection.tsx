@@ -4,12 +4,14 @@ import { Link } from '@inertiajs/react'
 import { ArrowRight } from 'lucide-react'
 
 interface HomeProductSectionProps {
+    id: string
     title: string
     products: StorefrontProductCard[]
     viewAllHref?: string
 }
 
 export default function HomeProductSection({
+    id,
     title,
     products,
     viewAllHref = '/products',
@@ -19,11 +21,11 @@ export default function HomeProductSection({
     }
 
     return (
-        <section className="min-w-0" aria-labelledby={`home-${slugify(title)}`}>
+        <section className="min-w-0" aria-labelledby={id}>
             <div className="mb-6 flex items-end justify-between gap-4">
                 <div className="min-w-0">
                     <h2
-                        id={`home-${slugify(title)}`}
+                        id={id}
                         className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl"
                     >
                         {title}
@@ -46,12 +48,4 @@ export default function HomeProductSection({
             </div>
         </section>
     )
-}
-
-function slugify(value: string): string {
-    return value
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '')
 }

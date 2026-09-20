@@ -9,6 +9,7 @@ use App\Domain\Catalog\Services\ProductCommercialIntegrityService;
 use App\Domain\Catalog\Services\ProductVariantIntegrityService;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Support\Cache\StorefrontCatalogCache;
 use Illuminate\Support\Facades\DB;
 
 final readonly class CreateProductVariantAction
@@ -16,13 +17,14 @@ final readonly class CreateProductVariantAction
     public function __construct(
         private ProductVariantIntegrityService $integrity,
         private ProductCommercialIntegrityService $commercialIntegrity,
+        private StorefrontCatalogCache $storefrontCache,
     ) {}
 
     public function execute(
         Product $product,
         CreateProductVariantData $data,
     ): ProductVariant {
-        return DB::transaction(
+        $variant = DB::transaction(
             function () use ($product, $data): ProductVariant {
                 $lockedProduct = Product::query()
                     ->whereKey($product->id)
@@ -105,5 +107,9 @@ final readonly class CreateProductVariantAction
                 );
             },
         );
+
+        $this->storefrontCache->invalidate();
+
+        return $variant;
     }
 }

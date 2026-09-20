@@ -25,10 +25,7 @@ final readonly class StorefrontProductListingQuery
             ->with([
                 'brand:id,name,slug',
 
-                'images' => static fn ($query) => $query
-                    ->orderByDesc('is_primary')
-                    ->orderBy('position')
-                    ->orderBy('id'),
+                'primaryImage',
 
                 'variants' => static fn ($query) => $query
                     ->where('is_active', true)

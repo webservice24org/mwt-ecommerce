@@ -7,6 +7,7 @@ namespace App\Domain\Catalog\Actions;
 use App\Domain\Catalog\Enums\ProductVideoType;
 use App\Domain\Catalog\Services\ProductVideoStorageService;
 use App\Models\Product;
+use App\Support\Cache\StorefrontCatalogCache;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -14,6 +15,7 @@ final readonly class DeleteProductVideoAction
 {
     public function __construct(
         private ProductVideoStorageService $storage,
+        private StorefrontCatalogCache $storefrontCache,
     ) {}
 
     /**
@@ -22,10 +24,10 @@ final readonly class DeleteProductVideoAction
     public function execute(
         Product $product,
     ): void {
-        $uploadedPath = DB::transaction(
+        $result = DB::transaction(
             function () use (
                 $product,
-            ): ?string {
+            ): array {
                 $lockedProduct = Product::query()
                     ->lockForUpdate()
                     ->findOrFail(
@@ -38,7 +40,10 @@ final readonly class DeleteProductVideoAction
                     ->first();
 
                 if ($video === null) {
-                    return null;
+                    return [
+                        'deleted' => false,
+                        'uploaded_path' => null,
+                    ];
                 }
 
                 $path =
@@ -49,12 +54,25 @@ final readonly class DeleteProductVideoAction
 
                 $video->delete();
 
-                return $path;
+                return [
+                    'deleted' => true,
+                    'uploaded_path' => $path,
+                ];
             },
         );
 
+        if (! $result['deleted']) {
+            return;
+        }
+
+        $this->storefrontCache->invalidate();
+
+        $uploadedPath = $result['uploaded_path'];
+
         $this->storage->delete(
-            $uploadedPath,
+            is_string($uploadedPath)
+                ? $uploadedPath
+                : null,
         );
     }
 }

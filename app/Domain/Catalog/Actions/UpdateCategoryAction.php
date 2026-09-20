@@ -7,6 +7,7 @@ namespace App\Domain\Catalog\Actions;
 use App\Domain\Catalog\Data\UpdateCategoryData;
 use App\Domain\Catalog\Services\CategoryHierarchyService;
 use App\Models\Category;
+use App\Support\Cache\StorefrontCatalogCache;
 use App\Support\Media\ImageStorageService;
 use App\Support\Slugs\UniqueSlugGenerator;
 use Illuminate\Http\UploadedFile;
@@ -19,6 +20,7 @@ final readonly class UpdateCategoryAction
         private UniqueSlugGenerator $slugGenerator,
         private CategoryHierarchyService $hierarchyService,
         private ImageStorageService $imageStorage,
+        private StorefrontCatalogCache $storefrontCache,
     ) {}
 
     public function execute(
@@ -90,6 +92,8 @@ final readonly class UpdateCategoryAction
 
             throw $exception;
         }
+
+        $this->storefrontCache->invalidate();
 
         if (
             $oldImagePath !== null

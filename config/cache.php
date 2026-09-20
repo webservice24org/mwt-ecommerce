@@ -19,6 +19,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Storefront Catalog Cache Store
+    |--------------------------------------------------------------------------
+    |
+    | This store is used specifically by the public storefront catalog cache.
+    | Local development and automated tests may use database/array caching,
+    | while production can use Redis independently of the default cache store.
+    |
+    */
+
+    'storefront_store' => env(
+        'STOREFRONT_CACHE_STORE',
+        env('CACHE_STORE', 'database'),
+    ),
+
+    /*
+    |--------------------------------------------------------------------------
     | Cache Stores
     |--------------------------------------------------------------------------
     |
@@ -74,8 +90,14 @@ return [
 
         'redis' => [
             'driver' => 'redis',
-            'connection' => env('REDIS_CACHE_CONNECTION', 'cache'),
-            'lock_connection' => env('REDIS_CACHE_LOCK_CONNECTION', 'default'),
+            'connection' => env(
+                'REDIS_CACHE_CONNECTION',
+                'cache',
+            ),
+            'lock_connection' => env(
+                'REDIS_CACHE_LOCK_CONNECTION',
+                'default',
+            ),
         ],
 
         'dynamodb' => [

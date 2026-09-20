@@ -167,4 +167,13 @@ final class Product extends Model
                 now(),
             );
     }
+
+    /**
+     * @return HasOne<ProductImage, $this>
+     */
+    public function primaryImage(): HasOne
+    {
+        return $this->hasOne(ProductImage::class)
+            ->where('is_primary', true);
+    }
 }

@@ -7,6 +7,7 @@ namespace App\Domain\Catalog\Actions;
 use App\Domain\Catalog\Data\UpdateProductData;
 use App\Domain\Catalog\Services\ProductCommercialIntegrityService;
 use App\Models\Product;
+use App\Support\Cache\StorefrontCatalogCache;
 use App\Support\Slugs\UniqueSlugGenerator;
 use Illuminate\Support\Facades\DB;
 
@@ -15,13 +16,14 @@ final readonly class UpdateProductAction
     public function __construct(
         private UniqueSlugGenerator $slugGenerator,
         private ProductCommercialIntegrityService $commercialIntegrity,
+        private StorefrontCatalogCache $storefrontCache,
     ) {}
 
     public function execute(
         Product $product,
         UpdateProductData $data,
     ): Product {
-        return DB::transaction(
+        $updatedProduct = DB::transaction(
             function () use (
                 $product,
                 $data,
@@ -91,5 +93,9 @@ final readonly class UpdateProductAction
                     ]);
             },
         );
+
+        $this->storefrontCache->invalidate();
+
+        return $updatedProduct;
     }
 }

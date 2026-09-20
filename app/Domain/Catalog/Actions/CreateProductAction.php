@@ -7,6 +7,7 @@ namespace App\Domain\Catalog\Actions;
 use App\Domain\Catalog\Data\CreateProductData;
 use App\Domain\Catalog\Services\ProductCommercialIntegrityService;
 use App\Models\Product;
+use App\Support\Cache\StorefrontCatalogCache;
 use App\Support\Slugs\UniqueSlugGenerator;
 use Illuminate\Support\Facades\DB;
 
@@ -15,6 +16,7 @@ final readonly class CreateProductAction
     public function __construct(
         private UniqueSlugGenerator $slugGenerator,
         private ProductCommercialIntegrityService $commercialIntegrity,
+        private StorefrontCatalogCache $storefrontCache,
     ) {}
 
     public function execute(CreateProductData $data): Product
@@ -27,7 +29,7 @@ final readonly class CreateProductAction
                 compareAtPrice: $data->compareAtPrice,
             );
 
-        return DB::transaction(function () use ($data): Product {
+        $product = DB::transaction(function () use ($data): Product {
             $slug = $this->slugGenerator->generate(
                 table: 'products',
                 column: 'slug',
@@ -62,5 +64,9 @@ final readonly class CreateProductAction
                 'categories',
             ]);
         });
+
+        $this->storefrontCache->invalidate();
+
+        return $product;
     }
 }

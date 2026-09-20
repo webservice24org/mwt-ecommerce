@@ -7,19 +7,21 @@ namespace App\Domain\Catalog\Actions;
 use App\Domain\Catalog\Data\UpdateAttributeValueData;
 use App\Domain\Catalog\Services\AttributeValueSlugGenerator;
 use App\Models\AttributeValue;
+use App\Support\Cache\StorefrontCatalogCache;
 use Illuminate\Support\Facades\DB;
 
 final readonly class UpdateAttributeValueAction
 {
     public function __construct(
         private AttributeValueSlugGenerator $slugGenerator,
+        private StorefrontCatalogCache $storefrontCache,
     ) {}
 
     public function execute(
         AttributeValue $value,
         UpdateAttributeValueData $data,
     ): AttributeValue {
-        return DB::transaction(
+        $updatedValue = DB::transaction(
             function () use (
                 $value,
                 $data,
@@ -43,5 +45,9 @@ final readonly class UpdateAttributeValueAction
                 return $value->refresh();
             },
         );
+
+        $this->storefrontCache->invalidate();
+
+        return $updatedValue;
     }
 }

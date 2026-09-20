@@ -7,7 +7,6 @@ namespace App\Http\Controllers\Frontend;
 use App\Domain\Catalog\Queries\Storefront\StorefrontFilterOptionsQuery;
 use App\Domain\Catalog\Queries\Storefront\StorefrontProductDetailQuery;
 use App\Domain\Catalog\Queries\Storefront\StorefrontProductIndexQuery;
-use App\Domain\Catalog\Services\Storefront\StorefrontProductDataFactory;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Frontend\StorefrontProductFilterRequest;
 use Inertia\Inertia;
@@ -17,7 +16,6 @@ final class ProductController extends Controller
 {
     public function __construct(
         private readonly StorefrontProductDetailQuery $productDetail,
-        private readonly StorefrontProductDataFactory $productData,
     ) {}
 
     public function index(
@@ -49,15 +47,17 @@ final class ProductController extends Controller
         string $slug,
     ): Response {
         $product = $this->productDetail
-            ->findBySlugOrFail($slug);
+            ->findBySlug($slug);
+
+        abort_if(
+            $product === null,
+            404,
+        );
 
         return Inertia::render(
             'Frontend/Products/Show',
             [
-                'product' => $this
-                    ->productData
-                    ->detail($product)
-                    ->toArray(),
+                'product' => $product->toArray(),
             ],
         );
     }

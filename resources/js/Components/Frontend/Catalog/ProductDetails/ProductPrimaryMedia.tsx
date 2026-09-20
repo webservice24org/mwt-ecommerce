@@ -13,10 +13,10 @@ export default function ProductPrimaryMedia({ productName, images }: ProductPrim
         <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50">
             <ProductImage
                 image={primaryImage}
-                productName={productName}
-                eager
+                alt={productName}
+                priority
                 sizes="(min-width: 1024px) 50vw, 100vw"
-                className="aspect-square w-full"
+                className="h-full w-full object-contain"
             />
         </div>
     )

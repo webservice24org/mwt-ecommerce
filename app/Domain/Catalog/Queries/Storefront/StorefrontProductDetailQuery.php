@@ -4,25 +4,31 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\Queries\Storefront;
 
+use App\Domain\Catalog\Data\Storefront\StorefrontProductDetailData;
+use App\Domain\Catalog\Services\Storefront\StorefrontProductDataFactory;
 use App\Models\Product;
-use Illuminate\Database\Eloquent\Builder;
+use App\Support\Cache\StorefrontCatalogCache;
+use App\Support\Cache\StorefrontCatalogCacheKey;
 
 final class StorefrontProductDetailQuery
 {
-    public function findBySlugOrFail(
-        string $slug,
-    ): Product {
-        return $this->query()
-            ->where('slug', $slug)
-            ->firstOrFail();
+    public function __construct(
+        private readonly StorefrontProductDataFactory $productData,
+        private readonly StorefrontCatalogCache $cache,
+    ) {}
+
+    public function findBySlug(string $slug): ?StorefrontProductDetailData
+    {
+        return $this->cache->rememberNotNull(
+            StorefrontCatalogCacheKey::product($slug),
+            fn (): ?StorefrontProductDetailData => $this->findPublishedBySlug($slug),
+        );
     }
 
-    /**
-     * @return Builder<Product>
-     */
-    private function query(): Builder
-    {
-        return Product::query()
+    private function findPublishedBySlug(
+        string $slug,
+    ): ?StorefrontProductDetailData {
+        $product = Product::query()
             ->published()
             ->with([
                 'brand:id,name,slug',
@@ -49,11 +55,28 @@ final class StorefrontProductDetailQuery
                     ->orderBy('id'),
 
                 'variants.attributeValues' => static fn ($query) => $query
-                    ->where('attribute_values.is_active', true)
-                    ->orderBy('attribute_values.position')
-                    ->orderBy('attribute_values.name'),
+                    ->where(
+                        'attribute_values.is_active',
+                        true,
+                    )
+                    ->whereHas(
+                        'attribute',
+                        static fn ($attributeQuery) => $attributeQuery
+                            ->where(
+                                'attributes.is_active',
+                                true,
+                            ),
+                    ),
 
                 'variants.attributeValues.attribute',
-            ]);
+            ])
+            ->where('slug', $slug)
+            ->first();
+
+        if ($product === null) {
+            return null;
+        }
+
+        return $this->productData->detail($product);
     }
 }

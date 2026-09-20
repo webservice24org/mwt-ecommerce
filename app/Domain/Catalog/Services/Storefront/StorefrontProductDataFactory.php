@@ -40,7 +40,7 @@ final readonly class StorefrontProductDataFactory
             ->listingPricingResolver
             ->resolve($product);
 
-        $image = $product->images->first();
+        $image = $product->primaryImage;
 
         return new StorefrontProductCardData(
             id: $product->id,

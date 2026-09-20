@@ -7,6 +7,7 @@ namespace App\Domain\Catalog\Actions;
 use App\Domain\Catalog\Services\ProductMediaIntegrityService;
 use App\Models\Product;
 use App\Models\ProductImage;
+use App\Support\Cache\StorefrontCatalogCache;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -14,6 +15,7 @@ final readonly class SetFeaturedProductImageAction
 {
     public function __construct(
         private ProductMediaIntegrityService $integrity,
+        private StorefrontCatalogCache $storefrontCache,
     ) {}
 
     /**
@@ -23,7 +25,7 @@ final readonly class SetFeaturedProductImageAction
         Product $product,
         ProductImage $image,
     ): ProductImage {
-        return DB::transaction(
+        $featuredImage = DB::transaction(
             function () use (
                 $product,
                 $image,
@@ -59,5 +61,9 @@ final readonly class SetFeaturedProductImageAction
                 return $lockedImage->refresh();
             },
         );
+
+        $this->storefrontCache->invalidate();
+
+        return $featuredImage;
     }
 }
