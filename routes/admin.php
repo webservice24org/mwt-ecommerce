@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\Catalog\ProductController;
 use App\Http\Controllers\Admin\Catalog\ProductImageController;
 use App\Http\Controllers\Admin\Catalog\ProductVariantController;
 use App\Http\Controllers\Admin\Catalog\ProductVideoController;
+use App\Http\Controllers\Admin\PageController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -84,6 +85,9 @@ Route::middleware([
     Route::delete('products/{product}/images/{image}', [ProductImageController::class, 'destroy'])->whereNumber('image')->name('products.images.destroy');
     Route::post('products/{product}/video', [ProductVideoController::class, 'store'])->name('products.video.store');
     Route::delete('products/{product}/video', [ProductVideoController::class, 'destroy'])->name('products.video.destroy');
+
+    Route::resource('pages', PageController::class)->except(['show']);
+
 });
 
 Route::middleware([
