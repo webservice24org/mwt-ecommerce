@@ -1,36 +1,22 @@
-import StorefrontMobileNav from '@/Components/Frontend/Navigation/StorefrontMobileNav'
-import { Link, usePage } from '@inertiajs/react'
-import { Menu, Search, ShoppingBag, UserRound } from 'lucide-react'
-import { useState } from 'react'
-
-interface NavigationItem {
-    label: string
-    href: string
-    active: (url: string) => boolean
-}
-
-const navigation: NavigationItem[] = [
-    {
-        label: 'Home',
-        href: '/',
-        active: (url) => url === '/',
-    },
-    {
-        label: 'Shop',
-        href: '/products',
-        active: (url) => url === '/products' || url.startsWith('/products?'),
-    },
-]
+import { Link } from '@inertiajs/react'
+import { Menu, Search, ShoppingBag, User } from 'lucide-react'
+import { useCallback, useRef, useState } from 'react'
+import StorefrontMobileNav from './StorefrontMobileNav'
 
 export default function StorefrontHeader() {
-    const { url } = usePage()
     const [mobileOpen, setMobileOpen] = useState(false)
+    const menuButtonRef = useRef<HTMLButtonElement>(null)
+
+    const closeMobileNavigation = useCallback(() => {
+        setMobileOpen(false)
+    }, [])
 
     return (
         <>
-            <header className="sticky top-0 z-40 w-full min-w-0 border-b border-neutral-200 bg-white/95 backdrop-blur">
-                <div className="mx-auto flex h-16 w-full min-w-0 max-w-7xl items-center gap-2 px-4 sm:gap-4 sm:px-6 lg:px-8">
+            <header className="relative z-40 border-b border-neutral-200 bg-white">
+                <div className="mx-auto flex h-16 w-full max-w-7xl min-w-0 items-center gap-2 px-4 sm:gap-4 sm:px-6 lg:px-8">
                     <button
+                        ref={menuButtonRef}
                         type="button"
                         className="inline-flex size-10 shrink-0 items-center justify-center rounded-md text-neutral-700 transition hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 lg:hidden"
                         aria-label="Open navigation"
@@ -43,40 +29,34 @@ export default function StorefrontHeader() {
 
                     <Link
                         href="/"
-                        className="min-w-0 shrink truncate text-base font-bold tracking-tight text-neutral-950 sm:text-lg"
+                        className="min-w-0 flex-1 truncate text-base font-bold tracking-tight text-neutral-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 sm:flex-none sm:text-lg"
                     >
-                        MWT Ecommerce
+                        Storefront
                     </Link>
 
                     <nav
-                        className="ml-8 hidden items-center gap-1 lg:flex"
-                        aria-label="Main navigation"
+                        className="hidden items-center gap-6 lg:flex"
+                        aria-label="Primary navigation"
                     >
-                        {navigation.map((item) => {
-                            const isActive = item.active(url)
+                        <Link
+                            href="/"
+                            className="text-sm font-medium text-neutral-700 transition hover:text-neutral-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900"
+                        >
+                            Home
+                        </Link>
 
-                            return (
-                                <Link
-                                    key={item.href}
-                                    href={item.href}
-                                    aria-current={isActive ? 'page' : undefined}
-                                    className={[
-                                        'rounded-md px-3 py-2 text-sm font-medium transition',
-                                        isActive
-                                            ? 'bg-neutral-100 text-neutral-950'
-                                            : 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950',
-                                    ].join(' ')}
-                                >
-                                    {item.label}
-                                </Link>
-                            )
-                        })}
+                        <Link
+                            href="/products"
+                            className="text-sm font-medium text-neutral-700 transition hover:text-neutral-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900"
+                        >
+                            Shop
+                        </Link>
                     </nav>
 
                     <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1">
                         <button
                             type="button"
-                            className="inline-flex size-10 items-center justify-center rounded-md text-neutral-700 transition hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900"
+                            className="hidden size-10 items-center justify-center rounded-md text-neutral-700 transition hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 sm:inline-flex"
                             aria-label="Search"
                             title="Search will be added in a later storefront step"
                         >
@@ -88,14 +68,14 @@ export default function StorefrontHeader() {
                             className="inline-flex size-10 items-center justify-center rounded-md text-neutral-700 transition hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900"
                             aria-label="Account"
                         >
-                            <UserRound className="size-5" aria-hidden="true" />
+                            <User className="size-5" aria-hidden="true" />
                         </Link>
 
                         <button
                             type="button"
-                            className="relative inline-flex size-10 items-center justify-center rounded-md text-neutral-700 transition hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900"
+                            className="inline-flex size-10 items-center justify-center rounded-md text-neutral-700 transition hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900"
                             aria-label="Shopping cart"
-                            title="Cart will be added in the cart phase"
+                            title="Cart will be added in a later phase"
                         >
                             <ShoppingBag className="size-5" aria-hidden="true" />
                         </button>
@@ -105,12 +85,9 @@ export default function StorefrontHeader() {
 
             <StorefrontMobileNav
                 open={mobileOpen}
-                currentUrl={url}
-                navigation={navigation}
-                onClose={() => setMobileOpen(false)}
+                onClose={closeMobileNavigation}
+                returnFocusRef={menuButtonRef}
             />
         </>
     )
 }
-
-export type { NavigationItem }

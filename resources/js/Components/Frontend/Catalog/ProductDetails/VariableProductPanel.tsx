@@ -1,7 +1,7 @@
 import ProductPrice from '@/Components/Frontend/Catalog/ProductPrice'
 import ProductVariantSelector from '@/Components/Frontend/Catalog/ProductDetails/ProductVariantSelector'
 import { useStorefrontVariantSelection } from '@/hooks/useStorefrontVariantSelection'
-import type { StorefrontProductDetail } from '@/types/storefront'
+import type { StorefrontProductDetail, StorefrontVariant } from '@/types/storefront'
 
 interface VariableProductPanelProps {
     product: StorefrontProductDetail
@@ -42,7 +42,7 @@ export default function VariableProductPanel({ product }: VariableProductPanelPr
                 <button
                     type="button"
                     disabled
-                    className="mt-4 w-full rounded-lg bg-neutral-900 px-4 py-3 text-sm font-semibold text-white opacity-50"
+                    className="mt-4 min-h-11 w-full rounded-lg bg-neutral-900 px-4 py-3 text-sm font-semibold text-white opacity-50"
                 >
                     Add to cart
                 </button>
@@ -62,7 +62,7 @@ export default function VariableProductPanel({ product }: VariableProductPanelPr
 }
 
 interface SelectedVariantSummaryProps {
-    variant: StorefrontProductDetail['variants'][number]
+    variant: StorefrontVariant
 }
 
 function SelectedVariantSummary({ variant }: SelectedVariantSummaryProps) {

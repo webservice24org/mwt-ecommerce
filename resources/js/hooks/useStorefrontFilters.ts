@@ -6,9 +6,18 @@ interface UseStorefrontFiltersOptions {
     filters: StorefrontProductFilters
 }
 
+type StorefrontFilterQueryData = Partial<{
+    sort: StorefrontProductSort
+    brand: string
+    category: string
+    min_price: number
+    max_price: number
+    attributes: Record<string, string>
+}>
+
 export function useStorefrontFilters({ url, filters }: UseStorefrontFiltersOptions) {
     const visit = (next: StorefrontProductFilters) => {
-        const data: Record<string, string | number | Record<string, string>> = {}
+        const data: StorefrontFilterQueryData = {}
 
         if (next.sort !== 'newest') {
             data.sort = next.sort

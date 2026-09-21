@@ -5,19 +5,25 @@ import { useState } from 'react'
 interface ProductGalleryViewerProps {
     media: StorefrontMedia
     productName: string
+    imagePosition?: number
 }
 
-export default function ProductGalleryViewer({ media, productName }: ProductGalleryViewerProps) {
+export default function ProductGalleryViewer({
+    media,
+    productName,
+    imagePosition,
+}: ProductGalleryViewerProps) {
     if (media.kind === 'video') {
         return <ProductVideoViewer video={media.video} productName={productName} />
     }
 
+    const customAlt = media.image.alt?.trim()
+
+    const fallbackAlt =
+        imagePosition !== undefined ? `${productName} — image ${imagePosition}` : productName
+
     return (
-        <GalleryImage
-            key={media.image.id}
-            src={media.image.url}
-            alt={media.image.alt || productName}
-        />
+        <GalleryImage key={media.image.id} src={media.image.url} alt={customAlt || fallbackAlt} />
     )
 }
 
@@ -31,20 +37,27 @@ function GalleryImage({ src, alt }: GalleryImageProps) {
 
     if (failed) {
         return (
-            <div className="flex aspect-square items-center justify-center rounded-2xl bg-neutral-100 p-6 text-center text-sm text-neutral-500">
-                Image unavailable
+            <div
+                className="flex aspect-square w-full min-w-0 items-center justify-center overflow-hidden rounded-2xl bg-neutral-100 p-6 text-center text-sm text-neutral-500"
+                role="img"
+                aria-label={`${alt} — image unavailable`}
+            >
+                <span className="max-w-full break-words" aria-hidden="true">
+                    Image unavailable
+                </span>
             </div>
         )
     }
 
     return (
-        <div className="overflow-hidden rounded-2xl bg-neutral-100">
+        <div className="aspect-square w-full min-w-0 overflow-hidden rounded-2xl bg-neutral-100">
             <img
                 src={src}
                 alt={alt}
                 onError={() => setFailed(true)}
                 decoding="async"
-                className="aspect-square h-full w-full object-contain"
+                fetchPriority="high"
+                className="h-full w-full object-contain"
             />
         </div>
     )

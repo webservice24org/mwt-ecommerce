@@ -16,7 +16,7 @@ export default function ProductGalleryThumbnails({
 }: ProductGalleryThumbnailsProps) {
     return (
         <div
-            className="flex max-w-full gap-3 overflow-x-auto overscroll-x-contain pb-2"
+            className="flex w-full min-w-0 max-w-full gap-3 overflow-x-auto overscroll-x-contain pb-2"
             role="group"
             aria-label="Product media thumbnails"
         >
@@ -35,7 +35,7 @@ export default function ProductGalleryThumbnails({
                                 : `Play ${productName} video`
                         }
                         className={[
-                            'relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border bg-neutral-100',
+                            'relative size-20 shrink-0 overflow-hidden rounded-xl border bg-neutral-100 transition',
                             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2',
                             selected
                                 ? 'border-neutral-950 ring-1 ring-neutral-950'
@@ -52,7 +52,7 @@ export default function ProductGalleryThumbnails({
                             />
                         ) : (
                             <span className="flex h-full w-full items-center justify-center">
-                                <Play className="h-6 w-6" aria-hidden="true" />
+                                <Play className="size-6" aria-hidden="true" />
                             </span>
                         )}
                     </button>

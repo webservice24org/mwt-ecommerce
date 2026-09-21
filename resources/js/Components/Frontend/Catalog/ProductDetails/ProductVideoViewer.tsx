@@ -7,17 +7,17 @@ interface ProductVideoViewerProps {
 
 export default function ProductVideoViewer({ video, productName }: ProductVideoViewerProps) {
     if (!video.url) {
-        return <UnavailableVideo />
+        return <UnavailableVideo productName={productName} />
     }
 
     if (video.type === 'upload') {
         return (
-            <div className="overflow-hidden rounded-2xl bg-black">
+            <div className="aspect-square w-full min-w-0 overflow-hidden rounded-2xl bg-black">
                 <video
                     key={video.url}
                     controls
                     preload="metadata"
-                    className="aspect-square h-full w-full object-contain"
+                    className="h-full w-full object-contain"
                     aria-label={`${productName} product video`}
                 >
                     <source src={video.url} />
@@ -30,15 +30,15 @@ export default function ProductVideoViewer({ video, productName }: ProductVideoV
     const embedUrl = getEmbedUrl(video.type, video.url)
 
     if (!embedUrl) {
-        return <UnavailableVideo />
+        return <UnavailableVideo productName={productName} />
     }
 
     return (
-        <div className="overflow-hidden rounded-2xl bg-black">
+        <div className="aspect-square w-full min-w-0 overflow-hidden rounded-2xl bg-black">
             <iframe
                 src={embedUrl}
                 title={`${productName} product video`}
-                className="aspect-square h-full w-full"
+                className="h-full w-full border-0"
                 loading="lazy"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
@@ -117,10 +117,20 @@ function sanitizeVideoId(value: string | null | undefined): string | null {
     return value
 }
 
-function UnavailableVideo() {
+interface UnavailableVideoProps {
+    productName: string
+}
+
+function UnavailableVideo({ productName }: UnavailableVideoProps) {
     return (
-        <div className="flex aspect-square items-center justify-center rounded-2xl bg-neutral-100 p-6 text-center text-sm text-neutral-500">
-            Video unavailable
+        <div
+            className="flex aspect-square w-full min-w-0 items-center justify-center overflow-hidden rounded-2xl bg-neutral-100 p-6 text-center text-sm text-neutral-500"
+            role="img"
+            aria-label={`${productName} product video — unavailable`}
+        >
+            <span className="max-w-full break-words" aria-hidden="true">
+                Video unavailable
+            </span>
         </div>
     )
 }

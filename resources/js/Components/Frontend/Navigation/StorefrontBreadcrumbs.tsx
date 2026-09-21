@@ -33,8 +33,8 @@ export default function StorefrontBreadcrumbs({ items }: StorefrontBreadcrumbsPr
                                 <span
                                     className={
                                         current
-                                            ? 'truncate font-medium text-neutral-900'
-                                            : 'truncate'
+                                            ? 'min-w-0 break-words font-medium text-neutral-900'
+                                            : 'min-w-0 break-words'
                                     }
                                     aria-current={current ? 'page' : undefined}
                                 >
@@ -43,7 +43,7 @@ export default function StorefrontBreadcrumbs({ items }: StorefrontBreadcrumbsPr
                             ) : (
                                 <Link
                                     href={item.href}
-                                    className="truncate transition hover:text-neutral-900"
+                                    className="min-w-0 break-words rounded-sm transition hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
                                 >
                                     {item.label}
                                 </Link>

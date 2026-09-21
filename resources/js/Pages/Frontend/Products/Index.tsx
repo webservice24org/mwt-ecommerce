@@ -8,6 +8,7 @@ import FrontendLayout from '@/Layouts/Frontend/FrontendLayout'
 import { useStorefrontFilters } from '@/hooks/useStorefrontFilters'
 import type {
     PaginatedStorefrontProducts,
+    StorefrontBreadcrumbItem,
     StorefrontFilterOptions,
     StorefrontProductFilters,
 } from '@/types/storefront'
@@ -27,7 +28,7 @@ export default function Index({ products, filters, filterOptions }: ProductsInde
         filters,
     })
 
-    const breadcrumbs = [
+    const breadcrumbs: StorefrontBreadcrumbItem[] = [
         {
             label: 'Home',
             href: '/',
@@ -36,6 +37,7 @@ export default function Index({ products, filters, filterOptions }: ProductsInde
             label: 'Shop',
         },
     ]
+
     const breadcrumbJsonLd = buildBreadcrumbJsonLd(breadcrumbs)
 
     return (

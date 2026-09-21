@@ -27,8 +27,8 @@ export default function StorefrontListingControls({
     onClearAll,
 }: StorefrontListingControlsProps) {
     return (
-        <div className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-y border-neutral-200 py-3">
+        <div className="min-w-0 space-y-4">
+            <div className="flex min-w-0 flex-col gap-3 border-y border-neutral-200 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                 <StorefrontMobileFilters
                     filters={filters}
                     options={options}
@@ -39,7 +39,7 @@ export default function StorefrontListingControls({
                     onAttributeChange={onAttributeChange}
                 />
 
-                <div className="ml-auto">
+                <div className="min-w-0 sm:ml-auto">
                     <StorefrontSortSelect value={filters.sort} onChange={onSortChange} />
                 </div>
             </div>

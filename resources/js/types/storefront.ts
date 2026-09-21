@@ -141,6 +141,16 @@ export interface StorefrontFilterOptions {
 
 export type StorefrontProductSort = 'newest' | 'price_asc' | 'price_desc' | 'name_asc' | 'name_desc'
 
+export function isStorefrontProductSort(value: string): value is StorefrontProductSort {
+    return (
+        value === 'newest' ||
+        value === 'price_asc' ||
+        value === 'price_desc' ||
+        value === 'name_asc' ||
+        value === 'name_desc'
+    )
+}
+
 export interface StorefrontProductFilters {
     sort: StorefrontProductSort
     brand: string | null

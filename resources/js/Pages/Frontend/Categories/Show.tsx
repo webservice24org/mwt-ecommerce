@@ -4,16 +4,17 @@ import ProductPagination from '@/Components/Frontend/Catalog/ProductPagination'
 import StorefrontFilterPanel from '@/Components/Frontend/Catalog/StorefrontFilterPanel'
 import StorefrontListingControls from '@/Components/Frontend/Catalog/StorefrontListingControls'
 import StorefrontBreadcrumbs from '@/Components/Frontend/Navigation/StorefrontBreadcrumbs'
-import FrontendLayout from '@/Layouts/Frontend/FrontendLayout'
+import StorefrontSeo from '@/Components/Frontend/Seo/StorefrontSeo'
 import { useStorefrontFilters } from '@/hooks/useStorefrontFilters'
+import FrontendLayout from '@/Layouts/Frontend/FrontendLayout'
+import { buildBreadcrumbJsonLd } from '@/lib/storefrontSeo'
 import type {
     PaginatedStorefrontProducts,
+    StorefrontBreadcrumbItem,
     StorefrontCategoryDetail,
     StorefrontFilterOptions,
     StorefrontProductFilters,
 } from '@/types/storefront'
-import StorefrontSeo from '@/Components/Frontend/Seo/StorefrontSeo'
-import { buildBreadcrumbJsonLd } from '@/lib/storefrontSeo'
 
 interface Props {
     category: StorefrontCategoryDetail
@@ -33,7 +34,7 @@ export default function Show({ category, products, filters, filterOptions }: Pro
     const metaDescription =
         category.meta_description?.trim() || category.description?.trim() || null
 
-    const breadcrumbs = [
+    const breadcrumbs: StorefrontBreadcrumbItem[] = [
         {
             label: 'Home',
             href: '/',
@@ -59,8 +60,9 @@ export default function Show({ category, products, filters, filterOptions }: Pro
                 jsonLd={breadcrumbJsonLd}
             />
 
-            <section className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+            <main className="mx-auto w-full max-w-7xl min-w-0 px-4 py-8 sm:px-6 lg:px-8">
                 <StorefrontBreadcrumbs items={breadcrumbs} />
+
                 {category.image_url && (
                     <div className="mb-8 mt-5 overflow-hidden rounded-xl bg-neutral-100">
                         <img
@@ -126,7 +128,7 @@ export default function Show({ category, products, filters, filterOptions }: Pro
                         )}
                     </div>
                 </div>
-            </section>
+            </main>
         </FrontendLayout>
     )
 }
@@ -156,7 +158,7 @@ function CategoryEmptyState({
                 <button
                     type="button"
                     onClick={onClearFilters}
-                    className="mt-4 text-sm font-semibold text-neutral-900 underline underline-offset-4 hover:text-neutral-600"
+                    className="mt-4 rounded-sm text-sm font-semibold text-neutral-900 underline underline-offset-4 transition hover:text-neutral-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2"
                 >
                     Clear filters
                 </button>

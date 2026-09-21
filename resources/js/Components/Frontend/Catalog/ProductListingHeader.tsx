@@ -10,13 +10,13 @@ export default function ProductListingHeader({
     description,
 }: ProductListingHeaderProps) {
     return (
-        <header>
-            <h1 className="text-2xl font-semibold tracking-tight text-neutral-950 sm:text-3xl">
+        <header className="min-w-0">
+            <h1 className="break-words text-2xl font-semibold tracking-tight text-neutral-950 sm:text-3xl">
                 {title}
             </h1>
 
             {description && (
-                <p className="mt-3 max-w-3xl text-sm leading-6 text-neutral-600 sm:text-base">
+                <p className="mt-3 max-w-3xl break-words text-sm leading-6 text-neutral-600 sm:text-base">
                     {description}
                 </p>
             )}

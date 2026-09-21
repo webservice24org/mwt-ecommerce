@@ -1,5 +1,10 @@
-import type { PaginationLink } from '@/types/storefront'
 import { Link } from '@inertiajs/react'
+
+interface PaginationLink {
+    url: string | null
+    label: string
+    active: boolean
+}
 
 interface ProductPaginationProps {
     links: PaginationLink[]
@@ -11,50 +16,72 @@ export default function ProductPagination({ links }: ProductPaginationProps) {
     }
 
     return (
-        <nav
-            className="mt-10 flex flex-wrap items-center justify-center gap-2"
-            aria-label="Product pagination"
-        >
-            {links.map((link, index) => {
-                const label = cleanLabel(link.label)
+        <nav className="min-w-0 border-t border-neutral-200 pt-6" aria-label="Product pagination">
+            <div className="flex min-w-0 flex-wrap items-center justify-center gap-2">
+                {links.map((link, index) => {
+                    const label = decodePaginationLabel(link.label)
+                    const isPrevious = index === 0
+                    const isNext = index === links.length - 1
 
-                if (link.url === null) {
+                    const accessibleLabel = isPrevious
+                        ? 'Go to previous page'
+                        : isNext
+                          ? 'Go to next page'
+                          : `Go to page ${label}`
+
+                    if (!link.url) {
+                        const disabledLabel = isPrevious
+                            ? 'Previous page unavailable'
+                            : isNext
+                              ? 'Next page unavailable'
+                              : undefined
+
+                        return (
+                            <span
+                                key={`${link.label}-${index}`}
+                                className="inline-flex min-h-11 min-w-11 cursor-not-allowed items-center justify-center rounded-lg border border-neutral-200 px-3 text-sm text-neutral-400"
+                                aria-disabled="true"
+                                aria-label={disabledLabel}
+                            >
+                                {label}
+                            </span>
+                        )
+                    }
+
+                    if (link.active) {
+                        return (
+                            <span
+                                key={`${link.label}-${index}`}
+                                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-neutral-950 bg-neutral-950 px-3 text-sm font-medium text-white"
+                                aria-current="page"
+                            >
+                                {label}
+                            </span>
+                        )
+                    }
+
                     return (
-                        <span
+                        <Link
                             key={`${link.label}-${index}`}
-                            className="inline-flex min-h-10 min-w-10 cursor-not-allowed items-center justify-center rounded-md border border-neutral-200 px-3 text-sm text-neutral-400"
-                            aria-disabled="true"
+                            href={link.url}
+                            preserveScroll
+                            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-neutral-300 bg-white px-3 text-sm font-medium text-neutral-700 transition hover:border-neutral-400 hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
+                            aria-label={accessibleLabel}
                         >
                             {label}
-                        </span>
+                        </Link>
                     )
-                }
-
-                return (
-                    <Link
-                        key={`${link.label}-${index}`}
-                        href={link.url}
-                        preserveScroll
-                        className={[
-                            'inline-flex min-h-10 min-w-10 items-center justify-center rounded-md border px-3 text-sm transition-colors',
-                            link.active
-                                ? 'border-neutral-950 bg-neutral-950 text-white'
-                                : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400 hover:text-neutral-950',
-                        ].join(' ')}
-                        aria-current={link.active ? 'page' : undefined}
-                    >
-                        {label}
-                    </Link>
-                )
-            })}
+                })}
+            </div>
         </nav>
     )
 }
 
-function cleanLabel(label: string): string {
+function decodePaginationLabel(label: string): string {
     return label
-        .replace('&laquo;', '«')
-        .replace('&raquo;', '»')
-        .replace('Previous', 'Previous')
-        .replace('Next', 'Next')
+        .replace(/&laquo;/g, '«')
+        .replace(/&raquo;/g, '»')
+        .replace(/&lsaquo;/g, '‹')
+        .replace(/&rsaquo;/g, '›')
+        .replace(/&hellip;/g, '…')
 }

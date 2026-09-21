@@ -6,7 +6,7 @@ import StorefrontBreadcrumbs from '@/Components/Frontend/Navigation/StorefrontBr
 import StorefrontSeo from '@/Components/Frontend/Seo/StorefrontSeo'
 import FrontendLayout from '@/Layouts/Frontend/FrontendLayout'
 import { buildBreadcrumbJsonLd } from '@/lib/storefrontSeo'
-import type { StorefrontProductDetail } from '@/types/storefront'
+import type { StorefrontBreadcrumbItem, StorefrontProductDetail } from '@/types/storefront'
 
 interface Props {
     product: StorefrontProductDetail
@@ -24,7 +24,7 @@ export default function Show({ product }: Props) {
 
     const primaryCategory = product.categories[0] ?? null
 
-    const breadcrumbs = [
+    const breadcrumbs: StorefrontBreadcrumbItem[] = [
         {
             label: 'Home',
             href: '/',
@@ -59,8 +59,8 @@ export default function Show({ product }: Props) {
                 jsonLd={breadcrumbJsonLd}
             />
 
-            <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-                <div className="mb-6">
+            <main className="mx-auto w-full max-w-7xl min-w-0 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+                <div className="mb-6 min-w-0">
                     <StorefrontBreadcrumbs items={breadcrumbs} />
                 </div>
 

@@ -34,7 +34,9 @@ function ListingPrice({
 
     if (pricing.varies && pricing.max_price !== null) {
         return (
-            <p className={`text-base font-semibold text-neutral-950 ${className}`}>
+            <p
+                className={`min-w-0 break-words text-base font-semibold leading-6 text-neutral-950 ${className}`}
+            >
                 <span className="sr-only">Price range: </span>
                 {formatMoney(pricing.min_price)}
                 <span aria-hidden="true"> – </span>
@@ -68,8 +70,8 @@ function ResolvedPrice({
     }
 
     return (
-        <div className={`flex flex-wrap items-baseline gap-x-2 gap-y-1 ${className}`}>
-            <span className="text-base font-semibold text-neutral-950">
+        <div className={`flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1 ${className}`}>
+            <span className="whitespace-nowrap text-base font-semibold text-neutral-950">
                 {formatMoney(pricing.price)}
             </span>
 
@@ -77,7 +79,7 @@ function ResolvedPrice({
                 <>
                     <span className="sr-only">Original price:</span>
 
-                    <del className="text-sm font-normal text-neutral-500">
+                    <del className="whitespace-nowrap text-sm font-normal text-neutral-500">
                         {formatMoney(pricing.compare_at_price)}
                     </del>
                 </>

@@ -11,6 +11,12 @@ interface StorefrontActiveFiltersProps {
     onClearAll: () => void
 }
 
+interface ActiveFilter {
+    key: string
+    label: string
+    onClear: () => void
+}
+
 export default function StorefrontActiveFilters({
     filters,
     options,
@@ -20,92 +26,93 @@ export default function StorefrontActiveFilters({
     onAttributeClear,
     onClearAll,
 }: StorefrontActiveFiltersProps) {
-    const chips: React.ReactNode[] = []
+    const activeFilters: ActiveFilter[] = []
 
     if (filters.brand) {
         const brand = options.brands.find((item) => item.slug === filters.brand)
 
-        chips.push(
-            <FilterChip
-                key="brand"
-                label={`Brand: ${brand?.name ?? filters.brand}`}
-                onRemove={onBrandClear}
-            />,
-        )
+        activeFilters.push({
+            key: 'brand',
+            label: `Brand: ${brand?.name ?? filters.brand}`,
+            onClear: onBrandClear,
+        })
     }
 
     if (filters.category) {
         const category = options.categories.find((item) => item.slug === filters.category)
 
-        chips.push(
-            <FilterChip
-                key="category"
-                label={`Category: ${category?.name ?? filters.category}`}
-                onRemove={onCategoryClear}
-            />,
-        )
+        activeFilters.push({
+            key: 'category',
+            label: `Category: ${category?.name ?? filters.category}`,
+            onClear: onCategoryClear,
+        })
     }
 
     if (filters.min_price !== null || filters.max_price !== null) {
-        const label =
-            filters.min_price !== null && filters.max_price !== null
-                ? `Price: ${filters.min_price} – ${filters.max_price}`
-                : filters.min_price !== null
-                  ? `Price from ${filters.min_price}`
-                  : `Price up to ${filters.max_price}`
+        let label = 'Price'
 
-        chips.push(<FilterChip key="price" label={label} onRemove={onPriceClear} />)
+        if (filters.min_price !== null && filters.max_price !== null) {
+            label = `Price: ${filters.min_price} – ${filters.max_price}`
+        } else if (filters.min_price !== null) {
+            label = `Price: from ${filters.min_price}`
+        } else if (filters.max_price !== null) {
+            label = `Price: up to ${filters.max_price}`
+        }
+
+        activeFilters.push({
+            key: 'price',
+            label,
+            onClear: onPriceClear,
+        })
     }
 
     Object.entries(filters.attributes).forEach(([attributeSlug, valueSlug]) => {
-        const attribute = options.attributes.find((item) => item.slug === attributeSlug)
+        if (!valueSlug) {
+            return
+        }
 
+        const attribute = options.attributes.find((item) => item.slug === attributeSlug)
         const value = attribute?.values.find((item) => item.slug === valueSlug)
 
-        chips.push(
-            <FilterChip
-                key={`attribute-${attributeSlug}`}
-                label={`${attribute?.name ?? attributeSlug}: ${value?.name ?? valueSlug}`}
-                onRemove={() => onAttributeClear(attributeSlug)}
-            />,
-        )
+        activeFilters.push({
+            key: `attribute-${attributeSlug}`,
+            label: `${attribute?.name ?? attributeSlug}: ${value?.name ?? valueSlug}`,
+            onClear: () => onAttributeClear(attributeSlug),
+        })
     })
 
-    if (chips.length === 0) {
+    if (activeFilters.length === 0) {
         return null
     }
 
     return (
-        <div className="flex flex-wrap items-center gap-2">
-            {chips}
-
-            <button
-                type="button"
-                onClick={onClearAll}
-                className="px-2 py-1 text-sm font-medium text-neutral-600 underline-offset-4 hover:text-neutral-950 hover:underline"
-            >
-                Clear all
-            </button>
-        </div>
-    )
-}
-
-interface FilterChipProps {
-    label: string
-    onRemove: () => void
-}
-
-function FilterChip({ label, onRemove }: FilterChipProps) {
-    return (
-        <button
-            type="button"
-            onClick={onRemove}
-            className="inline-flex items-center gap-1 rounded-full border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 transition hover:border-neutral-400 hover:text-neutral-950"
-            aria-label={`Remove ${label} filter`}
+        <div
+            className="flex min-w-0 flex-wrap items-center gap-2"
+            aria-label="Active product filters"
         >
-            {label}
+            {activeFilters.map((filter) => (
+                <button
+                    key={filter.key}
+                    type="button"
+                    onClick={filter.onClear}
+                    className="inline-flex min-h-11 max-w-full min-w-0 items-center gap-2 rounded-full border border-neutral-300 bg-white px-3 py-1.5 text-left text-sm text-neutral-700 transition hover:border-neutral-400 hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
+                    aria-label={`Remove ${filter.label} filter`}
+                >
+                    <span className="min-w-0 break-words">{filter.label}</span>
 
-            <X className="h-3.5 w-3.5" aria-hidden="true" />
-        </button>
+                    <X className="size-4 shrink-0" aria-hidden="true" />
+                </button>
+            ))}
+
+            {activeFilters.length > 1 && (
+                <button
+                    type="button"
+                    onClick={onClearAll}
+                    className="inline-flex min-h-11 shrink-0 items-center rounded-md px-2 text-sm font-medium text-neutral-600 underline-offset-4 transition hover:text-neutral-950 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
+                >
+                    Clear all
+                </button>
+            )}
+        </div>
     )
 }

@@ -13,7 +13,7 @@ export default function ProductImage({
     image,
     alt,
     className = '',
-    sizes = '(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw',
+    sizes = '(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw',
     priority = false,
 }: ProductImageProps) {
     const [failedUrl, setFailedUrl] = useState<string | null>(null)
@@ -23,11 +23,16 @@ export default function ProductImage({
     if (!hasValidImage) {
         return (
             <div
-                className={`flex aspect-square items-center justify-center bg-neutral-100 ${className}`}
+                className={`flex aspect-square min-w-0 items-center justify-center overflow-hidden bg-neutral-100 ${className}`}
                 role="img"
-                aria-label={alt}
+                aria-label={`${alt} — image unavailable`}
             >
-                <span className="px-4 text-center text-xs text-neutral-400">Image unavailable</span>
+                <span
+                    className="max-w-full break-words px-4 text-center text-xs text-neutral-400"
+                    aria-hidden="true"
+                >
+                    Image unavailable
+                </span>
             </div>
         )
     }

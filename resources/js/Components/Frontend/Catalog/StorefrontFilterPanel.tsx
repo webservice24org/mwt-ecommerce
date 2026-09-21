@@ -1,4 +1,5 @@
 import type { StorefrontFilterOptions, StorefrontProductFilters } from '@/types/storefront'
+import type { ReactNode } from 'react'
 
 interface StorefrontFilterPanelProps {
     filters: StorefrontProductFilters
@@ -10,6 +11,9 @@ interface StorefrontFilterPanelProps {
     onAttributeChange: (attributeSlug: string, valueSlug: string | null) => void
 }
 
+const selectClassName =
+    'min-h-11 w-full min-w-0 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 transition focus-visible:border-neutral-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2'
+
 export default function StorefrontFilterPanel({
     filters,
     options,
@@ -20,13 +24,13 @@ export default function StorefrontFilterPanel({
     onAttributeChange,
 }: StorefrontFilterPanelProps) {
     return (
-        <div className="space-y-7">
+        <div className="min-w-0 space-y-7">
             {options.brands.length > 0 && (
                 <FilterSection title="Brand">
                     <select
                         value={filters.brand ?? ''}
                         onChange={(event) => onBrandChange(event.target.value || null)}
-                        className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-neutral-500 focus:ring-2 focus:ring-neutral-200"
+                        className={selectClassName}
                         aria-label="Filter by brand"
                     >
                         <option value="">All brands</option>
@@ -45,7 +49,7 @@ export default function StorefrontFilterPanel({
                     <select
                         value={filters.category ?? ''}
                         onChange={(event) => onCategoryChange(event.target.value || null)}
-                        className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-neutral-500 focus:ring-2 focus:ring-neutral-200"
+                        className={selectClassName}
                         aria-label="Filter by category"
                     >
                         <option value="">All categories</option>
@@ -60,7 +64,11 @@ export default function StorefrontFilterPanel({
             )}
 
             {(options.min_price !== null || options.max_price !== null) && (
-                <FilterSection title="Price">
+                <fieldset className="min-w-0">
+                    <legend className="mb-3 break-words text-sm font-semibold text-neutral-900">
+                        Price
+                    </legend>
+
                     <PriceFilter
                         minPrice={filters.min_price}
                         maxPrice={filters.max_price}
@@ -68,27 +76,32 @@ export default function StorefrontFilterPanel({
                         availableMax={options.max_price}
                         onChange={onPriceChange}
                     />
-                </FilterSection>
+                </fieldset>
             )}
 
             {options.attributes.map((attribute) => (
-                <FilterSection key={attribute.id} title={attribute.name}>
-                    <div className="space-y-2">
-                        <label className="flex cursor-pointer items-center gap-2 text-sm">
+                <fieldset key={attribute.id} className="min-w-0">
+                    <legend className="mb-3 max-w-full break-words text-sm font-semibold text-neutral-900">
+                        {attribute.name}
+                    </legend>
+
+                    <div className="min-w-0 space-y-1">
+                        <label className="flex min-h-11 min-w-0 cursor-pointer items-center gap-3 rounded-md px-2 text-sm text-neutral-800 transition hover:bg-neutral-50 focus-within:bg-neutral-50 focus-within:outline-none focus-within:ring-2 focus-within:ring-neutral-900 focus-within:ring-offset-2">
                             <input
                                 type="radio"
                                 name={`attribute-${attribute.slug}`}
                                 checked={!filters.attributes[attribute.slug]}
                                 onChange={() => onAttributeChange(attribute.slug, null)}
+                                className="size-4 shrink-0 accent-neutral-950 focus-visible:outline-none"
                             />
 
-                            <span>All</span>
+                            <span className="min-w-0 break-words">All</span>
                         </label>
 
                         {attribute.values.map((value) => (
                             <label
                                 key={value.id}
-                                className="flex cursor-pointer items-center gap-2 text-sm"
+                                className="flex min-h-11 min-w-0 cursor-pointer items-center gap-3 rounded-md px-2 text-sm text-neutral-800 transition hover:bg-neutral-50 focus-within:bg-neutral-50 focus-within:outline-none focus-within:ring-2 focus-within:ring-neutral-900 focus-within:ring-offset-2"
                             >
                                 <input
                                     type="radio"
@@ -96,13 +109,14 @@ export default function StorefrontFilterPanel({
                                     value={value.slug}
                                     checked={filters.attributes[attribute.slug] === value.slug}
                                     onChange={() => onAttributeChange(attribute.slug, value.slug)}
+                                    className="size-4 shrink-0 accent-neutral-950 focus-visible:outline-none"
                                 />
 
-                                <span>{value.name}</span>
+                                <span className="min-w-0 break-words">{value.name}</span>
                             </label>
                         ))}
                     </div>
-                </FilterSection>
+                </fieldset>
             ))}
         </div>
     )
@@ -110,13 +124,13 @@ export default function StorefrontFilterPanel({
 
 interface FilterSectionProps {
     title: string
-    children: React.ReactNode
+    children: ReactNode
 }
 
 function FilterSection({ title, children }: FilterSectionProps) {
     return (
-        <section>
-            <h3 className="mb-3 text-sm font-semibold text-neutral-900">{title}</h3>
+        <section className="min-w-0">
+            <h3 className="mb-3 break-words text-sm font-semibold text-neutral-900">{title}</h3>
 
             {children}
         </section>
@@ -139,13 +153,14 @@ function PriceFilter({
     onChange,
 }: PriceFilterProps) {
     return (
-        <div className="grid grid-cols-2 gap-2">
-            <label>
+        <div className="grid min-w-0 grid-cols-1 gap-2 min-[340px]:grid-cols-2">
+            <label className="min-w-0">
                 <span className="sr-only">Minimum price</span>
 
                 <input
                     type="number"
                     min={0}
+                    inputMode="numeric"
                     value={minPrice ?? ''}
                     placeholder={availableMin !== null ? String(availableMin) : 'Min'}
                     onChange={(event) => {
@@ -153,16 +168,17 @@ function PriceFilter({
 
                         onChange(value === '' ? null : Number(value), maxPrice)
                     }}
-                    className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-500 focus:ring-2 focus:ring-neutral-200"
+                    className="min-h-11 w-full min-w-0 rounded-lg border border-neutral-300 px-3 py-2 text-sm transition focus-visible:border-neutral-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
                 />
             </label>
 
-            <label>
+            <label className="min-w-0">
                 <span className="sr-only">Maximum price</span>
 
                 <input
                     type="number"
                     min={0}
+                    inputMode="numeric"
                     value={maxPrice ?? ''}
                     placeholder={availableMax !== null ? String(availableMax) : 'Max'}
                     onChange={(event) => {
@@ -170,7 +186,7 @@ function PriceFilter({
 
                         onChange(minPrice, value === '' ? null : Number(value))
                     }}
-                    className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-500 focus:ring-2 focus:ring-neutral-200"
+                    className="min-h-11 w-full min-w-0 rounded-lg border border-neutral-300 px-3 py-2 text-sm transition focus-visible:border-neutral-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
                 />
             </label>
         </div>

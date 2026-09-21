@@ -10,7 +10,7 @@ export default function ProductPrimaryMedia({ productName, images }: ProductPrim
     const primaryImage = images[0] ?? null
 
     return (
-        <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50">
+        <div className="aspect-square w-full min-w-0 overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50">
             <ProductImage
                 image={primaryImage}
                 alt={productName}
