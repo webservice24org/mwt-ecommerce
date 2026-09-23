@@ -2,6 +2,8 @@ export type PageType = 'standard' | 'home'
 
 export type PageStatus = 'draft' | 'published' | 'archived'
 
+export type PageContentMode = 'classic' | 'builder'
+
 export interface PageFormOption {
     value: string
     label: string
@@ -10,6 +12,7 @@ export interface PageFormOption {
 export interface PageFormOptions {
     types: PageFormOption[]
     statuses: PageFormOption[]
+    content_modes: PageFormOption[]
 }
 
 export interface PageIndexItem {
@@ -31,15 +34,22 @@ export interface PageSection {
     is_enabled: boolean
 }
 
+export interface PageSeoData {
+    meta_title: string | null
+    meta_description: string | null
+}
+
 export interface PageData {
     id: number
     type: PageType
     title: string
     slug: string
     status: PageStatus
-    meta_title: string | null
-    meta_description: string | null
+    content_mode: PageContentMode
+    content: string | null
+    featured_image: string | null
     published_at: string | null
+    seo: PageSeoData
     sections: PageSection[]
 }
 
@@ -48,6 +58,8 @@ export interface PageFormValues {
     title: string
     slug: string
     status: PageStatus
+    content_mode: PageContentMode
+    content: string
     meta_title: string
     meta_description: string
     published_at: string

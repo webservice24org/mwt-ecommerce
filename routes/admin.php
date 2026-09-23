@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\Catalog\ProductImageController;
 use App\Http\Controllers\Admin\Catalog\ProductVariantController;
 use App\Http\Controllers\Admin\Catalog\ProductVideoController;
 use App\Http\Controllers\Admin\PageController;
+use App\Http\Controllers\Admin\PageSectionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -87,6 +88,10 @@ Route::middleware([
     Route::delete('products/{product}/video', [ProductVideoController::class, 'destroy'])->name('products.video.destroy');
 
     Route::resource('pages', PageController::class)->except(['show']);
+
+    Route::post('pages/{page}/sections', [PageSectionController::class, 'store'])->name('pages.sections.store');
+    Route::put('pages/{page}/sections/reorder', [PageSectionController::class, 'reorder'])->name('pages.sections.reorder');
+    Route::delete('pages/{page}/sections/{section}', [PageSectionController::class, 'destroy'])->whereNumber('section')->name('pages.sections.destroy');
 
 });
 

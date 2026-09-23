@@ -17,8 +17,10 @@ export default function Edit({ page, options }: Props) {
         title: page.title,
         slug: page.slug,
         status: page.status,
-        meta_title: page.meta_title ?? '',
-        meta_description: page.meta_description ?? '',
+        content_mode: page.content_mode,
+        content: page.content ?? '',
+        meta_title: page.seo.meta_title ?? '',
+        meta_description: page.seo.meta_description ?? '',
         published_at: toDateTimeLocal(page.published_at),
     })
 
@@ -33,7 +35,7 @@ export default function Edit({ page, options }: Props) {
     return (
         <AdminLayout
             title={`Edit ${page.title}`}
-            description="Edit the details of your e-commerce page."
+            description="Edit page content, publishing settings, SEO, or its Page Builder configuration."
             actions={
                 <Link
                     href={route('admin.pages.index')}
@@ -49,23 +51,11 @@ export default function Edit({ page, options }: Props) {
                 errors={form.errors}
                 processing={form.processing}
                 submitLabel="Save Changes"
+                sections={page.sections}
+                featuredImage={page.featured_image}
                 onChange={form.setData}
                 onSubmit={submit}
             />
-
-            <section className="mt-6 rounded-xl border border-dashed border-neutral-300 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-950">
-                <div className="flex flex-col gap-2">
-                    <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-                        Page Sections
-                    </h2>
-
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                        This page currently has {page.sections.length}{' '}
-                        {page.sections.length === 1 ? 'section' : 'sections'}. The visual section
-                        editor is introduced in the next Page Builder step.
-                    </p>
-                </div>
-            </section>
         </AdminLayout>
     )
 }

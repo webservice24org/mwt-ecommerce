@@ -16,6 +16,8 @@ export default function Create({ options }: Props) {
         title: '',
         slug: '',
         status: 'draft',
+        content_mode: 'classic',
+        content: '',
         meta_title: '',
         meta_description: '',
         published_at: '',
@@ -30,7 +32,7 @@ export default function Create({ options }: Props) {
     return (
         <AdminLayout
             title="Create Page"
-            description="Create a new page for your e-commerce store."
+            description="Create a classic content page or build a section-based page for your e-commerce store."
             actions={
                 <Link
                     href={route('admin.pages.index')}
@@ -46,6 +48,8 @@ export default function Create({ options }: Props) {
                 errors={form.errors}
                 processing={form.processing}
                 submitLabel="Create Page"
+                sections={[]}
+                featuredImage={null}
                 onChange={form.setData}
                 onSubmit={submit}
             />

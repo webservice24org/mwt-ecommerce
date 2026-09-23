@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Domain\PageBuilder\Enums\PageContentMode;
 use App\Domain\PageBuilder\Enums\PageStatus;
 use App\Domain\PageBuilder\Enums\PageType;
 use Database\Factories\PageFactory;
@@ -19,6 +20,9 @@ use Illuminate\Support\Carbon;
  * @property string $title
  * @property string $slug
  * @property PageStatus $status
+ * @property PageContentMode $content_mode
+ * @property string|null $content
+ * @property string|null $featured_image
  * @property string|null $meta_title
  * @property string|null $meta_description
  * @property Carbon|null $published_at
@@ -36,6 +40,9 @@ final class Page extends Model
         'meta_title',
         'meta_description',
         'published_at',
+        'content_mode',
+        'content',
+        'featured_image',
     ];
 
     protected function casts(): array
@@ -43,6 +50,7 @@ final class Page extends Model
         return [
             'type' => PageType::class,
             'status' => PageStatus::class,
+            'content_mode' => PageContentMode::class,
             'published_at' => 'datetime',
         ];
     }

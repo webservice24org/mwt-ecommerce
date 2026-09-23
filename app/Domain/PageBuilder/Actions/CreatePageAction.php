@@ -38,6 +38,8 @@ final readonly class CreatePageAction
                     'title' => $data->title,
                     'slug' => $slug,
                     'status' => $data->status,
+                    'content_mode' => $data->contentMode,
+                    'content' => $data->content,
                     'meta_title' => $data->metaTitle,
                     'meta_description' => $data->metaDescription,
                     'published_at' => $data->publishedAt,

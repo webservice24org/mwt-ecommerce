@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Tests\Feature\Admin;
 
 use App\Domain\Auth\Admin\Enums\AdminRole;
+use App\Domain\PageBuilder\Enums\PageContentMode;
 use App\Domain\PageBuilder\Enums\PageStatus;
 use App\Domain\PageBuilder\Enums\PageType;
+use App\Domain\PageBuilder\Enums\SectionType;
 use App\Models\Admin;
 use App\Models\Page;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -43,6 +45,8 @@ final class PageManagementTest extends TestCase
                     'title' => 'About Us',
                     'slug' => '',
                     'status' => PageStatus::Draft->value,
+                    'content_mode' => PageContentMode::Classic->value,
+                    'content' => '<p>About our company.</p>',
                     'meta_title' => '',
                     'meta_description' => '',
                     'published_at' => '',
@@ -67,6 +71,25 @@ final class PageManagementTest extends TestCase
             'about-us',
             $page->slug,
         );
+
+        $this->assertSame(
+            PageContentMode::Classic,
+            $page->content_mode,
+        );
+
+        $this->assertSame(
+            '<p>About our company.</p>',
+            $page->content,
+        );
+
+        $this->assertDatabaseHas(
+            'pages',
+            [
+                'id' => $page->id,
+                'content_mode' => PageContentMode::Classic->value,
+                'content' => '<p>About our company.</p>',
+            ],
+        );
     }
 
     public function test_editor_can_update_page(): void
@@ -89,6 +112,8 @@ final class PageManagementTest extends TestCase
                     'title' => 'Updated Page',
                     'slug' => 'updated-page',
                     'status' => PageStatus::Draft->value,
+                    'content_mode' => PageContentMode::Classic->value,
+                    'content' => '<p>Updated page content.</p>',
                     'meta_title' => '',
                     'meta_description' => '',
                     'published_at' => '',
@@ -102,6 +127,8 @@ final class PageManagementTest extends TestCase
                 'id' => $page->id,
                 'title' => 'Updated Page',
                 'slug' => 'updated-page',
+                'content_mode' => PageContentMode::Classic->value,
+                'content' => '<p>Updated page content.</p>',
             ],
         );
     }
@@ -174,16 +201,52 @@ final class PageManagementTest extends TestCase
                     'type' => 'invalid-type',
                     'title' => '',
                     'status' => 'invalid-status',
+                    'content_mode' => 'invalid-content-mode',
                 ],
             )
             ->assertSessionHasErrors([
                 'type',
                 'title',
                 'status',
+                'content_mode',
             ]);
 
         $this->assertDatabaseCount(
             'pages',
+            0,
+        );
+    }
+
+    public function test_invalid_section_configuration_cannot_be_persisted(): void
+    {
+        $admin = Admin::factory()->create([
+            'role' => AdminRole::Editor,
+        ]);
+
+        $page = Page::factory()->create();
+
+        $this
+            ->actingAs($admin, 'admin')
+            ->post(
+                route(
+                    'admin.pages.sections.store',
+                    $page,
+                ),
+                [
+                    'type' => SectionType::FeaturedProducts->value,
+                    'template' => 'grid',
+                    'config' => [
+                        'title' => 'Featured Products',
+                        'limit' => 999,
+                    ],
+                ],
+            )
+            ->assertSessionHasErrors([
+                'limit',
+            ]);
+
+        $this->assertDatabaseCount(
+            'page_sections',
             0,
         );
     }

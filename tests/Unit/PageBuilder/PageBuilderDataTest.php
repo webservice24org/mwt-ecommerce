@@ -7,6 +7,7 @@ namespace Tests\Unit\PageBuilder;
 use App\Domain\PageBuilder\Data\PageData;
 use App\Domain\PageBuilder\Data\PageSectionData;
 use App\Domain\PageBuilder\Data\PageSeoData;
+use App\Domain\PageBuilder\Enums\PageContentMode;
 use App\Domain\PageBuilder\Enums\PageStatus;
 use App\Domain\PageBuilder\Enums\PageType;
 use App\Domain\PageBuilder\Enums\SectionType;
@@ -69,6 +70,9 @@ final class PageBuilderDataTest extends TestCase
             title: 'Home',
             slug: 'home',
             status: PageStatus::Published,
+            contentMode: PageContentMode::Classic,
+            content: '<p>Welcome to our store.</p>',
+            featuredImage: null,
             publishedAt: $publishedAt,
             seo: new PageSeoData(
                 metaTitle: 'Store Home',
@@ -82,6 +86,21 @@ final class PageBuilderDataTest extends TestCase
         $this->assertSame(1, $payload['id']);
         $this->assertSame('home', $payload['type']);
         $this->assertSame('published', $payload['status']);
+
+        $this->assertSame(
+            'classic',
+            $payload['content_mode'],
+        );
+
+        $this->assertSame(
+            '<p>Welcome to our store.</p>',
+            $payload['content'],
+        );
+
+        $this->assertNull(
+            $payload['featured_image'],
+        );
+
         $this->assertSame(
             $publishedAt->toIso8601String(),
             $payload['published_at'],
@@ -95,7 +114,10 @@ final class PageBuilderDataTest extends TestCase
             $payload['seo'],
         );
 
-        $this->assertCount(1, $payload['sections']);
+        $this->assertCount(
+            1,
+            $payload['sections'],
+        );
 
         $this->assertSame(
             'featured_products',
@@ -111,6 +133,9 @@ final class PageBuilderDataTest extends TestCase
             title: 'About Us',
             slug: 'about-us',
             status: PageStatus::Draft,
+            contentMode: PageContentMode::Classic,
+            content: null,
+            featuredImage: null,
             publishedAt: null,
             seo: new PageSeoData(
                 metaTitle: null,
@@ -121,6 +146,12 @@ final class PageBuilderDataTest extends TestCase
         $payload = $data->toArray();
 
         $this->assertNull($payload['id']);
+        $this->assertSame(
+            'classic',
+            $payload['content_mode'],
+        );
+        $this->assertNull($payload['content']);
+        $this->assertNull($payload['featured_image']);
         $this->assertNull($payload['published_at']);
         $this->assertSame([], $payload['sections']);
     }

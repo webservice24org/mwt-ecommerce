@@ -9,6 +9,7 @@ use App\Domain\PageBuilder\Actions\DeletePageAction;
 use App\Domain\PageBuilder\Actions\UpdatePageAction;
 use App\Domain\PageBuilder\Data\CreatePageData;
 use App\Domain\PageBuilder\Data\UpdatePageData;
+use App\Domain\PageBuilder\Enums\PageContentMode;
 use App\Domain\PageBuilder\Enums\PageStatus;
 use App\Domain\PageBuilder\Enums\PageType;
 use App\Models\Page;
@@ -29,6 +30,8 @@ final class PageActionsTest extends TestCase
                     title: 'About Us',
                     slug: null,
                     status: PageStatus::Draft,
+                    contentMode: PageContentMode::Classic,
+                    content: '<p>About our company.</p>',
                     metaTitle: 'About Us',
                     metaDescription: 'About our company.',
                     publishedAt: null,
@@ -43,8 +46,46 @@ final class PageActionsTest extends TestCase
                 'title' => 'About Us',
                 'slug' => 'about-us',
                 'status' => PageStatus::Draft->value,
+                'content_mode' => PageContentMode::Classic->value,
+                'content' => '<p>About our company.</p>',
                 'meta_title' => 'About Us',
                 'meta_description' => 'About our company.',
+            ],
+        );
+    }
+
+    public function test_builder_page_can_be_created(): void
+    {
+        $page = app(CreatePageAction::class)
+            ->execute(
+                new CreatePageData(
+                    type: PageType::Standard,
+                    title: 'Landing Page',
+                    slug: 'landing-page',
+                    status: PageStatus::Draft,
+                    contentMode: PageContentMode::Builder,
+                    content: null,
+                    metaTitle: null,
+                    metaDescription: null,
+                    publishedAt: null,
+                ),
+            );
+
+        $this->assertSame(
+            PageContentMode::Builder,
+            $page->content_mode,
+        );
+
+        $this->assertNull(
+            $page->content,
+        );
+
+        $this->assertDatabaseHas(
+            'pages',
+            [
+                'id' => $page->id,
+                'content_mode' => PageContentMode::Builder->value,
+                'content' => null,
             ],
         );
     }
@@ -63,6 +104,8 @@ final class PageActionsTest extends TestCase
                     title: 'About Us',
                     slug: null,
                     status: PageStatus::Draft,
+                    contentMode: PageContentMode::Classic,
+                    content: null,
                     metaTitle: null,
                     metaDescription: null,
                     publishedAt: null,
@@ -98,6 +141,8 @@ final class PageActionsTest extends TestCase
                     title: 'New Title',
                     slug: null,
                     status: PageStatus::Published,
+                    contentMode: PageContentMode::Classic,
+                    content: '<p>Updated page content.</p>',
                     metaTitle: 'New Meta Title',
                     metaDescription: 'New description.',
                     publishedAt: now(),
@@ -120,6 +165,16 @@ final class PageActionsTest extends TestCase
         );
 
         $this->assertSame(
+            PageContentMode::Classic,
+            $updated->content_mode,
+        );
+
+        $this->assertSame(
+            '<p>Updated page content.</p>',
+            $updated->content,
+        );
+
+        $this->assertSame(
             'New Meta Title',
             $updated->meta_title,
         );
@@ -139,6 +194,8 @@ final class PageActionsTest extends TestCase
                     title: 'About Us Updated',
                     slug: 'about-us',
                     status: PageStatus::Draft,
+                    contentMode: PageContentMode::Classic,
+                    content: null,
                     metaTitle: null,
                     metaDescription: null,
                     publishedAt: null,
@@ -166,6 +223,8 @@ final class PageActionsTest extends TestCase
                     title: 'Another Home',
                     slug: 'another-home',
                     status: PageStatus::Draft,
+                    contentMode: PageContentMode::Builder,
+                    content: null,
                     metaTitle: null,
                     metaDescription: null,
                     publishedAt: null,
@@ -175,10 +234,16 @@ final class PageActionsTest extends TestCase
 
     public function test_standard_page_cannot_be_changed_to_home_when_home_exists(): void
     {
-        Page::factory()->home()->create();
+        Page::factory()
+            ->home()
+            ->create([
+                'content_mode' => PageContentMode::Builder,
+            ]);
 
         $page = Page::factory()->create([
             'type' => PageType::Standard,
+            'content_mode' => PageContentMode::Classic,
+            'content' => null,
         ]);
 
         $this->expectException(
@@ -193,6 +258,8 @@ final class PageActionsTest extends TestCase
                     title: $page->title,
                     slug: $page->slug,
                     status: $page->status,
+                    contentMode: PageContentMode::Builder,
+                    content: $page->content,
                     metaTitle: $page->meta_title,
                     metaDescription: $page->meta_description,
                     publishedAt: $page->published_at,
@@ -214,6 +281,8 @@ final class PageActionsTest extends TestCase
                     title: 'Store Home',
                     slug: 'home',
                     status: PageStatus::Draft,
+                    contentMode: PageContentMode::Builder,
+                    content: null,
                     metaTitle: null,
                     metaDescription: null,
                     publishedAt: null,
@@ -223,6 +292,11 @@ final class PageActionsTest extends TestCase
         $this->assertSame(
             PageType::Home,
             $updated->type,
+        );
+
+        $this->assertSame(
+            PageContentMode::Builder,
+            $updated->content_mode,
         );
 
         $this->assertSame(

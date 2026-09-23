@@ -28,6 +28,9 @@ final class PageDataFactory
             title: $page->title,
             slug: $page->slug,
             status: $page->status,
+            contentMode: $page->content_mode,
+            content: $page->content,
+            featuredImage: $page->featured_image,
             publishedAt: $page->published_at,
             seo: new PageSeoData(
                 metaTitle: $page->meta_title,

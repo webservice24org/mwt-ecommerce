@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Admin;
 
 use App\Domain\PageBuilder\Data\UpdatePageData;
+use App\Domain\PageBuilder\Enums\PageContentMode;
 use App\Domain\PageBuilder\Enums\PageStatus;
 use App\Domain\PageBuilder\Enums\PageType;
 use App\Models\Page;
@@ -55,6 +56,16 @@ final class UpdatePageRequest extends FormRequest
                 Rule::enum(PageStatus::class),
             ],
 
+            'content_mode' => [
+                'required',
+                Rule::enum(PageContentMode::class),
+            ],
+
+            'content' => [
+                'nullable',
+                'string',
+            ],
+
             'meta_title' => [
                 'nullable',
                 'string',
@@ -83,6 +94,10 @@ final class UpdatePageRequest extends FormRequest
 
             'slug' => $this->normalizeNullableString(
                 $this->input('slug'),
+            ),
+
+            'content' => $this->normalizeNullableContent(
+                $this->input('content'),
             ),
 
             'meta_title' => $this->normalizeNullableString(
@@ -118,6 +133,14 @@ final class UpdatePageRequest extends FormRequest
                 (string) $validated['status'],
             ),
 
+            contentMode: PageContentMode::from(
+                (string) $validated['content_mode'],
+            ),
+
+            content: isset($validated['content'])
+                ? (string) $validated['content']
+                : null,
+
             metaTitle: isset($validated['meta_title'])
                 ? (string) $validated['meta_title']
                 : null,
@@ -152,6 +175,18 @@ final class UpdatePageRequest extends FormRequest
         $value = trim($value);
 
         return $value === ''
+            ? null
+            : $value;
+    }
+
+    private function normalizeNullableContent(
+        mixed $value,
+    ): mixed {
+        if (! is_string($value)) {
+            return $value;
+        }
+
+        return trim($value) === ''
             ? null
             : $value;
     }
