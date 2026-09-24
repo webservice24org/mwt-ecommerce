@@ -12,6 +12,7 @@ use App\Domain\PageBuilder\Enums\SectionType;
 use App\Models\Admin;
 use App\Models\Page;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 final class PageManagementTest extends TestCase
@@ -90,6 +91,44 @@ final class PageManagementTest extends TestCase
                 'content' => '<p>About our company.</p>',
             ],
         );
+    }
+
+    public function test_editor_can_view_page_edit_without_builder_registry_data(): void
+    {
+        $admin = Admin::factory()->create([
+            'role' => AdminRole::Editor,
+        ]);
+
+        $page = Page::factory()->create([
+            'content_mode' => PageContentMode::Builder,
+        ]);
+
+        $this
+            ->actingAs($admin, 'admin')
+            ->get(
+                route(
+                    'admin.pages.edit',
+                    $page,
+                ),
+            )
+            ->assertOk()
+            ->assertInertia(
+                fn (Assert $inertia): Assert => $inertia
+                    ->component(
+                        'Admin/PageBuilder/Pages/Edit',
+                    )
+                    ->where(
+                        'page.id',
+                        $page->id,
+                    )
+                    ->where(
+                        'page.content_mode',
+                        PageContentMode::Builder->value,
+                    )
+                    ->missing(
+                        'sectionDefinitions',
+                    ),
+            );
     }
 
     public function test_editor_can_update_page(): void
@@ -249,5 +288,48 @@ final class PageManagementTest extends TestCase
             'page_sections',
             0,
         );
+    }
+
+    public function test_editor_can_open_the_dedicated_page_builder(): void
+    {
+        $admin = Admin::factory()->create([
+            'role' => AdminRole::Editor,
+        ]);
+
+        $page = Page::factory()->create([
+            'content_mode' => PageContentMode::Builder,
+        ]);
+
+        $this
+            ->actingAs($admin, 'admin')
+            ->get(
+                route(
+                    'admin.pages.builder',
+                    $page,
+                ),
+            )
+            ->assertOk()
+            ->assertInertia(
+                fn (Assert $inertia): Assert => $inertia
+                    ->component(
+                        'Admin/PageBuilder/Pages/Builder',
+                    )
+                    ->where(
+                        'page.id',
+                        $page->id,
+                    )
+                    ->where(
+                        'page.title',
+                        $page->title,
+                    )
+                    ->has(
+                        'sectionDefinitions',
+                        1,
+                    )
+                    ->where(
+                        'sectionDefinitions.0.type',
+                        SectionType::FeaturedProducts->value,
+                    ),
+            );
     }
 }

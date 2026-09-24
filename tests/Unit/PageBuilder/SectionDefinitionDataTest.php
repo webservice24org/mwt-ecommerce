@@ -30,7 +30,9 @@ final class SectionDefinitionDataTest extends TestCase
                 'templates' => [
                     [
                         'key' => 'grid',
-                        'label' => 'Grid',
+                        'label' => 'Product Grid',
+                        'description' => 'Display a curated selection of featured products in a responsive grid.',
+                        'category' => 'Products',
                     ],
                 ],
                 'default_template' => 'grid',

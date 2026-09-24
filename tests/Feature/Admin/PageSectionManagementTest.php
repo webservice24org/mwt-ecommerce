@@ -315,6 +315,7 @@ final class PageSectionManagementTest extends TestCase
                         'title' => 'Featured Products',
                         'limit' => 8,
                     ],
+                    'is_enabled' => true,
                 ],
             )
             ->assertRedirect();
@@ -322,6 +323,202 @@ final class PageSectionManagementTest extends TestCase
         $this->assertDatabaseCount(
             'page_sections',
             0,
+        );
+    }
+
+    public function test_authorized_admin_can_update_a_page_section(): void
+    {
+        $admin = Admin::factory()->create([
+            'role' => AdminRole::Editor,
+        ]);
+
+        $page = Page::factory()->create();
+
+        $section = PageSection::factory()
+            ->for($page)
+            ->create([
+                'type' => SectionType::FeaturedProducts,
+                'template' => 'grid',
+                'config' => [
+                    'title' => 'Featured Products',
+                    'limit' => 8,
+                ],
+                'is_enabled' => true,
+            ]);
+
+        $response = $this
+            ->actingAs($admin, 'admin')
+            ->put(
+                route(
+                    'admin.pages.sections.update',
+                    [
+                        'page' => $page,
+                        'section' => $section->id,
+                    ],
+                ),
+                [
+                    'type' => SectionType::FeaturedProducts->value,
+                    'template' => 'grid',
+                    'config' => [
+                        'title' => 'Latest Products',
+                        'limit' => 12,
+                    ],
+                    'is_enabled' => false,
+                ],
+            );
+
+        $response->assertRedirect();
+
+        $section->refresh();
+
+        $this->assertSame(
+            SectionType::FeaturedProducts,
+            $section->type,
+        );
+
+        $this->assertSame(
+            'grid',
+            $section->template,
+        );
+
+        $this->assertSame(
+            [
+                'title' => 'Latest Products',
+                'limit' => 12,
+            ],
+            $section->config,
+        );
+
+        $this->assertFalse(
+            $section->is_enabled,
+        );
+    }
+
+    public function test_invalid_page_section_configuration_cannot_be_updated(): void
+    {
+        $admin = Admin::factory()->create([
+            'role' => AdminRole::Editor,
+        ]);
+
+        $page = Page::factory()->create();
+
+        $section = PageSection::factory()
+            ->for($page)
+            ->create([
+                'type' => SectionType::FeaturedProducts,
+                'template' => 'grid',
+                'config' => [
+                    'title' => 'Featured Products',
+                    'limit' => 8,
+                ],
+            ]);
+
+        $response = $this
+            ->actingAs($admin, 'admin')
+            ->from(
+                route(
+                    'admin.pages.edit',
+                    $page,
+                ),
+            )
+            ->put(
+                route(
+                    'admin.pages.sections.update',
+                    [
+                        'page' => $page,
+                        'section' => $section->id,
+                    ],
+                ),
+                [
+                    'type' => SectionType::FeaturedProducts->value,
+                    'template' => 'grid',
+                    'config' => [
+                        'title' => 'Featured Products',
+                        'limit' => 999,
+                    ],
+                    'is_enabled' => true,
+                ],
+            );
+
+        $response
+            ->assertRedirect(
+                route(
+                    'admin.pages.edit',
+                    $page,
+                ),
+            )
+            ->assertSessionHasErrors();
+    }
+
+    public function test_page_section_from_another_page_cannot_be_updated(): void
+    {
+        $admin = Admin::factory()->create([
+            'role' => AdminRole::Editor,
+        ]);
+
+        $page = Page::factory()->create();
+        $otherPage = Page::factory()->create();
+
+        $section = PageSection::factory()
+            ->for($otherPage)
+            ->create();
+
+        $response = $this
+            ->actingAs($admin, 'admin')
+            ->put(
+                route(
+                    'admin.pages.sections.update',
+                    [
+                        'page' => $page,
+                        'section' => $section->id,
+                    ],
+                ),
+                [
+                    'type' => SectionType::FeaturedProducts->value,
+                    'template' => 'grid',
+                    'config' => [
+                        'title' => 'Featured Products',
+                        'limit' => 8,
+                    ],
+                    'is_enabled' => true,
+                ],
+            );
+
+        $response->assertNotFound();
+    }
+
+    public function test_unknown_section_type_cannot_be_updated(): void
+    {
+        $admin = Admin::factory()->create([
+            'role' => AdminRole::Editor,
+        ]);
+
+        $page = Page::factory()->create();
+
+        $section = PageSection::factory()
+            ->for($page)
+            ->create();
+
+        $response = $this
+            ->actingAs($admin, 'admin')
+            ->put(
+                route(
+                    'admin.pages.sections.update',
+                    [
+                        'page' => $page,
+                        'section' => $section->id,
+                    ],
+                ),
+                [
+                    'type' => 'unknown_section',
+                    'template' => 'grid',
+                    'config' => [],
+                    'is_enabled' => true,
+                ],
+            );
+
+        $response->assertSessionHasErrors(
+            'type',
         );
     }
 }

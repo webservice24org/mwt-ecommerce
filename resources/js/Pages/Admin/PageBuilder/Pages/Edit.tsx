@@ -35,7 +35,7 @@ export default function Edit({ page, options }: Props) {
     return (
         <AdminLayout
             title={`Edit ${page.title}`}
-            description="Edit page content, publishing settings, SEO, or its Page Builder configuration."
+            description="Edit page details, content, publishing settings, and SEO."
             actions={
                 <Link
                     href={route('admin.pages.index')}
@@ -51,7 +51,7 @@ export default function Edit({ page, options }: Props) {
                 errors={form.errors}
                 processing={form.processing}
                 submitLabel="Save Changes"
-                sections={page.sections}
+                pageId={page.id}
                 featuredImage={page.featured_image}
                 onChange={form.setData}
                 onSubmit={submit}

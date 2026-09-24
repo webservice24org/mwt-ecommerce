@@ -48,7 +48,7 @@ export default function Create({ options }: Props) {
                 errors={form.errors}
                 processing={form.processing}
                 submitLabel="Create Page"
-                sections={[]}
+                pageId={null}
                 featuredImage={null}
                 onChange={form.setData}
                 onSubmit={submit}

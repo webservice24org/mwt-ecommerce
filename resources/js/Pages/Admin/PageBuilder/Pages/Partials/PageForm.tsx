@@ -1,11 +1,7 @@
+import { Link } from '@inertiajs/react'
 import type { FormEvent, ReactNode } from 'react'
 
-import type {
-    PageContentMode,
-    PageFormOptions,
-    PageFormValues,
-    PageSection,
-} from '@/types/page-builder'
+import type { PageContentMode, PageFormOptions, PageFormValues } from '@/types/page-builder'
 
 interface Props {
     data: PageFormValues
@@ -13,7 +9,7 @@ interface Props {
     errors: Partial<Record<keyof PageFormValues, string>>
     processing: boolean
     submitLabel: string
-    sections: PageSection[]
+    pageId: number | null
     featuredImage: string | null
     onChange: <K extends keyof PageFormValues>(key: K, value: PageFormValues[K]) => void
     onSubmit: (event: FormEvent<HTMLFormElement>) => void
@@ -25,7 +21,7 @@ export default function PageForm({
     errors,
     processing,
     submitLabel,
-    sections,
+    pageId,
     featuredImage,
     onChange,
     onSubmit,
@@ -152,7 +148,7 @@ export default function PageForm({
                             onChange={(value) => onChange('content', value)}
                         />
                     ) : (
-                        <PageBuilderWorkspace sections={sections} />
+                        <PageBuilderPanel pageId={pageId} />
                     )}
 
                     <section className={sectionClass}>
@@ -341,78 +337,37 @@ function ClassicEditor({ content, featuredImage, error, onChange }: ClassicEdito
     )
 }
 
-interface PageBuilderWorkspaceProps {
-    sections: PageSection[]
+interface PageBuilderPanelProps {
+    pageId: number | null
 }
 
-function PageBuilderWorkspace({ sections }: PageBuilderWorkspaceProps) {
+function PageBuilderPanel({ pageId }: PageBuilderPanelProps) {
     return (
         <section className={sectionClass}>
-            <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
                         Page Builder
                     </h2>
 
-                    <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-                        Build this page from controlled storefront sections.
+                    <p className="mt-1 max-w-2xl text-sm leading-6 text-neutral-500 dark:text-neutral-400">
+                        This page uses section-based content. Open the dedicated Page Builder to
+                        add, edit, arrange, and remove sections.
                     </p>
                 </div>
 
-                <div className="mt-2 rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-600 sm:mt-0 dark:bg-neutral-800 dark:text-neutral-300">
-                    {sections.length} {sections.length === 1 ? 'section' : 'sections'}
-                </div>
-            </div>
-
-            <div className="mt-6">
-                {sections.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-10 text-center dark:border-neutral-700 dark:bg-neutral-900/50">
-                        <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">
-                            No sections yet
-                        </p>
-
-                        <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-neutral-500 dark:text-neutral-400">
-                            This page is ready for Page Builder sections. Adding, removing and
-                            reordering sections is introduced in step 4.9.
-                        </p>
-                    </div>
+                {pageId !== null ? (
+                    <Link
+                        href={route('admin.pages.builder', pageId)}
+                        className="inline-flex shrink-0 items-center justify-center rounded-lg bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-700 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-300"
+                    >
+                        Open Page Builder
+                    </Link>
                 ) : (
-                    <div className="space-y-3">
-                        {sections.map((section, index) => (
-                            <div
-                                key={section.id}
-                                className="flex items-center gap-4 rounded-xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-900/50"
-                            >
-                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-sm font-semibold text-neutral-600 shadow-sm dark:bg-neutral-950 dark:text-neutral-300">
-                                    {index + 1}
-                                </div>
-
-                                <div className="min-w-0 flex-1">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <p className="truncate text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                                            {formatSectionType(section.type)}
-                                        </p>
-
-                                        {!section.is_enabled && (
-                                            <span className="rounded-full bg-neutral-200 px-2 py-0.5 text-xs font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
-                                                Disabled
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-                                        Template: {section.template}
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                    <span className="shrink-0 text-sm text-neutral-500 dark:text-neutral-400">
+                        Save the page first
+                    </span>
                 )}
-            </div>
-
-            <div className="mt-5 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-500 dark:border-neutral-800 dark:bg-neutral-900/50 dark:text-neutral-400">
-                Section management controls are intentionally disabled in this editor-shell step.
-                They will be introduced in 4.9.
             </div>
         </section>
     )
@@ -441,13 +396,6 @@ function Field({ label, hint, error, children }: FieldProps) {
             {error && <p className="mt-1.5 text-sm text-red-600">{error}</p>}
         </div>
     )
-}
-
-function formatSectionType(type: string): string {
-    return type
-        .split('_')
-        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ')
 }
 
 const sectionClass =

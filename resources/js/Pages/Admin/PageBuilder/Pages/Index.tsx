@@ -221,28 +221,18 @@ export default function Index({ pages, filters, options, abilities }: Props) {
                                     </td>
 
                                     <td className="px-4 py-4">
-                                        <div className="flex justify-end gap-2">
-                                            <Link
-                                                href={route('admin.pages.edit', page.id)}
-                                                className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm text-neutral-700 transition hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900"
-                                            >
-                                                Edit
-                                            </Link>
-
-                                            {abilities.delete && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        setDeleteTarget({
-                                                            id: page.id,
-                                                            title: page.title,
-                                                        })
-                                                    }
-                                                    className="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-600 transition hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950/30"
-                                                >
-                                                    Delete
-                                                </button>
-                                            )}
+                                        <div className="flex justify-end">
+                                            <PageActionsMenu
+                                                pageId={page.id}
+                                                slug={page.slug}
+                                                canDelete={abilities.delete}
+                                                onDelete={() =>
+                                                    setDeleteTarget({
+                                                        id: page.id,
+                                                        title: page.title,
+                                                    })
+                                                }
+                                            />
                                         </div>
                                     </td>
                                 </tr>
@@ -279,6 +269,78 @@ export default function Index({ pages, filters, options, abilities }: Props) {
                 onCancel={closeDeleteDialog}
             />
         </AdminLayout>
+    )
+}
+
+interface PageActionsMenuProps {
+    pageId: number
+    slug: string
+    canDelete: boolean
+    onDelete: () => void
+}
+
+function PageActionsMenu({ pageId, slug, canDelete, onDelete }: PageActionsMenuProps) {
+    const closeMenu = (target: HTMLElement) => {
+        target.closest('details')?.removeAttribute('open')
+    }
+
+    const copySlug = (target: HTMLElement) => {
+        void navigator.clipboard.writeText(`/${slug}`)
+        closeMenu(target)
+    }
+
+    return (
+        <details className="group relative">
+            <summary
+                className="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-md text-lg font-semibold text-neutral-600 transition hover:bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 dark:text-neutral-300 dark:hover:bg-neutral-900 [&::-webkit-details-marker]:hidden"
+                aria-label="Page actions"
+            >
+                <span aria-hidden="true">•••</span>
+            </summary>
+
+            <div className="absolute right-0 z-30 mt-2 w-52 overflow-hidden rounded-xl border border-neutral-200 bg-white py-2 shadow-xl dark:border-neutral-800 dark:bg-neutral-950">
+                <div className="px-3 pb-1.5 text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                    Page Actions
+                </div>
+
+                <Link href={route('admin.pages.builder', pageId)} className={menuItemClass}>
+                    <span aria-hidden="true">▦</span>
+                    Page Builder
+                </Link>
+
+                <Link href={route('admin.pages.edit', pageId)} className={menuItemClass}>
+                    <span aria-hidden="true">✎</span>
+                    Edit
+                </Link>
+
+                <button
+                    type="button"
+                    onClick={(event) => copySlug(event.currentTarget)}
+                    className={`${menuItemClass} w-full`}
+                >
+                    <span aria-hidden="true">▣</span>
+                    Copy slug
+                </button>
+
+                {canDelete && (
+                    <>
+                        <div className="my-2 border-t border-neutral-200 dark:border-neutral-800" />
+
+                        <button
+                            type="button"
+                            onClick={(event) => {
+                                closeMenu(event.currentTarget)
+                                onDelete()
+                            }}
+                            className={`${menuItemClass} w-full text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30`}
+                        >
+                            <span aria-hidden="true">♲</span>
+                            Delete
+                        </button>
+                    </>
+                )}
+            </div>
+        </details>
     )
 }
 
@@ -370,3 +432,6 @@ function formatDate(value: string | null): string {
 
 const inputClass =
     'w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 shadow-sm outline-none focus:border-neutral-500 focus:ring-2 focus:ring-neutral-200 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:ring-neutral-800'
+
+const menuItemClass =
+    'flex items-center gap-2 px-3 py-2 text-left text-sm text-neutral-700 transition hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-900'

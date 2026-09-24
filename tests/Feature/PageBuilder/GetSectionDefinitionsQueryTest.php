@@ -2,24 +2,25 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\PageBuilder;
+namespace Tests\Feature\PageBuilder;
 
 use App\Domain\PageBuilder\Data\SectionDefinitionData;
+use App\Domain\PageBuilder\Enums\SectionType;
 use App\Domain\PageBuilder\Queries\GetSectionDefinitionsQuery;
-use App\Domain\PageBuilder\Registry\SectionRegistry;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 final class GetSectionDefinitionsQueryTest extends TestCase
 {
-    public function test_query_returns_only_registered_section_definitions(): void
+    public function test_it_returns_registered_section_definitions(): void
     {
-        $query = new GetSectionDefinitionsQuery(
-            new SectionRegistry,
+        $definitions = app(
+            GetSectionDefinitionsQuery::class,
+        )->handle();
+
+        $this->assertCount(
+            1,
+            $definitions,
         );
-
-        $definitions = $query->handle();
-
-        $this->assertCount(1, $definitions);
 
         $definition = $definitions[0];
 
@@ -29,13 +30,26 @@ final class GetSectionDefinitionsQueryTest extends TestCase
         );
 
         $this->assertSame(
-            'featured_products',
+            SectionType::FeaturedProducts->value,
             $definition->type,
         );
 
         $this->assertSame(
             'Featured Products',
             $definition->label,
+        );
+
+        $this->assertSame(
+            'grid',
+            $definition->defaultTemplate,
+        );
+
+        $this->assertSame(
+            [
+                'title' => 'Featured Products',
+                'limit' => 8,
+            ],
+            $definition->defaultConfig,
         );
 
         $this->assertCount(

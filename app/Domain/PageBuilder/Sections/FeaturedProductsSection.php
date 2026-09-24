@@ -27,7 +27,9 @@ final class FeaturedProductsSection implements SectionDefinition
         return [
             new SectionTemplateData(
                 key: 'grid',
-                label: 'Grid',
+                label: 'Product Grid',
+                description: 'Display a curated selection of featured products in a responsive grid.',
+                category: 'Products',
             ),
         ];
     }

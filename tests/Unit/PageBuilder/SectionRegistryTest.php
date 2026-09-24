@@ -93,8 +93,18 @@ final class SectionRegistryTest extends TestCase
         );
 
         $this->assertSame(
-            'Grid',
+            'Product Grid',
             $templates[0]->label,
+        );
+
+        $this->assertSame(
+            'Display a curated selection of featured products in a responsive grid.',
+            $templates[0]->description,
+        );
+
+        $this->assertSame(
+            'Products',
+            $templates[0]->category,
         );
     }
 

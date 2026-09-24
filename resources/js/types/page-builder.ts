@@ -4,6 +4,12 @@ export type PageStatus = 'draft' | 'published' | 'archived'
 
 export type PageContentMode = 'classic' | 'builder'
 
+export type JsonPrimitive = string | number | boolean | null
+
+export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue }
+
+export type SectionConfig = Record<string, JsonValue>
+
 export interface PageFormOption {
     value: string
     label: string
@@ -29,9 +35,24 @@ export interface PageSection {
     id: number
     type: string
     template: string
-    config: Record<string, unknown>
+    config: SectionConfig
     position: number
     is_enabled: boolean
+}
+
+export interface SectionTemplateDefinition {
+    key: string
+    label: string
+    description: string
+    category: string
+}
+
+export interface SectionDefinition {
+    type: string
+    label: string
+    templates: SectionTemplateDefinition[]
+    default_template: string
+    default_config: SectionConfig
 }
 
 export interface PageSeoData {
