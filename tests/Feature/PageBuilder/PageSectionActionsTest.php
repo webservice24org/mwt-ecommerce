@@ -55,6 +55,9 @@ final class PageSectionActionsTest extends TestCase
             [
                 'title' => 'Featured Products',
                 'limit' => 8,
+                'source' => [
+                    'type' => 'featured',
+                ],
             ],
             $section->config,
         );
@@ -154,12 +157,32 @@ final class PageSectionActionsTest extends TestCase
             [
                 'title' => 'Updated',
                 'limit' => 12,
+                'source' => [
+                    'type' => 'featured',
+                ],
             ],
             $updated->config,
         );
 
         $this->assertFalse(
             $updated->is_enabled,
+        );
+
+        $section->refresh();
+
+        $this->assertSame(
+            [
+                'title' => 'Updated',
+                'limit' => 12,
+                'source' => [
+                    'type' => 'featured',
+                ],
+            ],
+            $section->config,
+        );
+
+        $this->assertFalse(
+            $section->is_enabled,
         );
     }
 
@@ -233,7 +256,7 @@ final class PageSectionActionsTest extends TestCase
             'page_id' => $page->id,
         ]);
 
-        $second = PageSection::factory()->create([
+        PageSection::factory()->create([
             'page_id' => $page->id,
         ]);
 
@@ -260,7 +283,8 @@ final class PageSectionActionsTest extends TestCase
             'page_id' => $page->id,
         ]);
 
-        $otherSection = PageSection::factory()->create();
+        $otherSection =
+            PageSection::factory()->create();
 
         $this->expectException(
             DomainException::class,

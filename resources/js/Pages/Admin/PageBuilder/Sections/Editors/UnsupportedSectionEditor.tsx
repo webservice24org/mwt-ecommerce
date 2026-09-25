@@ -1,4 +1,4 @@
-import type { SectionEditorProps } from './SectionEditor'
+import type { SectionEditorProps } from '../types'
 
 export default function UnsupportedSectionEditor({ section, definition }: SectionEditorProps) {
     return (

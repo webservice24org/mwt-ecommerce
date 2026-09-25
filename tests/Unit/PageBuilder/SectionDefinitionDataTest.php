@@ -39,7 +39,11 @@ final class SectionDefinitionDataTest extends TestCase
                 'default_config' => [
                     'title' => 'Featured Products',
                     'limit' => 8,
+                    'source' => [
+                        'type' => 'featured',
+                    ],
                 ],
+
             ],
             $data->toArray(),
         );

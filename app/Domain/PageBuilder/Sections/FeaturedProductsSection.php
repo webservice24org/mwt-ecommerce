@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\PageBuilder\Sections;
 
 use App\Domain\PageBuilder\Data\SectionTemplateData;
+use App\Domain\PageBuilder\Enums\CatalogSourceType;
 use App\Domain\PageBuilder\Enums\SectionType;
 use App\Domain\PageBuilder\Sections\Contracts\SectionConfigSchema;
 use App\Domain\PageBuilder\Sections\Contracts\SectionDefinition;
@@ -44,6 +45,9 @@ final class FeaturedProductsSection implements SectionDefinition
         return [
             'title' => 'Featured Products',
             'limit' => 8,
+            'source' => [
+                'type' => CatalogSourceType::Featured->value,
+            ],
         ];
     }
 

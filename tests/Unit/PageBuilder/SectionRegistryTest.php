@@ -155,9 +155,13 @@ final class SectionRegistryTest extends TestCase
             [
                 'title' => 'Featured Products',
                 'limit' => 8,
+                'source' => [
+                    'type' => 'featured',
+                ],
             ],
             $definition->defaultConfig(),
         );
+
     }
 
     public function test_registered_section_defaults_are_valid(): void

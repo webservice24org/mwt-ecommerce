@@ -31,9 +31,13 @@ final class SectionConfigurationValidatorTest extends TestCase
             [
                 'title' => 'Featured Products',
                 'limit' => 8,
+                'source' => [
+                    'type' => 'featured',
+                ],
             ],
             $config,
         );
+
     }
 
     public function test_unregistered_section_type_is_rejected(): void

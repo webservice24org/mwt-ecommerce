@@ -113,3 +113,24 @@ export interface PaginatedPages {
     to: number | null
     links: PaginationLink[]
 }
+
+export interface CatalogSourceDefinition {
+    type: CatalogSourceType
+    label: string
+    description: string
+}
+
+export interface CatalogCategoryOption {
+    id: number
+    name: string
+    slug: string
+}
+
+export interface CatalogProductOption {
+    id: number
+    name: string
+    slug: string
+    sku: string | null
+}
+
+export type CatalogSourceType = 'featured' | 'manual' | 'category'

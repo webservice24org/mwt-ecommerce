@@ -46,8 +46,14 @@ final class GetSectionDefinitionsQueryTest extends TestCase
         $template = $definition->templates[0];
 
         $this->assertSame(
-            'grid',
-            $template->key,
+            [
+                'title' => 'Featured Products',
+                'limit' => 8,
+                'source' => [
+                    'type' => 'featured',
+                ],
+            ],
+            $definition->defaultConfig,
         );
 
         $this->assertSame(

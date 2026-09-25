@@ -48,6 +48,9 @@ final class GetSectionDefinitionsQueryTest extends TestCase
             [
                 'title' => 'Featured Products',
                 'limit' => 8,
+                'source' => [
+                    'type' => 'featured',
+                ],
             ],
             $definition->defaultConfig,
         );

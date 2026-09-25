@@ -385,6 +385,9 @@ final class PageSectionManagementTest extends TestCase
             [
                 'title' => 'Latest Products',
                 'limit' => 12,
+                'source' => [
+                    'type' => 'featured',
+                ],
             ],
             $section->config,
         );

@@ -2,7 +2,15 @@ import { router } from '@inertiajs/react'
 import { useState } from 'react'
 
 import Dialog from '@/Components/Admin/Dialog'
-import type { PageSection, SectionConfig, SectionDefinition } from '@/types/page-builder'
+import type {
+    CatalogCategoryOption,
+    CatalogProductOption,
+    CatalogSourceDefinition,
+    JsonValue,
+    PageSection,
+    SectionConfig,
+    SectionDefinition,
+} from '@/types/page-builder'
 
 import SectionEditorRenderer from '../../Sections/Editors/SectionEditorRenderer'
 import { hasSectionEditor } from '../../Sections/section-editor-registry'
@@ -12,6 +20,9 @@ interface Props {
     pageId: number
     section: PageSection | null
     sectionDefinitions: SectionDefinition[]
+    catalogSources: CatalogSourceDefinition[]
+    categoryOptions: CatalogCategoryOption[]
+    selectedProductOptions: CatalogProductOption[]
     onClose: () => void
 }
 
@@ -20,6 +31,9 @@ export default function EditSectionDialog({
     pageId,
     section,
     sectionDefinitions,
+    catalogSources,
+    categoryOptions,
+    selectedProductOptions,
     onClose,
 }: Props) {
     if (!open || section === null) {
@@ -31,6 +45,9 @@ export default function EditSectionDialog({
             pageId={pageId}
             section={section}
             sectionDefinitions={sectionDefinitions}
+            catalogSources={catalogSources}
+            categoryOptions={categoryOptions}
+            selectedProductOptions={selectedProductOptions}
             onClose={onClose}
         />
     )
@@ -40,6 +57,9 @@ interface EditSectionDialogSessionProps {
     pageId: number
     section: PageSection
     sectionDefinitions: SectionDefinition[]
+    catalogSources: CatalogSourceDefinition[]
+    categoryOptions: CatalogCategoryOption[]
+    selectedProductOptions: CatalogProductOption[]
     onClose: () => void
 }
 
@@ -47,6 +67,9 @@ function EditSectionDialogSession({
     pageId,
     section,
     sectionDefinitions,
+    catalogSources,
+    categoryOptions,
+    selectedProductOptions,
     onClose,
 }: EditSectionDialogSessionProps) {
     const [config, setConfig] = useState<SectionConfig>(() => structuredClone(section.config))
@@ -131,9 +154,13 @@ function EditSectionDialogSession({
                     <>
                         <SectionEditorRenderer
                             type={section.type}
+                            pageId={pageId}
                             section={section}
                             definition={definition}
                             value={config}
+                            catalogSources={catalogSources}
+                            categoryOptions={categoryOptions}
+                            selectedProductOptions={selectedProductOptions}
                             onChange={setConfig}
                         />
 
@@ -212,20 +239,66 @@ function formatIdentifier(value: string): string {
 }
 
 function isConfigValid(type: string, config: SectionConfig): boolean {
-    if (type === 'featured_products') {
-        const title = config.title
-        const limit = config.limit
+    if (type !== 'featured_products') {
+        return true
+    }
 
+    const title = config.title
+    const limit = config.limit
+    const source = isJsonObject(config.source)
+        ? config.source
+        : {
+              type: 'featured',
+          }
+
+    if (
+        typeof title !== 'string' ||
+        title.trim().length === 0 ||
+        title.length > 120 ||
+        typeof limit !== 'number' ||
+        !Number.isInteger(limit) ||
+        limit < 1 ||
+        limit > 24
+    ) {
+        return false
+    }
+
+    if (!isJsonObject(source)) {
+        return false
+    }
+
+    const sourceType = source.type
+
+    if (sourceType === 'featured') {
+        return true
+    }
+
+    if (sourceType === 'category') {
         return (
-            typeof title === 'string' &&
-            title.trim().length > 0 &&
-            title.length <= 120 &&
-            typeof limit === 'number' &&
-            Number.isInteger(limit) &&
-            limit >= 1 &&
-            limit <= 24
+            typeof source.category_id === 'number' &&
+            Number.isInteger(source.category_id) &&
+            source.category_id > 0
         )
     }
 
-    return true
+    if (sourceType === 'manual') {
+        const productIds = source.product_ids
+
+        return (
+            Array.isArray(productIds) &&
+            productIds.length > 0 &&
+            productIds.length <= 24 &&
+            productIds.every(
+                (productId) =>
+                    typeof productId === 'number' && Number.isInteger(productId) && productId > 0,
+            ) &&
+            new Set(productIds).size === productIds.length
+        )
+    }
+
+    return false
+}
+
+function isJsonObject(value: SectionConfig[string]): value is Record<string, JsonValue> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
