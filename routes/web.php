@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Frontend\CategoryController;
 use App\Http\Controllers\Frontend\HomeController;
+use App\Http\Controllers\Frontend\PageController as StorefrontPageController;
 use App\Http\Controllers\Frontend\ProductController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -19,6 +20,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{slug}', [ProductController::class, 'show'])->name('products.show');
 Route::get('/category/{slug}', [CategoryController::class, 'show'])->name('categories.show');
+Route::get('/pages/{slug}', StorefrontPageController::class)->name('frontend.pages.show');
 
 /*
 |--------------------------------------------------------------------------

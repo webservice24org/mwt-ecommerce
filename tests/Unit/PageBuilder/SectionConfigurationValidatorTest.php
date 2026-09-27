@@ -5,24 +5,30 @@ declare(strict_types=1);
 namespace Tests\Unit\PageBuilder;
 
 use App\Domain\PageBuilder\Enums\SectionType;
-use App\Domain\PageBuilder\Registry\SectionRegistry;
 use App\Domain\PageBuilder\Sections\Exceptions\InvalidSectionConfiguration;
 use App\Domain\PageBuilder\Services\SectionConfigurationValidator;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 final class SectionConfigurationValidatorTest extends TestCase
 {
+    private SectionConfigurationValidator $validator;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->validator = app(
+            SectionConfigurationValidator::class,
+        );
+    }
+
     public function test_registered_section_with_supported_template_is_validated(): void
     {
-        $validator = new SectionConfigurationValidator(
-            new SectionRegistry,
-        );
-
-        $config = $validator->validate(
-            SectionType::FeaturedProducts,
-            'grid',
-            [
-                'title' => ' Featured Products ',
+        $config = $this->validator->validate(
+            type: SectionType::FeaturedProducts,
+            template: 'grid',
+            config: [
+                'title' => 'Featured Products',
                 'limit' => 8,
             ],
         );
@@ -37,57 +43,34 @@ final class SectionConfigurationValidatorTest extends TestCase
             ],
             $config,
         );
-
     }
 
     public function test_unregistered_section_type_is_rejected(): void
     {
-        $validator = new SectionConfigurationValidator(
-            new SectionRegistry,
+        $this->expectException(
+            InvalidSectionConfiguration::class,
         );
 
-        try {
-            $validator->validate(
-                SectionType::Hero,
-                'grid',
-                [],
-            );
-
-            $this->fail(
-                'Expected unregistered section type to be rejected.',
-            );
-        } catch (InvalidSectionConfiguration $exception) {
-            $this->assertArrayHasKey(
-                'type',
-                $exception->errors(),
-            );
-        }
+        $this->validator->validate(
+            type: SectionType::Hero,
+            template: 'default',
+            config: [],
+        );
     }
 
     public function test_unsupported_template_is_rejected(): void
     {
-        $validator = new SectionConfigurationValidator(
-            new SectionRegistry,
+        $this->expectException(
+            InvalidSectionConfiguration::class,
         );
 
-        try {
-            $validator->validate(
-                SectionType::FeaturedProducts,
-                'carousel',
-                [
-                    'title' => 'Featured Products',
-                    'limit' => 8,
-                ],
-            );
-
-            $this->fail(
-                'Expected unsupported template to be rejected.',
-            );
-        } catch (InvalidSectionConfiguration $exception) {
-            $this->assertArrayHasKey(
-                'template',
-                $exception->errors(),
-            );
-        }
+        $this->validator->validate(
+            type: SectionType::FeaturedProducts,
+            template: 'unsupported-template',
+            config: [
+                'title' => 'Featured Products',
+                'limit' => 8,
+            ],
+        );
     }
 }
