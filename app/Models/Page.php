@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Domain\PageBuilder\Enums\PageContentMode;
+use App\Domain\PageBuilder\Enums\PageLayout;
 use App\Domain\PageBuilder\Enums\PageStatus;
 use App\Domain\PageBuilder\Enums\PageType;
 use Database\Factories\PageFactory;
@@ -17,6 +18,8 @@ use Illuminate\Support\Carbon;
 /**
  * @property int $id
  * @property PageType $type
+ * @property PageLayout $layout
+ * @property bool $show_breadcrumbs
  * @property string $title
  * @property string $slug
  * @property PageStatus $status
@@ -34,6 +37,8 @@ final class Page extends Model
 
     protected $fillable = [
         'type',
+        'layout',
+        'show_breadcrumbs',
         'title',
         'slug',
         'status',
@@ -49,6 +54,8 @@ final class Page extends Model
     {
         return [
             'type' => PageType::class,
+            'layout' => PageLayout::class,
+            'show_breadcrumbs' => 'boolean',
             'status' => PageStatus::class,
             'content_mode' => PageContentMode::class,
             'published_at' => 'datetime',

@@ -10,6 +10,7 @@ use App\Domain\PageBuilder\Actions\UpdatePageAction;
 use App\Domain\PageBuilder\Data\CreatePageData;
 use App\Domain\PageBuilder\Data\UpdatePageData;
 use App\Domain\PageBuilder\Enums\PageContentMode;
+use App\Domain\PageBuilder\Enums\PageLayout;
 use App\Domain\PageBuilder\Enums\PageStatus;
 use App\Domain\PageBuilder\Enums\PageType;
 use App\Models\Page;
@@ -27,6 +28,8 @@ final class PageActionsTest extends TestCase
             ->execute(
                 new CreatePageData(
                     type: PageType::Standard,
+                    layout: PageLayout::FullWidth,
+                    showBreadcrumbs: true,
                     title: 'About Us',
                     slug: null,
                     status: PageStatus::Draft,
@@ -43,6 +46,8 @@ final class PageActionsTest extends TestCase
             [
                 'id' => $page->id,
                 'type' => PageType::Standard->value,
+                'show_breadcrumbs' => true,
+                'layout' => PageLayout::FullWidth->value,
                 'title' => 'About Us',
                 'slug' => 'about-us',
                 'status' => PageStatus::Draft->value,
@@ -52,6 +57,15 @@ final class PageActionsTest extends TestCase
                 'meta_description' => 'About our company.',
             ],
         );
+
+        $this->assertSame(
+            PageLayout::FullWidth,
+            $page->layout,
+        );
+
+        $this->assertTrue(
+            $page->show_breadcrumbs,
+        );
     }
 
     public function test_builder_page_can_be_created(): void
@@ -60,6 +74,8 @@ final class PageActionsTest extends TestCase
             ->execute(
                 new CreatePageData(
                     type: PageType::Standard,
+                    layout: PageLayout::FullWidth,
+                    showBreadcrumbs: false,
                     title: 'Landing Page',
                     slug: 'landing-page',
                     status: PageStatus::Draft,
@@ -76,6 +92,15 @@ final class PageActionsTest extends TestCase
             $page->content_mode,
         );
 
+        $this->assertSame(
+            PageLayout::FullWidth,
+            $page->layout,
+        );
+
+        $this->assertFalse(
+            $page->show_breadcrumbs,
+        );
+
         $this->assertNull(
             $page->content,
         );
@@ -84,7 +109,9 @@ final class PageActionsTest extends TestCase
             'pages',
             [
                 'id' => $page->id,
+                'layout' => PageLayout::FullWidth->value,
                 'content_mode' => PageContentMode::Builder->value,
+                'show_breadcrumbs' => false,
                 'content' => null,
             ],
         );
@@ -101,6 +128,8 @@ final class PageActionsTest extends TestCase
             ->execute(
                 new CreatePageData(
                     type: PageType::Standard,
+                    layout: PageLayout::FullWidth,
+                    showBreadcrumbs: true,
                     title: 'About Us',
                     slug: null,
                     status: PageStatus::Draft,
@@ -129,6 +158,8 @@ final class PageActionsTest extends TestCase
     public function test_page_can_be_updated(): void
     {
         $page = Page::factory()->create([
+            'layout' => PageLayout::FullWidth,
+            'show_breadcrumbs' => true,
             'title' => 'Old Title',
             'slug' => 'old-title',
         ]);
@@ -138,6 +169,8 @@ final class PageActionsTest extends TestCase
                 $page,
                 new UpdatePageData(
                     type: PageType::Standard,
+                    layout: PageLayout::LeftSidebar,
+                    showBreadcrumbs: false,
                     title: 'New Title',
                     slug: null,
                     status: PageStatus::Published,
@@ -170,6 +203,15 @@ final class PageActionsTest extends TestCase
         );
 
         $this->assertSame(
+            PageLayout::LeftSidebar,
+            $updated->layout,
+        );
+
+        $this->assertFalse(
+            $updated->show_breadcrumbs,
+        );
+
+        $this->assertSame(
             '<p>Updated page content.</p>',
             $updated->content,
         );
@@ -177,6 +219,59 @@ final class PageActionsTest extends TestCase
         $this->assertSame(
             'New Meta Title',
             $updated->meta_title,
+        );
+
+        $this->assertDatabaseHas(
+            'pages',
+            [
+                'id' => $page->id,
+                'layout' => PageLayout::LeftSidebar->value,
+                'show_breadcrumbs' => false,
+            ],
+        );
+    }
+
+    public function test_update_without_layout_preserves_existing_layout(): void
+    {
+        $page = Page::factory()->create([
+            'layout' => PageLayout::RightSidebar,
+            'show_breadcrumbs' => false,
+        ]);
+
+        $updated = app(UpdatePageAction::class)
+            ->execute(
+                $page,
+                new UpdatePageData(
+                    type: PageType::Standard,
+                    layout: null,
+                    showBreadcrumbs: true,
+                    title: 'Existing Layout',
+                    slug: $page->slug,
+                    status: PageStatus::Draft,
+                    contentMode: PageContentMode::Classic,
+                    content: null,
+                    metaTitle: null,
+                    metaDescription: null,
+                    publishedAt: null,
+                ),
+            );
+
+        $this->assertSame(
+            PageLayout::RightSidebar,
+            $updated->layout,
+        );
+
+        $this->assertTrue(
+            $updated->show_breadcrumbs,
+        );
+
+        $this->assertDatabaseHas(
+            'pages',
+            [
+                'id' => $page->id,
+                'layout' => PageLayout::RightSidebar->value,
+                'show_breadcrumbs' => true,
+            ],
         );
     }
 
@@ -191,6 +286,8 @@ final class PageActionsTest extends TestCase
                 $page,
                 new UpdatePageData(
                     type: PageType::Standard,
+                    layout: null,
+                    showBreadcrumbs: true,
                     title: 'About Us Updated',
                     slug: 'about-us',
                     status: PageStatus::Draft,
@@ -220,6 +317,8 @@ final class PageActionsTest extends TestCase
             ->execute(
                 new CreatePageData(
                     type: PageType::Home,
+                    layout: PageLayout::FullWidth,
+                    showBreadcrumbs: true,
                     title: 'Another Home',
                     slug: 'another-home',
                     status: PageStatus::Draft,
@@ -255,6 +354,8 @@ final class PageActionsTest extends TestCase
                 $page,
                 new UpdatePageData(
                     type: PageType::Home,
+                    layout: null,
+                    showBreadcrumbs: true,
                     title: $page->title,
                     slug: $page->slug,
                     status: $page->status,
@@ -278,6 +379,8 @@ final class PageActionsTest extends TestCase
                 $page,
                 new UpdatePageData(
                     type: PageType::Home,
+                    layout: PageLayout::FullWidth,
+                    showBreadcrumbs: true,
                     title: 'Store Home',
                     slug: 'home',
                     status: PageStatus::Draft,
@@ -297,6 +400,11 @@ final class PageActionsTest extends TestCase
         $this->assertSame(
             PageContentMode::Builder,
             $updated->content_mode,
+        );
+
+        $this->assertSame(
+            PageLayout::FullWidth,
+            $updated->layout,
         );
 
         $this->assertSame(

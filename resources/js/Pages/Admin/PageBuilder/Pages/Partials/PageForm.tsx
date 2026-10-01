@@ -1,7 +1,12 @@
 import { Link } from '@inertiajs/react'
 import type { FormEvent, ReactNode } from 'react'
 
-import type { PageContentMode, PageFormOptions, PageFormValues } from '@/types/page-builder'
+import type {
+    PageContentMode,
+    PageFormOptions,
+    PageFormValues,
+    PageLayout,
+} from '@/types/page-builder'
 
 interface Props {
     data: PageFormValues
@@ -140,6 +145,18 @@ export default function PageForm({
                         </div>
                     </section>
 
+                     <PageLayoutSelector
+                        value={data.layout}
+                        error={errors.layout}
+                        onChange={(value) =>
+                            onChange(
+                                'layout',
+                                value,
+                            )
+                        }
+                    />
+                    
+
                     {data.content_mode === 'classic' ? (
                         <ClassicEditor
                             content={data.content}
@@ -241,8 +258,29 @@ export default function PageForm({
                                     className={inputClass}
                                 />
                             </Field>
+
+                            
                         </div>
+
+                        
                     </section>
+
+                    <PageDisplaySettings
+                                showBreadcrumbs={
+                                    data.show_breadcrumbs
+                                }
+                                error={
+                                    errors.show_breadcrumbs
+                                }
+                                onShowBreadcrumbsChange={(
+                                    value,
+                                ) =>
+                                    onChange(
+                                        'show_breadcrumbs',
+                                        value,
+                                    )
+                                }
+                            />
 
                     <section className={sectionClass}>
                         <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
@@ -266,6 +304,259 @@ export default function PageForm({
                 </div>
             </div>
         </form>
+    )
+}
+
+interface PageLayoutSelectorProps {
+    value: PageLayout
+    error?: string
+    onChange: (
+        value: PageLayout,
+    ) => void
+}
+
+interface PageLayoutOption {
+    value: PageLayout
+    label: string
+    description: string
+}
+
+const pageLayoutOptions:
+    PageLayoutOption[] = [
+        {
+            value: 'full_width',
+            label: 'Full Width',
+            description:
+                'Display page content without a sidebar.',
+        },
+        {
+            value: 'left_sidebar',
+            label: 'Left Sidebar',
+            description:
+                'Display a sidebar on the left and page content on the right.',
+        },
+        {
+            value: 'right_sidebar',
+            label: 'Right Sidebar',
+            description:
+                'Display page content on the left and a sidebar on the right.',
+        },
+    ]
+
+function PageLayoutSelector({
+    value,
+    error,
+    onChange,
+}: PageLayoutSelectorProps) {
+    return (
+        <section className={sectionClass}>
+            <div className="mb-5">
+                <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+                    Page Layout
+                </h2>
+
+                <p className="mt-1 text-sm leading-6 text-neutral-500 dark:text-neutral-400">
+                    Choose the overall content
+                    structure for this page.
+                    Sidebar content will be
+                    configured separately.
+                </p>
+            </div>
+
+            {error && (
+                <p className="mb-4 text-sm text-red-600">
+                    {error}
+                </p>
+            )}
+
+            <div
+                role="radiogroup"
+                aria-label="Page layout"
+                className="grid gap-4 md:grid-cols-3"
+            >
+                {pageLayoutOptions.map(
+                    (option) => {
+                        const selected =
+                            value ===
+                            option.value
+
+                        return (
+                            <label
+                                key={
+                                    option.value
+                                }
+                                className={[
+                                    'cursor-pointer rounded-xl border p-4 transition',
+                                    selected
+                                        ? 'border-neutral-900 bg-neutral-50 ring-1 ring-neutral-900 dark:border-neutral-100 dark:bg-neutral-900 dark:ring-neutral-100'
+                                        : 'border-neutral-200 bg-white hover:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:border-neutral-600',
+                                ].join(
+                                    ' ',
+                                )}
+                            >
+                                <input
+                                    type="radio"
+                                    name="layout"
+                                    value={
+                                        option.value
+                                    }
+                                    checked={
+                                        selected
+                                    }
+                                    onChange={() =>
+                                        onChange(
+                                            option.value,
+                                        )
+                                    }
+                                    className="sr-only"
+                                />
+
+                                <PageLayoutDiagram
+                                    layout={
+                                        option.value
+                                    }
+                                    selected={
+                                        selected
+                                    }
+                                />
+
+                                <span className="mt-4 block text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                                    {
+                                        option.label
+                                    }
+                                </span>
+
+                                <span className="mt-1 block text-xs leading-5 text-neutral-500 dark:text-neutral-400">
+                                    {
+                                        option.description
+                                    }
+                                </span>
+                            </label>
+                        )
+                    },
+                )}
+            </div>
+        </section>
+    )
+}
+
+function PageLayoutDiagram({
+    layout,
+    selected,
+}: {
+    layout: PageLayout
+    selected: boolean
+}) {
+    const sidebarClass = selected
+        ? 'bg-neutral-700 dark:bg-neutral-300'
+        : 'bg-neutral-300 dark:bg-neutral-700'
+
+    const contentClass = selected
+        ? 'bg-neutral-200 dark:bg-neutral-700'
+        : 'bg-neutral-100 dark:bg-neutral-800'
+
+    return (
+        <span
+            aria-hidden="true"
+            className={[
+                'flex h-20 overflow-hidden rounded-lg border p-2 transition',
+                selected
+                    ? 'border-neutral-400 bg-white dark:border-neutral-600 dark:bg-neutral-950'
+                    : 'border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900',
+            ].join(' ')}
+        >
+            {layout ===
+                'left_sidebar' && (
+                <span
+                    className={[
+                        'mr-2 w-1/4 rounded',
+                        sidebarClass,
+                    ].join(' ')}
+                />
+            )}
+
+            <span
+                className={[
+                    'min-w-0 flex-1 rounded',
+                    contentClass,
+                ].join(' ')}
+            />
+
+            {layout ===
+                'right_sidebar' && (
+                <span
+                    className={[
+                        'ml-2 w-1/4 rounded',
+                        sidebarClass,
+                    ].join(' ')}
+                />
+            )}
+        </span>
+    )
+}
+
+interface PageDisplaySettingsProps {
+    showBreadcrumbs: boolean
+    error?: string
+    onShowBreadcrumbsChange: (
+        value: boolean,
+    ) => void
+}
+
+function PageDisplaySettings({
+    showBreadcrumbs,
+    error,
+    onShowBreadcrumbsChange,
+}: PageDisplaySettingsProps) {
+    return (
+        <section className={sectionClass}>
+            <div className="mb-5">
+                <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+                    Page Display
+                </h2>
+
+                <p className="mt-1 text-sm leading-6 text-neutral-500 dark:text-neutral-400">
+                    Control optional
+                    storefront elements for
+                    this page.
+                </p>
+            </div>
+
+            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+                <input
+                    type="checkbox"
+                    checked={
+                        showBreadcrumbs
+                    }
+                    onChange={(event) =>
+                        onShowBreadcrumbsChange(
+                            event.target
+                                .checked,
+                        )
+                    }
+                    className="mt-0.5 h-4 w-4 rounded border-neutral-300"
+                />
+
+                <span>
+                    <span className="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                        Show breadcrumbs
+                    </span>
+
+                    <span className="mt-1 block text-xs leading-5 text-neutral-500 dark:text-neutral-400">
+                        Display the
+                        breadcrumb navigation
+                        above this page on the
+                        storefront.
+                    </span>
+                </span>
+            </label>
+
+            {error && (
+                <p className="mt-2 text-sm text-red-600">
+                    {error}
+                </p>
+            )}
+        </section>
     )
 }
 

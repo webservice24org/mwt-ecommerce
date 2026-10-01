@@ -1,12 +1,6 @@
 import ProductGrid from '@/Components/Frontend/Catalog/ProductGrid'
-import type {
-    StorefrontFeaturedProductsSectionData,
-    StorefrontResolvedSection,
-} from '@/types/storefront-page'
-
-interface Props {
-    section: StorefrontResolvedSection
-}
+import type { StorefrontSectionProps } from '@/Components/Frontend/PageBuilder/types'
+import type { StorefrontFeaturedProductsSectionData } from '@/types/storefront-page'
 
 function isFeaturedProductsData(
     data: Record<string, unknown>,
@@ -20,7 +14,7 @@ function getSectionTitle(config: Record<string, unknown>): string {
     return typeof title === 'string' && title.trim() !== '' ? title : 'Featured Products'
 }
 
-export default function FeaturedProductsSection({ section }: Props) {
+export default function FeaturedProductsSection({ section }: StorefrontSectionProps) {
     if (!isFeaturedProductsData(section.data)) {
         return null
     }

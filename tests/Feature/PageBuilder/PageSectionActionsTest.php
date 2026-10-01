@@ -10,8 +10,10 @@ use App\Domain\PageBuilder\Actions\ReorderPageSectionsAction;
 use App\Domain\PageBuilder\Actions\UpdatePageSectionAction;
 use App\Domain\PageBuilder\Data\CreatePageSectionData;
 use App\Domain\PageBuilder\Data\ReorderPageSectionsData;
+use App\Domain\PageBuilder\Data\SectionLayoutData;
 use App\Domain\PageBuilder\Data\UpdatePageSectionData;
 use App\Domain\PageBuilder\Enums\SectionType;
+use App\Domain\PageBuilder\Enums\SectionWidth;
 use App\Domain\PageBuilder\Sections\Exceptions\InvalidSectionConfiguration;
 use App\Models\Page;
 use App\Models\PageSection;
@@ -38,6 +40,7 @@ final class PageSectionActionsTest extends TestCase
                     'title' => ' Featured Products ',
                     'limit' => 8,
                 ],
+                layout: SectionLayoutData::default(),
             ),
         );
 
@@ -63,8 +66,25 @@ final class PageSectionActionsTest extends TestCase
         );
 
         $this->assertSame(
+            [
+                'width' => 'container',
+            ],
+            $section->layout,
+        );
+
+        $this->assertSame(
             10,
             $section->position,
+        );
+
+        $this->assertDatabaseHas(
+            'page_sections',
+            [
+                'id' => $section->id,
+                'layout' => json_encode([
+                    'width' => 'container',
+                ]),
+            ],
         );
     }
 
@@ -113,6 +133,7 @@ final class PageSectionActionsTest extends TestCase
                         'title' => 'Featured Products',
                         'limit' => 999,
                     ],
+                    layout: SectionLayoutData::default(),
                 ),
             );
 
@@ -136,7 +157,11 @@ final class PageSectionActionsTest extends TestCase
 
     public function test_section_can_be_updated(): void
     {
-        $section = PageSection::factory()->create();
+        $section = PageSection::factory()->create([
+            'layout' => [
+                'width' => 'container',
+            ],
+        ]);
 
         $updated = app(
             UpdatePageSectionAction::class,
@@ -149,6 +174,9 @@ final class PageSectionActionsTest extends TestCase
                     'title' => ' Updated ',
                     'limit' => 12,
                 ],
+                layout: new SectionLayoutData(
+                    width: SectionWidth::Full,
+                ),
                 isEnabled: false,
             ),
         );
@@ -162,6 +190,13 @@ final class PageSectionActionsTest extends TestCase
                 ],
             ],
             $updated->config,
+        );
+
+        $this->assertSame(
+            [
+                'width' => 'full',
+            ],
+            $updated->layout,
         );
 
         $this->assertFalse(
@@ -181,8 +216,45 @@ final class PageSectionActionsTest extends TestCase
             $section->config,
         );
 
+        $this->assertSame(
+            [
+                'width' => 'full',
+            ],
+            $section->layout,
+        );
+
         $this->assertFalse(
             $section->is_enabled,
+        );
+    }
+
+    public function test_legacy_null_layout_is_normalized_when_section_is_updated(): void
+    {
+        $section = PageSection::factory()->create([
+            'layout' => null,
+        ]);
+
+        $updated = app(
+            UpdatePageSectionAction::class,
+        )->execute(
+            $section,
+            new UpdatePageSectionData(
+                type: SectionType::FeaturedProducts,
+                template: 'grid',
+                config: [
+                    'title' => 'Featured Products',
+                    'limit' => 8,
+                ],
+                layout: SectionLayoutData::default(),
+                isEnabled: true,
+            ),
+        );
+
+        $this->assertSame(
+            [
+                'width' => 'container',
+            ],
+            $updated->layout,
         );
     }
 
@@ -310,6 +382,7 @@ final class PageSectionActionsTest extends TestCase
                 'title' => 'Featured Products',
                 'limit' => 8,
             ],
+            layout: SectionLayoutData::default(),
         );
     }
 }

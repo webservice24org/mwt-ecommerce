@@ -9,6 +9,9 @@ use App\Domain\PageBuilder\Enums\SectionType;
 use App\Models\Page;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use App\Domain\PageBuilder\Enums\SectionWidth;
+use App\Domain\PageBuilder\Data\SectionLayoutData;
+
 
 final class UpdatePageSectionRequest extends FormRequest
 {
@@ -46,21 +49,50 @@ final class UpdatePageSectionRequest extends FormRequest
                 'required',
                 'boolean',
             ],
+
+            'layout' => [
+                'sometimes',
+                'array',
+            ],
+
+            'layout.width' => [
+                'sometimes',
+                'string',
+                Rule::enum(
+                    SectionWidth::class,
+                ),
+            ],
         ];
     }
 
     public function toData(): UpdatePageSectionData
     {
+        $validated = $this->validated();
+
         /** @var array<string, mixed> $config */
-        $config = $this->validated('config');
+        $config = $validated['config'];
+
+        $layout = isset($validated['layout'])
+            && is_array($validated['layout'])
+                ? $validated['layout']
+                : null;
 
         return new UpdatePageSectionData(
             type: SectionType::from(
-                $this->string('type')->toString(),
+                (string) $validated['type'],
             ),
-            template: $this->string('template')->toString(),
+            template:
+                (string) $validated['template'],
             config: $config,
-            isEnabled: $this->boolean('is_enabled'),
+            layout:
+                SectionLayoutData::fromArray(
+                    $layout,
+                ),
+            isEnabled:
+                (bool) $validated[
+                    'is_enabled'
+                ],
         );
     }
+
 }

@@ -9,8 +9,14 @@ use App\Domain\PageBuilder\Sections\Contracts\SectionDefinition;
 final readonly class SectionDefinitionData
 {
     /**
-     * @param  list<SectionTemplateData>  $templates
+     * @param  list<array{
+     *     key: string,
+     *     label: string,
+     *     description: string,
+     *     category: string
+     * }>  $templates
      * @param  array<string, mixed>  $defaultConfig
+     * @param  array<string, array<string, mixed>>  $templateDefaultConfigs
      */
     public function __construct(
         public string $type,
@@ -18,17 +24,33 @@ final readonly class SectionDefinitionData
         public array $templates,
         public string $defaultTemplate,
         public array $defaultConfig,
+        public array $templateDefaultConfigs,
     ) {}
 
     public static function fromDefinition(
         SectionDefinition $definition,
     ): self {
+        $templates = array_map(
+            static fn ($template): array => $template->toArray(),
+            $definition->templates(),
+        );
+
+        $templateDefaultConfigs = [];
+
+        foreach ($definition->templates() as $template) {
+            $templateDefaultConfigs[$template->key] =
+                $definition->defaultConfigForTemplate(
+                    $template->key,
+                );
+        }
+
         return new self(
             type: $definition->type()->value,
             label: $definition->label(),
-            templates: $definition->templates(),
+            templates: $templates,
             defaultTemplate: $definition->defaultTemplate(),
             defaultConfig: $definition->defaultConfig(),
+            templateDefaultConfigs: $templateDefaultConfigs,
         );
     }
 
@@ -38,10 +60,13 @@ final readonly class SectionDefinitionData
      *     label: string,
      *     templates: list<array{
      *         key: string,
-     *         label: string
+     *         label: string,
+     *         description: string,
+     *         category: string
      *     }>,
      *     default_template: string,
-     *     default_config: array<string, mixed>
+     *     default_config: array<string, mixed>,
+     *     template_default_configs: array<string, array<string, mixed>>
      * }
      */
     public function toArray(): array
@@ -49,12 +74,10 @@ final readonly class SectionDefinitionData
         return [
             'type' => $this->type,
             'label' => $this->label,
-            'templates' => array_map(
-                static fn (SectionTemplateData $template): array => $template->toArray(),
-                $this->templates,
-            ),
+            'templates' => $this->templates,
             'default_template' => $this->defaultTemplate,
             'default_config' => $this->defaultConfig,
+            'template_default_configs' => $this->templateDefaultConfigs,
         ];
     }
 }

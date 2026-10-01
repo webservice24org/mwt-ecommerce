@@ -9,6 +9,8 @@ use App\Domain\PageBuilder\Enums\SectionType;
 use App\Models\Page;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use App\Domain\PageBuilder\Enums\SectionWidth;
+use App\Domain\PageBuilder\Data\SectionLayoutData;
 
 final class StorePageSectionRequest extends FormRequest
 {
@@ -47,6 +49,19 @@ final class StorePageSectionRequest extends FormRequest
                 'sometimes',
                 'boolean',
             ],
+
+            'layout' => [
+                'sometimes',
+                'array',
+            ],
+
+            'layout.width' => [
+                'sometimes',
+                'string',
+                Rule::enum(
+                    SectionWidth::class,
+                ),
+            ],
         ];
     }
 
@@ -57,13 +72,27 @@ final class StorePageSectionRequest extends FormRequest
         /** @var array<string, mixed> $config */
         $config = $validated['config'];
 
+        $layout = isset($validated['layout'])
+            && is_array($validated['layout'])
+                ? $validated['layout']
+                : null;
+
         return new CreatePageSectionData(
             type: SectionType::from(
                 (string) $validated['type'],
             ),
-            template: (string) $validated['template'],
+            template:
+                (string) $validated['template'],
             config: $config,
-            isEnabled: (bool) ($validated['is_enabled'] ?? true),
+            layout:
+                SectionLayoutData::fromArray(
+                    $layout,
+                ),
+            isEnabled:
+                (bool) (
+                    $validated['is_enabled']
+                    ?? true
+                ),
         );
     }
 }

@@ -17,6 +17,7 @@ final readonly class ResolvedPageSectionData
         public SectionType $type,
         public string $template,
         public array $config,
+        public SectionLayoutData $layout,
         public array $data,
     ) {}
 
@@ -26,17 +27,27 @@ final readonly class ResolvedPageSectionData
      *     type: string,
      *     template: string,
      *     config: array<string, mixed>,
+     *     layout: array{
+     *         width: string
+     *     },
      *     data: array<string, mixed>
      * }
      */
     public function toArray(): array
     {
         return [
-            'id' => $this->id,
-            'type' => $this->type->value,
-            'template' => $this->template,
-            'config' => $this->config,
-            'data' => $this->data,
+            'id' =>
+                $this->id,
+            'type' =>
+                $this->type->value,
+            'template' =>
+                $this->template,
+            'config' =>
+                $this->config,
+            'layout' =>
+                $this->layout->toArray(),
+            'data' =>
+                $this->data,
         ];
     }
 }

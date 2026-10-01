@@ -26,6 +26,8 @@ final class PageDataFactory
             id: $page->id,
             type: $page->type,
             title: $page->title,
+            layout: $page->layout,
+            showBreadcrumbs: $page->show_breadcrumbs,
             slug: $page->slug,
             status: $page->status,
             contentMode: $page->content_mode,

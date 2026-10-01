@@ -20,8 +20,27 @@ export default function Dialog({
 }: Props) {
     const titleId = useId()
     const descriptionId = useId()
-    const dialogRef = useRef<HTMLDivElement>(null)
 
+    const dialogRef = useRef<HTMLDivElement>(null)
+    const onCloseRef = useRef(onClose)
+
+    /*
+     * Keep the latest onClose callback available without making the
+     * focus-management effect depend on the callback identity.
+     */
+    useEffect(() => {
+        onCloseRef.current = onClose
+    }, [onClose])
+
+    /*
+     * Dialog lifecycle.
+     *
+     * This effect intentionally depends only on `open`.
+     *
+     * Previously, `onClose` was also a dependency. If a parent supplied
+     * a new callback during an editor update, this effect ran again and
+     * focused the dialog container, stealing focus from the active input.
+     */
     useEffect(() => {
         if (!open) {
             return
@@ -32,21 +51,24 @@ export default function Dialog({
 
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
-                onClose()
+                onCloseRef.current()
             }
         }
 
         document.addEventListener('keydown', handleKeyDown)
 
-        requestAnimationFrame(() => {
+        const animationFrame = window.requestAnimationFrame(() => {
             dialogRef.current?.focus()
         })
 
         return () => {
+            window.cancelAnimationFrame(animationFrame)
+
             document.removeEventListener('keydown', handleKeyDown)
+
             previousActiveElement?.focus()
         }
-    }, [open, onClose])
+    }, [open])
 
     if (!open) {
         return null

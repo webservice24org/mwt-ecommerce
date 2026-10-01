@@ -7,7 +7,9 @@ namespace Tests\Unit\PageBuilder;
 use App\Domain\PageBuilder\Data\PageData;
 use App\Domain\PageBuilder\Data\PageSectionData;
 use App\Domain\PageBuilder\Data\PageSeoData;
+use App\Domain\PageBuilder\Data\SectionLayoutData;
 use App\Domain\PageBuilder\Enums\PageContentMode;
+use App\Domain\PageBuilder\Enums\PageLayout;
 use App\Domain\PageBuilder\Enums\PageStatus;
 use App\Domain\PageBuilder\Enums\PageType;
 use App\Domain\PageBuilder\Enums\SectionType;
@@ -26,6 +28,7 @@ final class PageBuilderDataTest extends TestCase
                 'title' => 'Featured Products',
                 'limit' => 8,
             ],
+            layout: SectionLayoutData::default(),
             position: 20,
             isEnabled: true,
         );
@@ -38,6 +41,9 @@ final class PageBuilderDataTest extends TestCase
                 'config' => [
                     'title' => 'Featured Products',
                     'limit' => 8,
+                ],
+                'layout' => [
+                    'width' => 'container',
                 ],
                 'position' => 20,
                 'is_enabled' => true,
@@ -60,6 +66,7 @@ final class PageBuilderDataTest extends TestCase
                 'title' => 'Featured Products',
                 'limit' => 8,
             ],
+            layout: SectionLayoutData::default(),
             position: 0,
             isEnabled: true,
         );
@@ -67,6 +74,8 @@ final class PageBuilderDataTest extends TestCase
         $data = new PageData(
             id: 1,
             type: PageType::Home,
+            layout: PageLayout::LeftSidebar,
+            showBreadcrumbs: false,
             title: 'Home',
             slug: 'home',
             status: PageStatus::Published,
@@ -83,9 +92,29 @@ final class PageBuilderDataTest extends TestCase
 
         $payload = $data->toArray();
 
-        $this->assertSame(1, $payload['id']);
-        $this->assertSame('home', $payload['type']);
-        $this->assertSame('published', $payload['status']);
+        $this->assertSame(
+            1,
+            $payload['id'],
+        );
+
+        $this->assertSame(
+            'home',
+            $payload['type'],
+        );
+
+        $this->assertSame(
+            'left_sidebar',
+            $payload['layout'],
+        );
+
+        $this->assertFalse(
+            $payload['show_breadcrumbs'],
+        );
+
+        $this->assertSame(
+            'published',
+            $payload['status'],
+        );
 
         $this->assertSame(
             'classic',
@@ -123,6 +152,13 @@ final class PageBuilderDataTest extends TestCase
             'featured_products',
             $payload['sections'][0]['type'],
         );
+
+        $this->assertSame(
+            [
+                'width' => 'container',
+            ],
+            $payload['sections'][0]['layout'],
+        );
     }
 
     public function test_new_page_contract_can_exist_without_database_identity(): void
@@ -130,6 +166,8 @@ final class PageBuilderDataTest extends TestCase
         $data = new PageData(
             id: null,
             type: PageType::Standard,
+            layout: PageLayout::FullWidth,
+            showBreadcrumbs: true,
             title: 'About Us',
             slug: 'about-us',
             status: PageStatus::Draft,
@@ -145,14 +183,39 @@ final class PageBuilderDataTest extends TestCase
 
         $payload = $data->toArray();
 
-        $this->assertNull($payload['id']);
+        $this->assertNull(
+            $payload['id'],
+        );
+
+        $this->assertSame(
+            'full_width',
+            $payload['layout'],
+        );
+
+        $this->assertTrue(
+            $payload['show_breadcrumbs'],
+        );
+
         $this->assertSame(
             'classic',
             $payload['content_mode'],
         );
-        $this->assertNull($payload['content']);
-        $this->assertNull($payload['featured_image']);
-        $this->assertNull($payload['published_at']);
-        $this->assertSame([], $payload['sections']);
+
+        $this->assertNull(
+            $payload['content'],
+        );
+
+        $this->assertNull(
+            $payload['featured_image'],
+        );
+
+        $this->assertNull(
+            $payload['published_at'],
+        );
+
+        $this->assertSame(
+            [],
+            $payload['sections'],
+        );
     }
 }

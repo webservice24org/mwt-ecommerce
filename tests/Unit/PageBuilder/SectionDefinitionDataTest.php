@@ -44,8 +44,77 @@ final class SectionDefinitionDataTest extends TestCase
                     ],
                 ],
 
+                'template_default_configs' => [
+                    'grid' => [
+                        'title' => 'Featured Products',
+                        'limit' => 8,
+                        'source' => [
+                            'type' => 'featured',
+                        ],
+                    ],
+                ],
+
             ],
             $data->toArray(),
+        );
+    }
+
+    public function test_hero_definition_exposes_defaults_for_every_template(): void
+    {
+        $registry = new SectionRegistry;
+
+        $definition = $registry->get(
+            SectionType::Hero,
+        );
+
+        $data = SectionDefinitionData::fromDefinition(
+            $definition,
+        )->toArray();
+
+        $this->assertSame(
+            'content_slider',
+            $data['default_template'],
+        );
+
+        $this->assertArrayHasKey(
+            'content_slider',
+            $data['template_default_configs'],
+        );
+
+        $this->assertArrayHasKey(
+            'image_slider',
+            $data['template_default_configs'],
+        );
+
+        $this->assertArrayHasKey(
+            'static',
+            $data['template_default_configs'],
+        );
+
+        $this->assertSame(
+            $definition->defaultConfigForTemplate(
+                'content_slider',
+            ),
+            $data['template_default_configs']['content_slider'],
+        );
+
+        $this->assertSame(
+            $definition->defaultConfigForTemplate(
+                'image_slider',
+            ),
+            $data['template_default_configs']['image_slider'],
+        );
+
+        $this->assertSame(
+            $definition->defaultConfigForTemplate(
+                'static',
+            ),
+            $data['template_default_configs']['static'],
+        );
+
+        $this->assertSame(
+            $data['template_default_configs']['content_slider'],
+            $data['default_config'],
         );
     }
 }

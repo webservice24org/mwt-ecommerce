@@ -158,4 +158,62 @@ final class PageSectionResolverTest extends TestCase
             $data,
         );
     }
+
+    public function test_hero_section_is_resolved_without_external_data(): void
+    {
+        $section = new PageSection([
+            'type' => SectionType::Hero,
+            'template' => 'static',
+            'config' => [
+                'autoplay' => false,
+                'autoplay_delay' => 5000,
+                'effect' => 'fade',
+                'show_arrows' => false,
+                'show_dots' => false,
+                'slides' => [
+                    [
+                        'background_color' => '#ffffff',
+                        'background_image' => null,
+                        'top_title' => 'Welcome',
+                        'title' => 'Our Store',
+                        'description' => 'Discover our latest products.',
+                        'alignment' => 'center',
+                        'primary_button' => null,
+                        'secondary_button' => null,
+                    ],
+                ],
+            ],
+        ]);
+
+        $section->id = 123;
+
+        $resolved = app(
+            PageSectionResolver::class,
+        )->resolve($section);
+
+        $this->assertSame(
+            123,
+            $resolved->id,
+        );
+
+        $this->assertSame(
+            SectionType::Hero,
+            $resolved->type,
+        );
+
+        $this->assertSame(
+            'static',
+            $resolved->template,
+        );
+
+        $this->assertSame(
+            $section->config,
+            $resolved->config,
+        );
+
+        $this->assertSame(
+            [],
+            $resolved->data,
+        );
+    }
 }

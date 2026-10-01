@@ -30,10 +30,13 @@ final readonly class UpdatePageSectionAction
                     ->lockForUpdate()
                     ->firstOrFail();
 
-                $lockedSection = PageSection::query()
-                    ->whereKey($section->id)
-                    ->lockForUpdate()
-                    ->firstOrFail();
+                $lockedSection =
+                    PageSection::query()
+                        ->whereKey(
+                            $section->id,
+                        )
+                        ->lockForUpdate()
+                        ->firstOrFail();
 
                 $config = $this->validator->validate(
                     type: $data->type,
@@ -45,7 +48,10 @@ final readonly class UpdatePageSectionAction
                     'type' => $data->type,
                     'template' => $data->template,
                     'config' => $config,
-                    'is_enabled' => $data->isEnabled,
+                    'layout' =>
+                        $data->layout->toArray(),
+                    'is_enabled' =>
+                        $data->isEnabled,
                 ]);
 
                 return $lockedSection->refresh();

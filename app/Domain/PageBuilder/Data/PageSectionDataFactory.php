@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 namespace App\Domain\PageBuilder\Data;
+use App\Domain\PageBuilder\Data\SectionLayoutData;
 
 use App\Models\PageSection;
 
@@ -15,6 +16,10 @@ final class PageSectionDataFactory
             type: $section->type,
             template: $section->template,
             config: $section->config,
+            layout:
+                SectionLayoutData::fromArray(
+                    $section->layout,
+                ),
             position: $section->position,
             isEnabled: $section->is_enabled,
         );

@@ -44,8 +44,9 @@ final readonly class UpdatePageAction
                     ignoreId: $lockedPage->id,
                 );
 
-                $lockedPage->update([
+                $attributes = [
                     'type' => $data->type,
+                    'show_breadcrumbs' => $data->showBreadcrumbs,
                     'title' => $data->title,
                     'slug' => $slug,
                     'status' => $data->status,
@@ -54,7 +55,16 @@ final readonly class UpdatePageAction
                     'meta_title' => $data->metaTitle,
                     'meta_description' => $data->metaDescription,
                     'published_at' => $data->publishedAt,
-                ]);
+                ];
+
+                if ($data->layout !== null) {
+                    $attributes['layout'] =
+                        $data->layout;
+                }
+
+                $lockedPage->update(
+                    $attributes,
+                );
 
                 return $lockedPage->refresh();
             },

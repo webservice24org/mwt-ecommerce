@@ -12,6 +12,7 @@ use App\Models\Page;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use App\Domain\PageBuilder\Enums\PageLayout;
 
 final class UpdatePageRequest extends FormRequest
 {
@@ -59,6 +60,19 @@ final class UpdatePageRequest extends FormRequest
             'content_mode' => [
                 'required',
                 Rule::enum(PageContentMode::class),
+            ],
+
+            'layout' => [
+                'sometimes',
+                'string',
+                Rule::enum(
+                    PageLayout::class,
+                ),
+            ],
+
+            'show_breadcrumbs' => [
+                'sometimes',
+                'boolean',
             ],
 
             'content' => [
@@ -117,11 +131,30 @@ final class UpdatePageRequest extends FormRequest
     public function toData(): UpdatePageData
     {
         $validated = $this->validated();
+        $page = $this->route('page');
+
+        if (! $page instanceof Page) {
+            abort(404);
+        }
 
         return new UpdatePageData(
             type: PageType::from(
                 (string) $validated['type'],
             ),
+
+            layout: isset($validated['layout'])
+                ? PageLayout::from(
+                    (string) $validated['layout'],
+                )
+                : null,
+
+            showBreadcrumbs: array_key_exists(
+                'show_breadcrumbs',
+                $validated,
+            )
+                ? (bool) $validated['show_breadcrumbs']
+                : $page->show_breadcrumbs,
+            
 
             title: (string) $validated['title'],
 

@@ -35,6 +35,8 @@ final readonly class CreatePageAction
 
                 return Page::query()->create([
                     'type' => $data->type,
+                    'layout' => $data->layout,
+                    'show_breadcrumbs' => $data->showBreadcrumbs,
                     'title' => $data->title,
                     'slug' => $slug,
                     'status' => $data->status,

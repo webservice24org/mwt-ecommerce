@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\PageBuilder\Data;
 
 use App\Domain\PageBuilder\Enums\SectionType;
+use App\Domain\PageBuilder\Data\SectionLayoutData;
 
 final readonly class UpdatePageSectionData
 {
@@ -15,6 +16,7 @@ final readonly class UpdatePageSectionData
         public SectionType $type,
         public string $template,
         public array $config,
+        public SectionLayoutData $layout,
         public bool $isEnabled,
     ) {}
 }

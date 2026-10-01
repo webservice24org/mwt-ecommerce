@@ -1,26 +1,32 @@
-import FeaturedProductsSection from '@/Components/Frontend/PageBuilder/Sections/FeaturedProductsSection'
-import type { StorefrontResolvedSection } from '@/types/storefront-page'
+import StorefrontSectionLayout from '@/Components/Frontend/PageBuilder/StorefrontSectionLayout'
+import {
+    renderStorefrontSection,
+} from '@/Components/Frontend/PageBuilder/storefrontSectionRegistry'
+import type {
+    StorefrontResolvedSection,
+} from '@/types/storefront-page'
 
 interface Props {
     section: StorefrontResolvedSection
 }
 
-export default function StorefrontSectionRenderer({ section }: Props) {
-    switch (section.type) {
-        case 'featured_products':
-            return renderFeaturedProducts(section)
+export default function StorefrontSectionRenderer({
+    section,
+}: Props) {
+    const content =
+        renderStorefrontSection({
+            section,
+        })
 
-        default:
-            return null
+    if (content === null) {
+        return null
     }
-}
 
-function renderFeaturedProducts(section: StorefrontResolvedSection) {
-    switch (section.template) {
-        case 'grid':
-            return <FeaturedProductsSection section={section} />
-
-        default:
-            return null
-    }
+    return (
+        <StorefrontSectionLayout
+            layout={section.layout}
+        >
+            {content}
+        </StorefrontSectionLayout>
+    )
 }

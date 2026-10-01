@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\PageBuilder\Data;
 
 use App\Domain\PageBuilder\Enums\PageContentMode;
+use App\Domain\PageBuilder\Enums\PageLayout;
 use App\Domain\PageBuilder\Enums\PageStatus;
 use App\Domain\PageBuilder\Enums\PageType;
 use Carbon\CarbonInterface;
@@ -17,6 +18,8 @@ final readonly class PageData
     public function __construct(
         public ?int $id,
         public PageType $type,
+        public PageLayout $layout,
+        public bool $showBreadcrumbs,
         public string $title,
         public string $slug,
         public PageStatus $status,
@@ -32,6 +35,8 @@ final readonly class PageData
      * @return array{
      *     id: int|null,
      *     type: string,
+     *     layout: string,
+     *     show_breadcrumbs: bool,
      *     title: string,
      *     slug: string,
      *     status: string,
@@ -48,6 +53,9 @@ final readonly class PageData
      *         type: string,
      *         template: string,
      *         config: array<string, mixed>,
+     *         layout: array{
+     *             width: string
+     *         },
      *         position: int,
      *         is_enabled: bool
      *     }>
@@ -58,6 +66,8 @@ final readonly class PageData
         return [
             'id' => $this->id,
             'type' => $this->type->value,
+            'layout' => $this->layout->value,
+            'show_breadcrumbs' => $this->showBreadcrumbs,
             'title' => $this->title,
             'slug' => $this->slug,
             'status' => $this->status->value,

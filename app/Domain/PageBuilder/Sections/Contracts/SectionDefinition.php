@@ -14,7 +14,7 @@ interface SectionDefinition
     public function label(): string;
 
     /**
-     * @return list<SectionTemplateData>
+     * @return array<int, SectionTemplateData>
      */
     public function templates(): array;
 
@@ -24,6 +24,13 @@ interface SectionDefinition
      * @return array<string, mixed>
      */
     public function defaultConfig(): array;
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function defaultConfigForTemplate(
+        string $template,
+    ): array;
 
     public function configSchema(): SectionConfigSchema;
 }

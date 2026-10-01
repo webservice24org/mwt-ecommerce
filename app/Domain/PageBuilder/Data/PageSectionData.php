@@ -16,6 +16,7 @@ final readonly class PageSectionData
         public SectionType $type,
         public string $template,
         public array $config,
+        public SectionLayoutData $layout,
         public int $position,
         public bool $isEnabled,
     ) {}
@@ -26,6 +27,9 @@ final readonly class PageSectionData
      *     type: string,
      *     template: string,
      *     config: array<string, mixed>,
+     *     layout: array{
+     *         width: string
+     *     },
      *     position: int,
      *     is_enabled: bool
      * }
@@ -35,10 +39,16 @@ final readonly class PageSectionData
         return [
             'id' => $this->id,
             'type' => $this->type->value,
-            'template' => $this->template,
-            'config' => $this->config,
-            'position' => $this->position,
-            'is_enabled' => $this->isEnabled,
+            'template' =>
+                $this->template,
+            'config' =>
+                $this->config,
+            'layout' =>
+                $this->layout->toArray(),
+            'position' =>
+                $this->position,
+            'is_enabled' =>
+                $this->isEnabled,
         ];
     }
 }

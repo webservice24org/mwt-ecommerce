@@ -55,4 +55,22 @@ final class FeaturedProductsSection implements SectionDefinition
     {
         return new FeaturedProductsConfigSchema;
     }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function defaultConfigForTemplate(
+        string $template,
+    ): array {
+        if ($template !== 'grid') {
+            throw new \InvalidArgumentException(
+                \sprintf(
+                    'Unsupported Featured Products template [%s].',
+                    $template,
+                ),
+            );
+        }
+
+        return $this->defaultConfig();
+    }
 }

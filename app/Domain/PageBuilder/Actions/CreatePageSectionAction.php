@@ -39,13 +39,17 @@ final readonly class CreatePageSectionAction
                 );
 
                 $position = $this->positions
-                    ->nextPosition($lockedPage);
+                    ->nextPosition(
+                        $lockedPage,
+                    );
 
                 return PageSection::query()->create([
                     'page_id' => $lockedPage->id,
                     'type' => $data->type,
                     'template' => $data->template,
                     'config' => $config,
+                    'layout' =>
+                        $data->layout->toArray(),
                     'position' => $position,
                     'is_enabled' => $data->isEnabled,
                 ]);

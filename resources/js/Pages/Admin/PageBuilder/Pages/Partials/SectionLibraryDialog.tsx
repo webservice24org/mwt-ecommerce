@@ -40,7 +40,10 @@ export default function SectionLibraryDialog({ open, pageId, sectionDefinitions,
                     templateLabel: template.label,
                     description: template.description,
                     category: template.category,
-                    defaultConfig: definition.default_config,
+
+                    defaultConfig:
+                        definition.template_default_configs[template.key] ??
+                        definition.default_config,
                 })),
             ),
         [sectionDefinitions],

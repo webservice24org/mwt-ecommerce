@@ -6,6 +6,7 @@ namespace Tests\Feature\Admin;
 
 use App\Domain\Auth\Admin\Enums\AdminRole;
 use App\Domain\PageBuilder\Enums\PageContentMode;
+use App\Domain\PageBuilder\Enums\PageLayout;
 use App\Domain\PageBuilder\Enums\PageStatus;
 use App\Domain\PageBuilder\Enums\PageType;
 use App\Domain\PageBuilder\Enums\SectionType;
@@ -43,6 +44,8 @@ final class PageManagementTest extends TestCase
                 route('admin.pages.store'),
                 [
                     'type' => PageType::Standard->value,
+                    'layout' => PageLayout::LeftSidebar->value,
+                    'show_breadcrumbs' => false,
                     'title' => 'About Us',
                     'slug' => '',
                     'status' => PageStatus::Draft->value,
@@ -83,10 +86,21 @@ final class PageManagementTest extends TestCase
             $page->content,
         );
 
+        $this->assertSame(
+            PageLayout::LeftSidebar,
+            $page->layout,
+        );
+
+        $this->assertFalse(
+            $page->show_breadcrumbs,
+        );
+
         $this->assertDatabaseHas(
             'pages',
             [
                 'id' => $page->id,
+                'layout' => PageLayout::LeftSidebar->value,
+                'show_breadcrumbs' => false,
                 'content_mode' => PageContentMode::Classic->value,
                 'content' => '<p>About our company.</p>',
             ],
@@ -100,6 +114,8 @@ final class PageManagementTest extends TestCase
         ]);
 
         $page = Page::factory()->create([
+            'layout' => PageLayout::RightSidebar,
+            'show_breadcrumbs' => false,
             'content_mode' => PageContentMode::Builder,
         ]);
 
@@ -125,6 +141,14 @@ final class PageManagementTest extends TestCase
                         'page.content_mode',
                         PageContentMode::Builder->value,
                     )
+                    ->where(
+                        'page.layout',
+                        PageLayout::RightSidebar->value,
+                    )
+                    ->where(
+                        'page.show_breadcrumbs',
+                        false,
+                    )
                     ->missing(
                         'sectionDefinitions',
                     ),
@@ -148,6 +172,8 @@ final class PageManagementTest extends TestCase
                 ),
                 [
                     'type' => PageType::Standard->value,
+                    'layout' => PageLayout::RightSidebar->value,
+                    'show_breadcrumbs' => false,
                     'title' => 'Updated Page',
                     'slug' => 'updated-page',
                     'status' => PageStatus::Draft->value,
@@ -164,6 +190,8 @@ final class PageManagementTest extends TestCase
             'pages',
             [
                 'id' => $page->id,
+                'layout' => PageLayout::RightSidebar->value,
+                'show_breadcrumbs' => false,
                 'title' => 'Updated Page',
                 'slug' => 'updated-page',
                 'content_mode' => PageContentMode::Classic->value,
@@ -238,6 +266,7 @@ final class PageManagementTest extends TestCase
                 route('admin.pages.store'),
                 [
                     'type' => 'invalid-type',
+                    'layout' => 'invalid-layout',
                     'title' => '',
                     'status' => 'invalid-status',
                     'content_mode' => 'invalid-content-mode',
@@ -245,6 +274,7 @@ final class PageManagementTest extends TestCase
             )
             ->assertSessionHasErrors([
                 'type',
+                'layout',
                 'title',
                 'status',
                 'content_mode',
@@ -253,6 +283,37 @@ final class PageManagementTest extends TestCase
         $this->assertDatabaseCount(
             'pages',
             0,
+        );
+    }
+
+    public function test_invalid_breadcrumb_visibility_is_rejected(): void
+    {
+        $admin = Admin::factory()->create([
+            'role' => AdminRole::Admin,
+        ]);
+
+        $this
+            ->actingAs($admin, 'admin')
+            ->post(
+                route('admin.pages.store'),
+                [
+                    'type' => PageType::Standard->value,
+                    'layout' => PageLayout::FullWidth->value,
+                    'show_breadcrumbs' => 'not-a-boolean',
+                    'title' => 'Invalid Breadcrumb Page',
+                    'status' => PageStatus::Draft->value,
+                    'content_mode' => PageContentMode::Classic->value,
+                ],
+            )
+            ->assertSessionHasErrors([
+                'show_breadcrumbs',
+            ]);
+
+        $this->assertDatabaseMissing(
+            'pages',
+            [
+                'title' => 'Invalid Breadcrumb Page',
+            ],
         );
     }
 
@@ -324,11 +385,117 @@ final class PageManagementTest extends TestCase
                     )
                     ->has(
                         'sectionDefinitions',
-                        1,
+                        2,
                     )
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Hero
+                    |--------------------------------------------------------------------------
+                    */
+
                     ->where(
                         'sectionDefinitions.0.type',
+                        SectionType::Hero->value,
+                    )
+                    ->where(
+                        'sectionDefinitions.0.label',
+                        'Hero',
+                    )
+                    ->where(
+                        'sectionDefinitions.0.default_template',
+                        'content_slider',
+                    )
+                    ->has(
+                        'sectionDefinitions.0.templates',
+                        3,
+                    )
+                    ->has(
+                        'sectionDefinitions.0.template_default_configs',
+                        3,
+                    )
+                    ->has(
+                        'sectionDefinitions.0.template_default_configs.content_slider',
+                    )
+                    ->has(
+                        'sectionDefinitions.0.template_default_configs.image_slider',
+                    )
+                    ->has(
+                        'sectionDefinitions.0.template_default_configs.static',
+                    )
+                    ->where(
+                        'sectionDefinitions.0.template_default_configs.content_slider.autoplay',
+                        true,
+                    )
+                    ->where(
+                        'sectionDefinitions.0.template_default_configs.content_slider.effect',
+                        'slide_left',
+                    )
+                    ->where(
+                        'sectionDefinitions.0.template_default_configs.content_slider.show_arrows',
+                        true,
+                    )
+                    ->where(
+                        'sectionDefinitions.0.template_default_configs.content_slider.show_dots',
+                        true,
+                    )
+                    ->where(
+                        'sectionDefinitions.0.template_default_configs.image_slider.autoplay',
+                        true,
+                    )
+                    ->where(
+                        'sectionDefinitions.0.template_default_configs.image_slider.effect',
+                        'slide_left',
+                    )
+                    ->where(
+                        'sectionDefinitions.0.template_default_configs.image_slider.show_arrows',
+                        true,
+                    )
+                    ->where(
+                        'sectionDefinitions.0.template_default_configs.image_slider.show_dots',
+                        true,
+                    )
+                    ->where(
+                        'sectionDefinitions.0.template_default_configs.static.autoplay',
+                        false,
+                    )
+                    ->where(
+                        'sectionDefinitions.0.template_default_configs.static.effect',
+                        'fade',
+                    )
+                    ->where(
+                        'sectionDefinitions.0.template_default_configs.static.show_arrows',
+                        false,
+                    )
+                    ->where(
+                        'sectionDefinitions.0.template_default_configs.static.show_dots',
+                        false,
+                    )
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Featured Products
+                    |--------------------------------------------------------------------------
+                    */
+
+                    ->where(
+                        'sectionDefinitions.1.type',
                         SectionType::FeaturedProducts->value,
+                    )
+                    ->where(
+                        'sectionDefinitions.1.label',
+                        'Featured Products',
+                    )
+                    ->where(
+                        'sectionDefinitions.1.default_template',
+                        'grid',
+                    )
+                    ->has(
+                        'sectionDefinitions.1.template_default_configs',
+                        1,
+                    )
+                    ->has(
+                        'sectionDefinitions.1.template_default_configs.grid',
                     ),
             );
     }

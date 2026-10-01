@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property SectionType $type
  * @property string $template
  * @property array<string, mixed> $config
+ * @property array<string, mixed>|null $layout
  * @property int $position
  * @property bool $is_enabled
  */
@@ -29,6 +30,7 @@ final class PageSection extends Model
         'type',
         'template',
         'config',
+        'layout',
         'position',
         'is_enabled',
     ];
@@ -38,6 +40,7 @@ final class PageSection extends Model
         return [
             'type' => SectionType::class,
             'config' => 'array',
+            'layout' => 'array',
             'position' => 'integer',
             'is_enabled' => 'boolean',
         ];

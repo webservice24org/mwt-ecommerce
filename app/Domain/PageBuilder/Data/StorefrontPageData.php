@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\PageBuilder\Data;
 
 use App\Domain\PageBuilder\Enums\PageContentMode;
+use App\Domain\PageBuilder\Enums\PageLayout;
 use App\Domain\PageBuilder\Enums\PageType;
 
 final readonly class StorefrontPageData
@@ -15,6 +16,8 @@ final readonly class StorefrontPageData
     public function __construct(
         public int $id,
         public PageType $type,
+        public PageLayout $layout,
+        public bool $showBreadcrumbs,
         public string $title,
         public string $slug,
         public PageContentMode $contentMode,
@@ -28,6 +31,8 @@ final readonly class StorefrontPageData
      * @return array{
      *     id: int,
      *     type: string,
+     *     layout: string,
+     *     show_breadcrumbs: bool,
      *     title: string,
      *     slug: string,
      *     content_mode: string,
@@ -42,6 +47,9 @@ final readonly class StorefrontPageData
      *         type: string,
      *         template: string,
      *         config: array<string, mixed>,
+     *         layout: array{
+     *             width: string
+     *         },
      *         data: array<string, mixed>
      *     }>
      * }
@@ -51,6 +59,8 @@ final readonly class StorefrontPageData
         return [
             'id' => $this->id,
             'type' => $this->type->value,
+            'layout' => $this->layout->value,
+            'show_breadcrumbs' => $this->showBreadcrumbs,
             'title' => $this->title,
             'slug' => $this->slug,
             'content_mode' => $this->contentMode->value,

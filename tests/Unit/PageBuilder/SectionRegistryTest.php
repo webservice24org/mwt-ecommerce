@@ -8,6 +8,7 @@ use App\Domain\PageBuilder\Data\SectionTemplateData;
 use App\Domain\PageBuilder\Enums\SectionType;
 use App\Domain\PageBuilder\Registry\SectionRegistry;
 use App\Domain\PageBuilder\Sections\FeaturedProductsSection;
+use App\Domain\PageBuilder\Sections\HeroSection;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
@@ -37,11 +38,45 @@ final class SectionRegistryTest extends TestCase
         $registry = new SectionRegistry;
 
         $this->assertTrue(
-            $registry->has(SectionType::FeaturedProducts),
+            $registry->has(
+                SectionType::Hero,
+            ),
+        );
+
+        $this->assertTrue(
+            $registry->has(
+                SectionType::FeaturedProducts,
+            ),
         );
 
         $this->assertFalse(
-            $registry->has(SectionType::Hero),
+            $registry->has(
+                SectionType::ProductGrid,
+            ),
+        );
+
+        $this->assertFalse(
+            $registry->has(
+                SectionType::CategoryProducts,
+            ),
+        );
+
+        $this->assertFalse(
+            $registry->has(
+                SectionType::CategoryShowcase,
+            ),
+        );
+
+        $this->assertFalse(
+            $registry->has(
+                SectionType::PromotionalBanner,
+            ),
+        );
+
+        $this->assertFalse(
+            $registry->has(
+                SectionType::NewArrivals,
+            ),
         );
     }
 
@@ -51,11 +86,19 @@ final class SectionRegistryTest extends TestCase
 
         $definitions = $registry->all();
 
-        $this->assertCount(1, $definitions);
+        $this->assertCount(
+            2,
+            $definitions,
+        );
+
+        $this->assertInstanceOf(
+            HeroSection::class,
+            $definitions[0],
+        );
 
         $this->assertInstanceOf(
             FeaturedProductsSection::class,
-            $definitions[0],
+            $definitions[1],
         );
     }
 
@@ -67,7 +110,9 @@ final class SectionRegistryTest extends TestCase
             InvalidArgumentException::class,
         );
 
-        $registry->get(SectionType::Hero);
+        $registry->get(
+            SectionType::ProductGrid,
+        );
     }
 
     public function test_featured_products_exposes_typed_templates(): void

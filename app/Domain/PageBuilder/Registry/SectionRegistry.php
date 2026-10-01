@@ -7,6 +7,7 @@ namespace App\Domain\PageBuilder\Registry;
 use App\Domain\PageBuilder\Enums\SectionType;
 use App\Domain\PageBuilder\Sections\Contracts\SectionDefinition;
 use App\Domain\PageBuilder\Sections\FeaturedProductsSection;
+use App\Domain\PageBuilder\Sections\HeroSection;
 use InvalidArgumentException;
 
 final class SectionRegistry
@@ -18,6 +19,10 @@ final class SectionRegistry
 
     public function __construct()
     {
+        $this->register(
+            new HeroSection,
+        );
+
         $this->register(
             new FeaturedProductsSection,
         );

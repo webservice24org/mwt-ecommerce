@@ -1,14 +1,40 @@
 export type PageType = 'standard' | 'home'
 
-export type PageStatus = 'draft' | 'published' | 'archived'
+export type PageStatus =
+    | 'draft'
+    | 'published'
+    | 'archived'
 
-export type PageContentMode = 'classic' | 'builder'
+export type PageContentMode =
+    | 'classic'
+    | 'builder'
 
-export type JsonPrimitive = string | number | boolean | null
+export type PageLayout =
+    | 'full_width'
+    | 'left_sidebar'
+    | 'right_sidebar'
 
-export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue }
+export type SectionWidth =
+    | 'container'
+    | 'full'
 
-export type SectionConfig = Record<string, JsonValue>
+export interface SectionLayout {
+    width: SectionWidth
+}
+
+export type JsonPrimitive =
+    | string
+    | number
+    | boolean
+    | null
+
+export type JsonValue =
+    | JsonPrimitive
+    | JsonValue[]
+    | { [key: string]: JsonValue }
+
+export type SectionConfig =
+    Record<string, JsonValue>
 
 export interface PageFormOption {
     value: string
@@ -36,6 +62,7 @@ export interface PageSection {
     type: string
     template: string
     config: SectionConfig
+    layout: SectionLayout
     position: number
     is_enabled: boolean
 }
@@ -53,6 +80,8 @@ export interface SectionDefinition {
     templates: SectionTemplateDefinition[]
     default_template: string
     default_config: SectionConfig
+    template_default_configs:
+        Record<string, SectionConfig>
 }
 
 export interface PageSeoData {
@@ -63,6 +92,8 @@ export interface PageSeoData {
 export interface PageData {
     id: number
     type: PageType
+    layout: PageLayout
+    show_breadcrumbs: boolean
     title: string
     slug: string
     status: PageStatus
@@ -76,6 +107,8 @@ export interface PageData {
 
 export interface PageFormValues {
     type: PageType
+    layout: PageLayout
+    show_breadcrumbs: boolean
     title: string
     slug: string
     status: PageStatus
@@ -133,4 +166,7 @@ export interface CatalogProductOption {
     sku: string | null
 }
 
-export type CatalogSourceType = 'featured' | 'manual' | 'category'
+export type CatalogSourceType =
+    | 'featured'
+    | 'manual'
+    | 'category'
