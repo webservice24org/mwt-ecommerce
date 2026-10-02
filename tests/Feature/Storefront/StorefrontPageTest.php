@@ -9,6 +9,7 @@ use App\Domain\PageBuilder\Enums\PageLayout;
 use App\Domain\PageBuilder\Enums\PageStatus;
 use App\Domain\PageBuilder\Enums\SectionType;
 use App\Domain\PageBuilder\Enums\SectionWidth;
+use App\Models\Category;
 use App\Models\Page;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -411,6 +412,138 @@ final class StorefrontPageTest extends TestCase
                     ->where(
                         'page.sections.0.config.slides.1.image',
                         '/storage/page-builder/hero/banner-two.jpg',
+                    ),
+            );
+    }
+
+    public function test_published_builder_page_exposes_product_categories_section(): void
+    {
+        $page = Page::factory()->create([
+            'title' => 'Shop Categories',
+            'slug' => 'shop-categories',
+            'status' => PageStatus::Published,
+            'content_mode' => PageContentMode::Builder,
+            'published_at' => now()->subMinute(),
+        ]);
+
+        $firstCategory =
+            Category::factory()->create([
+                'name' => 'Electronics',
+                'slug' => 'electronics',
+                'description' => 'Shop electronics.',
+                'image_path' => null,
+                'is_active' => true,
+            ]);
+
+        $secondCategory =
+            Category::factory()->create([
+                'name' => 'Fashion',
+                'slug' => 'fashion',
+                'description' => 'Shop fashion.',
+                'image_path' => null,
+                'is_active' => true,
+            ]);
+
+        $section =
+            $page->sections()->create([
+                'type' => SectionType::ProductCategories,
+                'template' => 'grid',
+                'position' => 10,
+                'is_enabled' => true,
+                'layout' => [
+                    'width' => SectionWidth::Container->value,
+                ],
+                'config' => [
+                    'title' => 'Shop by Category',
+                    'category_ids' => [
+                        $secondCategory->id,
+                        $firstCategory->id,
+                    ],
+                    'show_name' => true,
+                    'columns' => 4,
+                    'show_product_count' => false,
+                ],
+            ]);
+
+        $response = $this->get(
+            route(
+                'frontend.pages.show',
+                $page->slug,
+            ),
+        );
+
+        $response
+            ->assertOk()
+            ->assertInertia(
+                fn (Assert $inertia) => $inertia
+                    ->component(
+                        'Frontend/Pages/Show',
+                    )
+                    ->where(
+                        'page.sections.0.id',
+                        $section->id,
+                    )
+                    ->where(
+                        'page.sections.0.type',
+                        'product_categories',
+                    )
+                    ->where(
+                        'page.sections.0.template',
+                        'grid',
+                    )
+                    ->where(
+                        'page.sections.0.layout.width',
+                        SectionWidth::Container
+                            ->value,
+                    )
+                    ->where(
+                        'page.sections.0.config.title',
+                        'Shop by Category',
+                    )
+                    ->where(
+                        'page.sections.0.config.category_ids',
+                        [
+                            $secondCategory->id,
+                            $firstCategory->id,
+                        ],
+                    )
+                    ->where(
+                        'page.sections.0.config.show_name',
+                        true,
+                    )
+                    ->where(
+                        'page.sections.0.config.columns',
+                        4,
+                    )
+                    ->where(
+                        'page.sections.0.config.show_product_count',
+                        false,
+                    )
+                    ->has(
+                        'page.sections.0.data.categories',
+                        2,
+                    )
+                    ->where(
+                        'page.sections.0.data.categories.0',
+                        [
+                            'id' => $secondCategory->id,
+                            'name' => 'Fashion',
+                            'slug' => 'fashion',
+                            'description' => 'Shop fashion.',
+                            'imageUrl' => null,
+                            'productCount' => null,
+                        ],
+                    )
+                    ->where(
+                        'page.sections.0.data.categories.1',
+                        [
+                            'id' => $firstCategory->id,
+                            'name' => 'Electronics',
+                            'slug' => 'electronics',
+                            'description' => 'Shop electronics.',
+                            'imageUrl' => null,
+                            'productCount' => null,
+                        ],
                     ),
             );
     }

@@ -1,17 +1,8 @@
-import {
-    Link,
-    useForm,
-} from '@inertiajs/react'
-import type {
-    FormEvent,
-} from 'react'
+import { Link, useForm } from '@inertiajs/react'
+import type { FormEvent } from 'react'
 
 import AdminLayout from '@/Layouts/Admin/AdminLayout'
-import type {
-    PageData,
-    PageFormOptions,
-    PageFormValues,
-} from '@/types/page-builder'
+import type { PageData, PageFormOptions, PageFormValues } from '@/types/page-builder'
 
 import PageForm from './Partials/PageForm'
 
@@ -20,44 +11,27 @@ interface Props {
     options: PageFormOptions
 }
 
-export default function Edit({
-    page,
-    options,
-}: Props) {
+export default function Edit({ page, options }: Props) {
     const form = useForm<PageFormValues>({
         type: page.type,
         layout: page.layout,
-        show_breadcrumbs:
-            page.show_breadcrumbs,
+        show_breadcrumbs: page.show_breadcrumbs,
         title: page.title,
         slug: page.slug,
         status: page.status,
         content_mode: page.content_mode,
         content: page.content ?? '',
-        meta_title:
-            page.seo.meta_title ?? '',
-        meta_description:
-            page.seo.meta_description ?? '',
-        published_at:
-            toDateTimeLocal(
-                page.published_at,
-            ),
+        meta_title: page.seo.meta_title ?? '',
+        meta_description: page.seo.meta_description ?? '',
+        published_at: toDateTimeLocal(page.published_at),
     })
 
-    const submit = (
-        event: FormEvent<HTMLFormElement>,
-    ) => {
+    const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault()
 
-        form.put(
-            route(
-                'admin.pages.update',
-                page.id,
-            ),
-            {
-                preserveScroll: true,
-            },
-        )
+        form.put(route('admin.pages.update', page.id), {
+            preserveScroll: true,
+        })
     }
 
     return (
@@ -66,9 +40,7 @@ export default function Edit({
             description="Edit page details, content, layout, publishing settings, and SEO."
             actions={
                 <Link
-                    href={route(
-                        'admin.pages.index',
-                    )}
+                    href={route('admin.pages.index')}
                     className="inline-flex items-center rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
                 >
                     Back to Pages
@@ -79,14 +51,10 @@ export default function Edit({
                 data={form.data}
                 options={options}
                 errors={form.errors}
-                processing={
-                    form.processing
-                }
+                processing={form.processing}
                 submitLabel="Save Changes"
                 pageId={page.id}
-                featuredImage={
-                    page.featured_image
-                }
+                featuredImage={page.featured_image}
                 onChange={form.setData}
                 onSubmit={submit}
             />
@@ -94,30 +62,18 @@ export default function Edit({
     )
 }
 
-function toDateTimeLocal(
-    value: string | null,
-): string {
+function toDateTimeLocal(value: string | null): string {
     if (!value) {
         return ''
     }
 
     const date = new Date(value)
 
-    if (
-        Number.isNaN(
-            date.getTime(),
-        )
-    ) {
+    if (Number.isNaN(date.getTime())) {
         return ''
     }
 
-    const offset =
-        date.getTimezoneOffset()
-        * 60_000
+    const offset = date.getTimezoneOffset() * 60_000
 
-    return new Date(
-        date.getTime() - offset,
-    )
-        .toISOString()
-        .slice(0, 16)
+    return new Date(date.getTime() - offset).toISOString().slice(0, 16)
 }

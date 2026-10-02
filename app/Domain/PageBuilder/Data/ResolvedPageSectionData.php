@@ -36,18 +36,12 @@ final readonly class ResolvedPageSectionData
     public function toArray(): array
     {
         return [
-            'id' =>
-                $this->id,
-            'type' =>
-                $this->type->value,
-            'template' =>
-                $this->template,
-            'config' =>
-                $this->config,
-            'layout' =>
-                $this->layout->toArray(),
-            'data' =>
-                $this->data,
+            'id' => $this->id,
+            'type' => $this->type->value,
+            'template' => $this->template,
+            'config' => $this->config,
+            'layout' => $this->layout->toArray(),
+            'data' => $this->data,
         ];
     }
 }

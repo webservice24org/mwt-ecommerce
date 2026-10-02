@@ -40,8 +40,7 @@ final readonly class StorefrontPageQuery
             id: $page->id,
             type: $page->type,
             layout: $page->layout,
-            showBreadcrumbs:
-                $page->show_breadcrumbs,
+            showBreadcrumbs: $page->show_breadcrumbs,
             title: $page->title,
             slug: $page->slug,
             contentMode: $page->content_mode,
@@ -49,8 +48,7 @@ final readonly class StorefrontPageQuery
             featuredImage: $page->featured_image,
             seo: new PageSeoData(
                 metaTitle: $page->meta_title,
-                metaDescription:
-                    $page->meta_description,
+                metaDescription: $page->meta_description,
             ),
             sections: $resolvedSections,
         );

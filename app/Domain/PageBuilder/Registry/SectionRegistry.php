@@ -8,6 +8,7 @@ use App\Domain\PageBuilder\Enums\SectionType;
 use App\Domain\PageBuilder\Sections\Contracts\SectionDefinition;
 use App\Domain\PageBuilder\Sections\FeaturedProductsSection;
 use App\Domain\PageBuilder\Sections\HeroSection;
+use App\Domain\PageBuilder\Sections\ProductCategoriesSection;
 use InvalidArgumentException;
 
 final class SectionRegistry
@@ -26,6 +27,10 @@ final class SectionRegistry
         $this->register(
             new FeaturedProductsSection,
         );
+
+        $this->register(
+            new ProductCategoriesSection,
+        );
     }
 
     /**
@@ -38,16 +43,23 @@ final class SectionRegistry
         );
     }
 
-    public function has(SectionType $type): bool
-    {
+    public function has(
+        SectionType $type,
+    ): bool {
         return isset(
-            $this->definitions[$type->value],
+            $this->definitions[
+                $type->value
+            ],
         );
     }
 
-    public function get(SectionType $type): SectionDefinition
-    {
-        $definition = $this->definitions[$type->value] ?? null;
+    public function get(
+        SectionType $type,
+    ): SectionDefinition {
+        $definition =
+            $this->definitions[
+                $type->value
+            ] ?? null;
 
         if ($definition === null) {
             throw new InvalidArgumentException(
@@ -69,8 +81,13 @@ final class SectionRegistry
             return false;
         }
 
-        foreach ($this->get($type)->templates() as $supported) {
-            if ($supported->key === $template) {
+        foreach (
+            $this->get($type)->templates() as $supported
+        ) {
+            if (
+                $supported->key ===
+                $template
+            ) {
                 return true;
             }
         }
@@ -81,9 +98,18 @@ final class SectionRegistry
     private function register(
         SectionDefinition $definition,
     ): void {
-        $key = $definition->type()->value;
+        $key =
+            $definition
+                ->type()
+                ->value;
 
-        if (isset($this->definitions[$key])) {
+        if (
+            isset(
+                $this->definitions[
+                    $key
+                ],
+            )
+        ) {
             throw new InvalidArgumentException(
                 sprintf(
                     'Page Builder section type [%s] is already registered.',
@@ -92,6 +118,8 @@ final class SectionRegistry
             );
         }
 
-        $this->definitions[$key] = $definition;
+        $this->definitions[
+            $key
+        ] = $definition;
     }
 }

@@ -6,13 +6,13 @@ namespace App\Http\Requests\Admin;
 
 use App\Domain\PageBuilder\Data\UpdatePageData;
 use App\Domain\PageBuilder\Enums\PageContentMode;
+use App\Domain\PageBuilder\Enums\PageLayout;
 use App\Domain\PageBuilder\Enums\PageStatus;
 use App\Domain\PageBuilder\Enums\PageType;
 use App\Models\Page;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Domain\PageBuilder\Enums\PageLayout;
 
 final class UpdatePageRequest extends FormRequest
 {
@@ -154,7 +154,6 @@ final class UpdatePageRequest extends FormRequest
             )
                 ? (bool) $validated['show_breadcrumbs']
                 : $page->show_breadcrumbs,
-            
 
             title: (string) $validated['title'],
 

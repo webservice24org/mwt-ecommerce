@@ -524,4 +524,393 @@ final class PageSectionManagementTest extends TestCase
             'type',
         );
     }
+
+    public function test_editor_can_create_product_categories_grid_section(): void
+    {
+        $admin = Admin::factory()->create([
+            'role' => AdminRole::Editor,
+        ]);
+
+        $page = Page::factory()->create();
+
+        $response = $this
+            ->actingAs($admin, 'admin')
+            ->post(
+                route(
+                    'admin.pages.sections.store',
+                    $page,
+                ),
+                [
+                    'type' => SectionType::ProductCategories->value,
+                    'template' => 'grid',
+                    'config' => [
+                        'title' => '  Shop Categories  ',
+                        'category_ids' => [],
+                        'show_name' => true,
+                        'columns' => 4,
+                        'show_product_count' => false,
+                    ],
+                    'is_enabled' => true,
+                ],
+            );
+
+        $response->assertRedirect();
+
+        $section = PageSection::query()
+            ->where('page_id', $page->id)
+            ->where(
+                'type',
+                SectionType::ProductCategories->value,
+            )
+            ->firstOrFail();
+
+        $this->assertSame(
+            'grid',
+            $section->template,
+        );
+
+        $this->assertSame(
+            [
+                'title' => 'Shop Categories',
+                'category_ids' => [],
+                'show_name' => true,
+                'columns' => 4,
+                'show_product_count' => false,
+            ],
+            $section->config,
+        );
+
+        $this->assertTrue(
+            $section->is_enabled,
+        );
+    }
+
+    public function test_editor_can_create_product_categories_cards_section(): void
+    {
+        $admin = Admin::factory()->create([
+            'role' => AdminRole::Editor,
+        ]);
+
+        $page = Page::factory()->create();
+
+        $this
+            ->actingAs($admin, 'admin')
+            ->post(
+                route(
+                    'admin.pages.sections.store',
+                    $page,
+                ),
+                [
+                    'type' => SectionType::ProductCategories->value,
+                    'template' => 'cards',
+                    'config' => [
+                        'title' => 'Browse Categories',
+                        'category_ids' => [],
+                        'show_name' => true,
+                        'columns' => 3,
+                        'show_product_count' => true,
+                    ],
+                    'is_enabled' => true,
+                ],
+            )
+            ->assertRedirect();
+
+        $section = PageSection::query()
+            ->where('page_id', $page->id)
+            ->where(
+                'type',
+                SectionType::ProductCategories->value,
+            )
+            ->firstOrFail();
+
+        $this->assertSame(
+            'cards',
+            $section->template,
+        );
+
+        $this->assertSame(
+            [
+                'title' => 'Browse Categories',
+                'category_ids' => [],
+                'show_name' => true,
+                'columns' => 3,
+                'show_product_count' => true,
+            ],
+            $section->config,
+        );
+    }
+
+    public function test_editor_can_create_product_categories_carousel_section(): void
+    {
+        $admin = Admin::factory()->create([
+            'role' => AdminRole::Editor,
+        ]);
+
+        $page = Page::factory()->create();
+
+        $this
+            ->actingAs($admin, 'admin')
+            ->post(
+                route(
+                    'admin.pages.sections.store',
+                    $page,
+                ),
+                [
+                    'type' => SectionType::ProductCategories->value,
+                    'template' => 'carousel',
+                    'config' => [
+                        'title' => 'Category Carousel',
+                        'category_ids' => [],
+                        'show_name' => true,
+                        'columns' => 4,
+                        'show_product_count' => false,
+                        'autoplay' => true,
+                        'autoplay_delay' => 5000,
+                        'show_arrows' => true,
+                        'show_dots' => true,
+                        'effect' => 'fade',
+
+                    ],
+                    'is_enabled' => true,
+                ],
+            )
+            ->assertRedirect();
+
+        $section = PageSection::query()
+            ->where('page_id', $page->id)
+            ->where(
+                'type',
+                SectionType::ProductCategories->value,
+            )
+            ->firstOrFail();
+
+        $this->assertSame(
+            'carousel',
+            $section->template,
+        );
+
+        $this->assertSame(
+            [
+                'title' => 'Category Carousel',
+                'category_ids' => [],
+                'show_name' => true,
+                'columns' => 4,
+                'show_product_count' => false,
+                'autoplay' => true,
+                'autoplay_delay' => 5000,
+                'show_arrows' => true,
+                'show_dots' => true,
+                'effect' => 'fade',
+            ],
+            $section->config,
+        );
+    }
+
+    public function test_editor_can_change_product_categories_grid_to_carousel(): void
+    {
+        $admin = Admin::factory()->create([
+            'role' => AdminRole::Editor,
+        ]);
+
+        $page = Page::factory()->create();
+
+        $section = PageSection::factory()
+            ->for($page)
+            ->create([
+                'type' => SectionType::ProductCategories,
+                'template' => 'grid',
+                'config' => [
+                    'title' => 'Categories',
+                    'category_ids' => [],
+                    'show_name' => true,
+                    'columns' => 4,
+                    'show_product_count' => false,
+                ],
+                'is_enabled' => true,
+            ]);
+
+        $this
+            ->actingAs($admin, 'admin')
+            ->put(
+                route(
+                    'admin.pages.sections.update',
+                    [
+                        'page' => $page,
+                        'section' => $section->id,
+                    ],
+                ),
+                [
+                    'type' => SectionType::ProductCategories->value,
+                    'template' => 'carousel',
+                    'config' => [
+                        'title' => 'Category Slider',
+                        'category_ids' => [],
+                        'show_name' => true,
+                        'columns' => 4,
+                        'show_product_count' => true,
+                        'autoplay' => false,
+                        'autoplay_delay' => 6000,
+                        'show_arrows' => true,
+                        'show_dots' => false,
+                        'effect' => 'fade',
+                    ],
+                    'is_enabled' => true,
+                ],
+            )
+            ->assertRedirect();
+
+        $section->refresh();
+
+        $this->assertSame(
+            SectionType::ProductCategories,
+            $section->type,
+        );
+
+        $this->assertSame(
+            'carousel',
+            $section->template,
+        );
+
+        $this->assertSame(
+            [
+                'title' => 'Category Slider',
+                'category_ids' => [],
+                'show_name' => true,
+                'columns' => 4,
+                'show_product_count' => true,
+                'autoplay' => false,
+                'autoplay_delay' => 6000,
+                'show_arrows' => true,
+                'show_dots' => false,
+                'effect' => 'fade',
+            ],
+            $section->config,
+        );
+    }
+
+    public function test_product_categories_rejects_unsupported_template(): void
+    {
+        $admin = Admin::factory()->create([
+            'role' => AdminRole::Editor,
+        ]);
+
+        $page = Page::factory()->create();
+
+        $this
+            ->actingAs($admin, 'admin')
+            ->post(
+                route(
+                    'admin.pages.sections.store',
+                    $page,
+                ),
+                [
+                    'type' => SectionType::ProductCategories->value,
+                    'template' => 'unsupported',
+                    'config' => [
+                        'title' => 'Categories',
+                        'category_ids' => [],
+                        'show_name' => true,
+                        'columns' => 4,
+                        'show_product_count' => false,
+                    ],
+                    'is_enabled' => true,
+                ],
+            )
+            ->assertSessionHasErrors(
+                'template',
+            );
+
+        $this->assertDatabaseMissing(
+            'page_sections',
+            [
+                'page_id' => $page->id,
+                'type' => SectionType::ProductCategories->value,
+            ],
+        );
+    }
+
+    public function test_invalid_product_categories_configuration_is_rejected(): void
+    {
+        $admin = Admin::factory()->create([
+            'role' => AdminRole::Editor,
+        ]);
+
+        $page = Page::factory()->create();
+
+        $this
+            ->actingAs($admin, 'admin')
+            ->post(
+                route(
+                    'admin.pages.sections.store',
+                    $page,
+                ),
+                [
+                    'type' => SectionType::ProductCategories->value,
+                    'template' => 'grid',
+                    'config' => [
+                        'title' => 'Categories',
+                        'category_ids' => [],
+                        'show_name' => true,
+                        'columns' => 99,
+                        'show_product_count' => false,
+                    ],
+                    'is_enabled' => true,
+                ],
+            )
+            ->assertSessionHasErrors(
+                'columns',
+            );
+
+        $this->assertDatabaseMissing(
+            'page_sections',
+            [
+                'page_id' => $page->id,
+                'type' => SectionType::ProductCategories->value,
+            ],
+        );
+    }
+
+    public function test_partial_product_categories_carousel_configuration_is_rejected(): void
+    {
+        $admin = Admin::factory()->create([
+            'role' => AdminRole::Editor,
+        ]);
+
+        $page = Page::factory()->create();
+
+        $this
+            ->actingAs($admin, 'admin')
+            ->post(
+                route(
+                    'admin.pages.sections.store',
+                    $page,
+                ),
+                [
+                    'type' => SectionType::ProductCategories->value,
+                    'template' => 'carousel',
+                    'config' => [
+                        'title' => 'Categories',
+                        'category_ids' => [],
+                        'show_name' => true,
+                        'columns' => 4,
+                        'show_product_count' => false,
+                        'autoplay' => true,
+                    ],
+                    'is_enabled' => true,
+                ],
+            )
+            ->assertSessionHasErrors([
+                'autoplay_delay',
+                'show_arrows',
+                'show_dots',
+            ]);
+
+        $this->assertDatabaseMissing(
+            'page_sections',
+            [
+                'page_id' => $page->id,
+                'type' => SectionType::ProductCategories->value,
+            ],
+        );
+    }
 }

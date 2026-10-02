@@ -1,40 +1,22 @@
 export type PageType = 'standard' | 'home'
 
-export type PageStatus =
-    | 'draft'
-    | 'published'
-    | 'archived'
+export type PageStatus = 'draft' | 'published' | 'archived'
 
-export type PageContentMode =
-    | 'classic'
-    | 'builder'
+export type PageContentMode = 'classic' | 'builder'
 
-export type PageLayout =
-    | 'full_width'
-    | 'left_sidebar'
-    | 'right_sidebar'
+export type PageLayout = 'full_width' | 'left_sidebar' | 'right_sidebar'
 
-export type SectionWidth =
-    | 'container'
-    | 'full'
+export type SectionWidth = 'container' | 'full'
 
 export interface SectionLayout {
     width: SectionWidth
 }
 
-export type JsonPrimitive =
-    | string
-    | number
-    | boolean
-    | null
+export type JsonPrimitive = string | number | boolean | null
 
-export type JsonValue =
-    | JsonPrimitive
-    | JsonValue[]
-    | { [key: string]: JsonValue }
+export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue }
 
-export type SectionConfig =
-    Record<string, JsonValue>
+export type SectionConfig = Record<string, JsonValue>
 
 export interface PageFormOption {
     value: string
@@ -80,8 +62,7 @@ export interface SectionDefinition {
     templates: SectionTemplateDefinition[]
     default_template: string
     default_config: SectionConfig
-    template_default_configs:
-        Record<string, SectionConfig>
+    template_default_configs: Record<string, SectionConfig>
 }
 
 export interface PageSeoData {
@@ -166,7 +147,4 @@ export interface CatalogProductOption {
     sku: string | null
 }
 
-export type CatalogSourceType =
-    | 'featured'
-    | 'manual'
-    | 'category'
+export type CatalogSourceType = 'featured' | 'manual' | 'category'

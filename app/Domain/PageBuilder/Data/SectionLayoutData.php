@@ -37,10 +37,9 @@ final readonly class SectionLayoutData
         }
 
         return new self(
-            width:
-                SectionWidth::tryFrom(
-                    $width,
-                )
+            width: SectionWidth::tryFrom(
+                $width,
+            )
                 ?? SectionWidth::Container,
         );
     }
@@ -53,8 +52,7 @@ final readonly class SectionLayoutData
     public function toArray(): array
     {
         return [
-            'width' =>
-                $this->width->value,
+            'width' => $this->width->value,
         ];
     }
 }

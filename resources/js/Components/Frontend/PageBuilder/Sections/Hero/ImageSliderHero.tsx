@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 
 import HeroSliderControls from './HeroSliderControls'
-import HeroSlideTransition from './HeroSlideTransition'
+import SlideTransition from '@/Components/Frontend/PageBuilder/Shared/SlideTransition'
 import type { HeroConfig, HeroSlide } from './types'
 import { useHeroSlider } from './useHeroSlider'
 
@@ -65,7 +65,7 @@ export default function ImageSliderHero({ config }: Props) {
                 })
             }}
         >
-            <HeroSlideTransition
+            <SlideTransition
                 activeIndex={slider.activeIndex}
                 direction={slider.direction}
                 effect={config.effect}
@@ -75,7 +75,7 @@ export default function ImageSliderHero({ config }: Props) {
                     activeIndex={slider.activeIndex}
                     slideCount={slideCount}
                 />
-            </HeroSlideTransition>
+            </SlideTransition>
 
             <HeroSliderControls
                 slideCount={slideCount}

@@ -46,18 +46,10 @@ export default function EditSectionDialog({
         <EditSectionDialogSession
             pageId={pageId}
             section={section}
-            sectionDefinitions={
-                sectionDefinitions
-            }
-            catalogSources={
-                catalogSources
-            }
-            categoryOptions={
-                categoryOptions
-            }
-            selectedProductOptions={
-                selectedProductOptions
-            }
+            sectionDefinitions={sectionDefinitions}
+            catalogSources={catalogSources}
+            categoryOptions={categoryOptions}
+            selectedProductOptions={selectedProductOptions}
             onClose={onClose}
         />
     )
@@ -82,53 +74,23 @@ function EditSectionDialogSession({
     selectedProductOptions,
     onClose,
 }: EditSectionDialogSessionProps) {
-    const [config, setConfig] =
-        useState<SectionConfig>(
-            () =>
-                structuredClone(
-                    section.config,
-                ),
-        )
+    const [config, setConfig] = useState<SectionConfig>(() => structuredClone(section.config))
 
-    const [layout, setLayout] =
-        useState<SectionLayout>(
-            () =>
-                normalizeSectionLayout(
-                    section.layout,
-                ),
-        )
+    const [layout, setLayout] = useState<SectionLayout>(() =>
+        normalizeSectionLayout(section.layout),
+    )
 
-    const [enabled, setEnabled] =
-        useState(
-            section.is_enabled,
-        )
+    const [enabled, setEnabled] = useState(section.is_enabled)
 
-    const [processing, setProcessing] =
-        useState(false)
+    const [processing, setProcessing] = useState(false)
 
-    const [errors, setErrors] =
-        useState<
-            Record<string, string>
-        >({})
+    const [errors, setErrors] = useState<Record<string, string>>({})
 
-    const definition =
-        sectionDefinitions.find(
-            (item) =>
-                item.type ===
-                section.type,
-        ) ?? null
+    const definition = sectionDefinitions.find((item) => item.type === section.type) ?? null
 
-    const editorAvailable =
-        definition !== null &&
-        hasSectionEditor(
-            section.type,
-        )
+    const editorAvailable = definition !== null && hasSectionEditor(section.type)
 
-    const configValid =
-        isConfigValid(
-            section.type,
-            config,
-        )
+    const configValid = isConfigValid(section.type, config)
 
     const close = () => {
         if (processing) {
@@ -139,12 +101,7 @@ function EditSectionDialogSession({
     }
 
     const save = () => {
-        if (
-            definition === null ||
-            !editorAvailable ||
-            !configValid ||
-            processing
-        ) {
+        if (definition === null || !editorAvailable || !configValid || processing) {
             return
         }
 
@@ -152,13 +109,7 @@ function EditSectionDialogSession({
         setErrors({})
 
         router.put(
-            route(
-                'admin.pages.sections.update',
-                [
-                    pageId,
-                    section.id,
-                ],
-            ),
+            route('admin.pages.sections.update', [pageId, section.id]),
             {
                 type: section.type,
                 template: section.template,
@@ -171,12 +122,8 @@ function EditSectionDialogSession({
             {
                 preserveScroll: true,
 
-                onError: (
-                    validationErrors,
-                ) => {
-                    setErrors(
-                        validationErrors,
-                    )
+                onError: (validationErrors) => {
+                    setErrors(validationErrors)
                 },
 
                 onSuccess: () => {
@@ -190,21 +137,11 @@ function EditSectionDialogSession({
         )
     }
 
-    const sectionLabel =
-        definition?.label ??
-        formatIdentifier(
-            section.type,
-        )
+    const sectionLabel = definition?.label ?? formatIdentifier(section.type)
 
     const templateLabel =
-        definition?.templates.find(
-            (template) =>
-                template.key ===
-                section.template,
-        )?.label ??
-        formatIdentifier(
-            section.template,
-        )
+        definition?.templates.find((template) => template.key === section.template)?.label ??
+        formatIdentifier(section.template)
 
     return (
         <Dialog
@@ -215,68 +152,34 @@ function EditSectionDialogSession({
             onClose={close}
         >
             <div className="space-y-6">
-                {definition ===
-                null ? (
+                {definition === null ? (
                     <div
                         role="alert"
                         className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200"
                     >
-                        This section
-                        type is no
-                        longer
-                        registered in
-                        the Page
-                        Builder.
+                        This section type is no longer registered in the Page Builder.
                     </div>
                 ) : (
                     <>
                         <SectionEditorRenderer
-                            pageId={
-                                pageId
-                            }
-                            section={
-                                section
-                            }
-                            definition={
-                                definition
-                            }
-                            value={
-                                config
-                            }
-                            catalogSources={
-                                catalogSources
-                            }
-                            categoryOptions={
-                                categoryOptions
-                            }
-                            selectedProductOptions={
-                                selectedProductOptions
-                            }
-                            onChange={
-                                setConfig
-                            }
+                            pageId={pageId}
+                            section={section}
+                            definition={definition}
+                            value={config}
+                            catalogSources={catalogSources}
+                            categoryOptions={categoryOptions}
+                            selectedProductOptions={selectedProductOptions}
+                            onChange={setConfig}
                         />
 
                         <SectionLayoutSelector
-                            value={
-                                layout.width
-                            }
-                            disabled={
-                                processing
-                            }
-                            error={
-                                errors[
-                                    'layout.width'
-                                ]
-                            }
-                            onChange={(
-                                width,
-                            ) =>
-                                setLayout(
-                                    {
-                                        width,
-                                    },
-                                )
+                            value={layout.width}
+                            disabled={processing}
+                            error={errors['layout.width']}
+                            onChange={(width) =>
+                                setLayout({
+                                    width,
+                                })
                             }
                         />
 
@@ -284,41 +187,20 @@ function EditSectionDialogSession({
                             <label className="flex cursor-pointer items-start gap-3">
                                 <input
                                     type="checkbox"
-                                    checked={
-                                        enabled
-                                    }
-                                    disabled={
-                                        processing
-                                    }
-                                    onChange={(
-                                        event,
-                                    ) =>
-                                        setEnabled(
-                                            event
-                                                .target
-                                                .checked,
-                                        )
-                                    }
+                                    checked={enabled}
+                                    disabled={processing}
+                                    onChange={(event) => setEnabled(event.target.checked)}
                                     className="mt-0.5 h-4 w-4 rounded border-neutral-300"
                                 />
 
                                 <span>
                                     <span className="block text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                                        Enable
-                                        section
+                                        Enable section
                                     </span>
 
                                     <span className="mt-1 block text-xs leading-5 text-neutral-500 dark:text-neutral-400">
-                                        Disabled
-                                        sections
-                                        remain in
-                                        the
-                                        builder
-                                        but are
-                                        not
-                                        rendered
-                                        on the
-                                        storefront.
+                                        Disabled sections remain in the builder but are not rendered
+                                        on the storefront.
                                     </span>
                                 </span>
                             </label>
@@ -326,39 +208,17 @@ function EditSectionDialogSession({
                     </>
                 )}
 
-                {Object.keys(
-                    errors,
-                ).length >
-                    0 && (
+                {Object.keys(errors).length > 0 && (
                     <div
                         role="alert"
                         className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200"
                     >
-                        <p className="font-semibold">
-                            Please
-                            correct the
-                            following:
-                        </p>
+                        <p className="font-semibold">Please correct the following:</p>
 
                         <ul className="mt-2 list-disc space-y-1 pl-5">
-                            {Object.entries(
-                                errors,
-                            ).map(
-                                ([
-                                    field,
-                                    message,
-                                ]) => (
-                                    <li
-                                        key={
-                                            field
-                                        }
-                                    >
-                                        {
-                                            message
-                                        }
-                                    </li>
-                                ),
-                            )}
+                            {Object.entries(errors).map(([field, message]) => (
+                                <li key={field}>{message}</li>
+                            ))}
                         </ul>
                     </div>
                 )}
@@ -366,12 +226,8 @@ function EditSectionDialogSession({
                 <div className="flex flex-col-reverse gap-3 border-t border-neutral-200 pt-5 sm:flex-row sm:justify-end dark:border-neutral-800">
                     <button
                         type="button"
-                        disabled={
-                            processing
-                        }
-                        onClick={
-                            close
-                        }
+                        disabled={processing}
+                        onClick={close}
                         className="inline-flex items-center justify-center rounded-lg border border-neutral-200 px-4 py-2.5 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900"
                     >
                         Cancel
@@ -380,20 +236,12 @@ function EditSectionDialogSession({
                     <button
                         type="button"
                         disabled={
-                            processing ||
-                            definition ===
-                                null ||
-                            !editorAvailable ||
-                            !configValid
+                            processing || definition === null || !editorAvailable || !configValid
                         }
-                        onClick={
-                            save
-                        }
+                        onClick={save}
                         className="inline-flex items-center justify-center rounded-lg bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-300"
                     >
-                        {processing
-                            ? 'Saving...'
-                            : 'Save Changes'}
+                        {processing ? 'Saving...' : 'Save Changes'}
                     </button>
                 </div>
             </div>
@@ -405,9 +253,7 @@ interface SectionLayoutSelectorProps {
     value: SectionWidth
     disabled: boolean
     error?: string
-    onChange: (
-        value: SectionWidth,
-    ) => void
+    onChange: (value: SectionWidth) => void
 }
 
 interface SectionLayoutOption {
@@ -416,50 +262,34 @@ interface SectionLayoutOption {
     description: string
 }
 
-const sectionLayoutOptions:
-    SectionLayoutOption[] = [
-        {
-            value: 'container',
-            label: 'Container',
-            description:
-                'Keep this section inside the storefront content container.',
-        },
-        {
-            value: 'full',
-            label: 'Full Width',
-            description:
-                'Allow this section to span the full available page width.',
-        },
-    ]
+const sectionLayoutOptions: SectionLayoutOption[] = [
+    {
+        value: 'container',
+        label: 'Container',
+        description: 'Keep this section inside the storefront content container.',
+    },
+    {
+        value: 'full',
+        label: 'Full Width',
+        description: 'Allow this section to span the full available page width.',
+    },
+]
 
-function SectionLayoutSelector({
-    value,
-    disabled,
-    error,
-    onChange,
-}: SectionLayoutSelectorProps) {
+function SectionLayoutSelector({ value, disabled, error, onChange }: SectionLayoutSelectorProps) {
     return (
         <section className="rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
             <div className="mb-4">
                 <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                    Section
-                    Layout
+                    Section Layout
                 </h3>
 
                 <p className="mt-1 text-xs leading-5 text-neutral-500 dark:text-neutral-400">
-                    Choose how
-                    wide this
-                    section should
-                    be displayed on
-                    the storefront.
+                    Choose how wide this section should be displayed on the storefront.
                 </p>
             </div>
 
             {error && (
-                <p
-                    role="alert"
-                    className="mb-3 text-sm text-red-600 dark:text-red-400"
-                >
+                <p role="alert" className="mb-3 text-sm text-red-600 dark:text-red-400">
                     {error}
                 </p>
             )}
@@ -469,91 +299,51 @@ function SectionLayoutSelector({
                 aria-label="Section layout"
                 className="grid gap-3 sm:grid-cols-2"
             >
-                {sectionLayoutOptions.map(
-                    (
-                        option,
-                    ) => {
-                        const selected =
-                            value ===
-                            option.value
+                {sectionLayoutOptions.map((option) => {
+                    const selected = value === option.value
 
-                        return (
-                            <label
-                                key={
-                                    option.value
-                                }
-                                className={[
-                                    'rounded-lg border p-4 transition',
-                                    disabled
-                                        ? 'cursor-not-allowed opacity-60'
-                                        : 'cursor-pointer',
-                                    selected
-                                        ? 'border-neutral-900 bg-neutral-50 ring-1 ring-neutral-900 dark:border-neutral-100 dark:bg-neutral-900 dark:ring-neutral-100'
-                                        : 'border-neutral-200 bg-white hover:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:border-neutral-600',
-                                ].join(
-                                    ' ',
-                                )}
-                            >
-                                <input
-                                    type="radio"
-                                    name="section_layout_width"
-                                    value={
-                                        option.value
-                                    }
-                                    checked={
-                                        selected
-                                    }
-                                    disabled={
-                                        disabled
-                                    }
-                                    onChange={() =>
-                                        onChange(
-                                            option.value,
-                                        )
-                                    }
-                                    className="sr-only"
-                                />
+                    return (
+                        <label
+                            key={option.value}
+                            className={[
+                                'rounded-lg border p-4 transition',
+                                disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
+                                selected
+                                    ? 'border-neutral-900 bg-neutral-50 ring-1 ring-neutral-900 dark:border-neutral-100 dark:bg-neutral-900 dark:ring-neutral-100'
+                                    : 'border-neutral-200 bg-white hover:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:border-neutral-600',
+                            ].join(' ')}
+                        >
+                            <input
+                                type="radio"
+                                name="section_layout_width"
+                                value={option.value}
+                                checked={selected}
+                                disabled={disabled}
+                                onChange={() => onChange(option.value)}
+                                className="sr-only"
+                            />
 
-                                <SectionLayoutDiagram
-                                    width={
-                                        option.value
-                                    }
-                                    selected={
-                                        selected
-                                    }
-                                />
+                            <SectionLayoutDiagram width={option.value} selected={selected} />
 
-                                <span className="mt-3 block text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                                    {
-                                        option.label
-                                    }
-                                </span>
+                            <span className="mt-3 block text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                                {option.label}
+                            </span>
 
-                                <span className="mt-1 block text-xs leading-5 text-neutral-500 dark:text-neutral-400">
-                                    {
-                                        option.description
-                                    }
-                                </span>
-                            </label>
-                        )
-                    },
-                )}
+                            <span className="mt-1 block text-xs leading-5 text-neutral-500 dark:text-neutral-400">
+                                {option.description}
+                            </span>
+                        </label>
+                    )
+                })}
             </div>
         </section>
     )
 }
 
-function SectionLayoutDiagram({
-    width,
-    selected,
-}: {
-    width: SectionWidth
-    selected: boolean
-}) {
-    const contentClass =
-        selected
-            ? 'bg-neutral-700 dark:bg-neutral-300'
-            : 'bg-neutral-300 dark:bg-neutral-700'
+function SectionLayoutDiagram({ width, selected }: { width: SectionWidth; selected: boolean }) {
+    const contentClass = selected
+        ? 'bg-neutral-700 dark:bg-neutral-300'
+        : 'bg-neutral-300 dark:bg-neutral-700'
 
     return (
         <span
@@ -569,26 +359,15 @@ function SectionLayoutDiagram({
                 className={[
                     'block h-9 rounded',
                     contentClass,
-                    width ===
-                    'container'
-                        ? 'mx-auto w-3/4'
-                        : 'w-full',
+                    width === 'container' ? 'mx-auto w-3/4' : 'w-full',
                 ].join(' ')}
             />
         </span>
     )
 }
 
-function normalizeSectionLayout(
-    layout:
-        | SectionLayout
-        | null
-        | undefined,
-): SectionLayout {
-    if (
-        layout?.width ===
-        'full'
-    ) {
+function normalizeSectionLayout(layout: SectionLayout | null | undefined): SectionLayout {
+    if (layout?.width === 'full') {
         return {
             width: 'full',
         }
@@ -599,147 +378,75 @@ function normalizeSectionLayout(
     }
 }
 
-function formatIdentifier(
-    value: string,
-): string {
+function formatIdentifier(value: string): string {
     return value
         .split(/[_-]/)
         .filter(Boolean)
-        .map(
-            (part) =>
-                part
-                    .charAt(0)
-                    .toUpperCase() +
-                part.slice(1),
-        )
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
         .join(' ')
 }
 
-function isConfigValid(
-    type: string,
-    config: SectionConfig,
-): boolean {
-    if (
-        type !==
-        'featured_products'
-    ) {
+function isConfigValid(type: string, config: SectionConfig): boolean {
+    if (type !== 'featured_products') {
         return true
     }
 
-    const title =
-        config.title
-    const limit =
-        config.limit
-    const source =
-        isJsonObject(
-            config.source,
-        )
-            ? config.source
-            : {
-                  type: 'featured',
-              }
+    const title = config.title
+    const limit = config.limit
+    const source = isJsonObject(config.source)
+        ? config.source
+        : {
+              type: 'featured',
+          }
 
     if (
-        typeof title !==
-            'string' ||
-        title.trim()
-            .length === 0 ||
-        title.length >
-            120 ||
-        typeof limit !==
-            'number' ||
-        !Number.isInteger(
-            limit,
-        ) ||
+        typeof title !== 'string' ||
+        title.trim().length === 0 ||
+        title.length > 120 ||
+        typeof limit !== 'number' ||
+        !Number.isInteger(limit) ||
         limit < 1 ||
         limit > 24
     ) {
         return false
     }
 
-    if (
-        !isJsonObject(
-            source,
-        )
-    ) {
+    if (!isJsonObject(source)) {
         return false
     }
 
-    const sourceType =
-        source.type
+    const sourceType = source.type
 
-    if (
-        sourceType ===
-        'featured'
-    ) {
+    if (sourceType === 'featured') {
         return true
     }
 
-    if (
-        sourceType ===
-        'category'
-    ) {
+    if (sourceType === 'category') {
         return (
-            typeof source.category_id ===
-                'number' &&
-            Number.isInteger(
-                source.category_id,
-            ) &&
-            source.category_id >
-                0
+            typeof source.category_id === 'number' &&
+            Number.isInteger(source.category_id) &&
+            source.category_id > 0
         )
     }
 
-    if (
-        sourceType ===
-        'manual'
-    ) {
-        const productIds =
-            source.product_ids
+    if (sourceType === 'manual') {
+        const productIds = source.product_ids
 
         return (
-            Array.isArray(
-                productIds,
-            ) &&
-            productIds.length >
-                0 &&
-            productIds.length <=
-                24 &&
+            Array.isArray(productIds) &&
+            productIds.length > 0 &&
+            productIds.length <= 24 &&
             productIds.every(
-                (
-                    productId,
-                ) =>
-                    typeof productId ===
-                        'number' &&
-                    Number.isInteger(
-                        productId,
-                    ) &&
-                    productId >
-                        0,
+                (productId) =>
+                    typeof productId === 'number' && Number.isInteger(productId) && productId > 0,
             ) &&
-            new Set(
-                productIds,
-            ).size ===
-                productIds.length
+            new Set(productIds).size === productIds.length
         )
     }
 
     return false
 }
 
-function isJsonObject(
-    value:
-        SectionConfig[string],
-): value is Record<
-    string,
-    JsonValue
-> {
-    return (
-        typeof value ===
-            'object' &&
-        value !== null &&
-        !Array.isArray(
-            value,
-        )
-    )
+function isJsonObject(value: SectionConfig[string]): value is Record<string, JsonValue> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value)
 }

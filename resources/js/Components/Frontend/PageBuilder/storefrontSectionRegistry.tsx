@@ -1,5 +1,8 @@
 import FeaturedProductsSection from '@/Components/Frontend/PageBuilder/Sections/FeaturedProductsSection'
 import HeroSection from '@/Components/Frontend/PageBuilder/Sections/Hero/HeroSection'
+import ProductCategoriesGridSection from '@/Components/Frontend/PageBuilder/Sections/ProductCategories/ProductCategoriesGridSection'
+import ProductCategoriesCardsSection from '@/Components/Frontend/PageBuilder/Sections/ProductCategories/ProductCategoriesCardsSection'
+import ProductCategoriesCarouselSection from '@/Components/Frontend/PageBuilder/Sections/ProductCategories/ProductCategoriesCarouselSection'
 
 import type {
     StorefrontSectionProps,
@@ -18,6 +21,18 @@ function renderHero({ section }: StorefrontSectionProps) {
     return <HeroSection section={section} />
 }
 
+function renderProductCategoriesGrid({ section }: StorefrontSectionProps) {
+    return <ProductCategoriesGridSection section={section} />
+}
+
+function renderProductCategoriesCards({ section }: StorefrontSectionProps) {
+    return <ProductCategoriesCardsSection section={section} />
+}
+
+function renderProductCategoriesCarousel({ section }: StorefrontSectionProps) {
+    return <ProductCategoriesCarouselSection section={section} />
+}
+
 const storefrontSectionRegistry: Record<string, StorefrontSectionRegistration> = {
     featured_products: {
         templates: {
@@ -30,6 +45,14 @@ const storefrontSectionRegistry: Record<string, StorefrontSectionRegistration> =
             content_slider: renderHero,
             image_slider: renderHero,
             static: renderHero,
+        },
+    },
+
+    product_categories: {
+        templates: {
+            grid: renderProductCategoriesGrid,
+            cards: renderProductCategoriesCards,
+            carousel: renderProductCategoriesCarousel,
         },
     },
 }

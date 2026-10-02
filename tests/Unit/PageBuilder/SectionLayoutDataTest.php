@@ -58,8 +58,7 @@ final class SectionLayoutDataTest extends TestCase
     {
         $layout =
             SectionLayoutData::fromArray([
-                'width' =>
-                    'container',
+                'width' => 'container',
             ]);
 
         $this->assertSame(
@@ -72,8 +71,7 @@ final class SectionLayoutDataTest extends TestCase
     {
         $layout =
             SectionLayoutData::fromArray([
-                'width' =>
-                    'full',
+                'width' => 'full',
             ]);
 
         $this->assertSame(
@@ -86,8 +84,7 @@ final class SectionLayoutDataTest extends TestCase
     {
         $layout =
             SectionLayoutData::fromArray([
-                'width' =>
-                    'something_invalid',
+                'width' => 'something_invalid',
             ]);
 
         $this->assertSame(

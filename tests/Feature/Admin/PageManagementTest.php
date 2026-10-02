@@ -385,7 +385,7 @@ final class PageManagementTest extends TestCase
                     )
                     ->has(
                         'sectionDefinitions',
-                        2,
+                        3,
                     )
 
                     /*
@@ -496,6 +496,89 @@ final class PageManagementTest extends TestCase
                     )
                     ->has(
                         'sectionDefinitions.1.template_default_configs.grid',
+                    )
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Product Categories
+                    |--------------------------------------------------------------------------
+                    */
+
+                    ->where(
+                        'sectionDefinitions.2.type',
+                        SectionType::ProductCategories->value,
+                    )
+                    ->where(
+                        'sectionDefinitions.2.label',
+                        'Product Categories',
+                    )
+                    ->where(
+                        'sectionDefinitions.2.default_template',
+                        'grid',
+                    )
+                    ->has(
+                        'sectionDefinitions.2.templates',
+                        3,
+                    )
+                    ->where(
+                        'sectionDefinitions.2.templates.0.key',
+                        'grid',
+                    )
+                    ->where(
+                        'sectionDefinitions.2.templates.1.key',
+                        'cards',
+                    )
+                    ->where(
+                        'sectionDefinitions.2.templates.2.key',
+                        'carousel',
+                    )
+                    ->where(
+                        'sectionDefinitions.2.default_config.title',
+                        'Shop by Category',
+                    )
+                    ->where(
+                        'sectionDefinitions.2.default_config.category_ids',
+                        [],
+                    )
+                    ->where(
+                        'sectionDefinitions.2.default_config.show_name',
+                        true,
+                    )
+                    ->where(
+                        'sectionDefinitions.2.default_config.columns',
+                        4,
+                    )
+                    ->where(
+                        'sectionDefinitions.2.default_config.show_product_count',
+                        false,
+                    )
+                    ->has(
+                        'sectionDefinitions.2.template_default_configs',
+                        3,
+                    )
+                    ->where(
+                        'sectionDefinitions.2.template_default_configs.cards.columns',
+                        3,
+                    )
+                    ->where(
+                        'sectionDefinitions.2.template_default_configs.cards.show_product_count',
+                        true,
+                    )
+                    ->where(
+                        'sectionDefinitions.2.template_default_configs.carousel.autoplay',
+                        true,
+                    )
+                    ->where(
+                        'sectionDefinitions.2.template_default_configs.carousel.autoplay_delay',
+                        5000,
+                    )
+                    ->where(
+                        'sectionDefinitions.2.template_default_configs.carousel.show_arrows',
+                        true,
+                    )
+                    ->where(
+                        'sectionDefinitions.2.template_default_configs.carousel.show_dots',
+                        true,
                     ),
             );
     }

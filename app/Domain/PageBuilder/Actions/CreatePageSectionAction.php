@@ -48,8 +48,7 @@ final readonly class CreatePageSectionAction
                     'type' => $data->type,
                     'template' => $data->template,
                     'config' => $config,
-                    'layout' =>
-                        $data->layout->toArray(),
+                    'layout' => $data->layout->toArray(),
                     'position' => $position,
                     'is_enabled' => $data->isEnabled,
                 ]);

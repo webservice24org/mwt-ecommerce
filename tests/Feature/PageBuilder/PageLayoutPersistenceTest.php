@@ -101,8 +101,7 @@ final class PageLayoutPersistenceTest extends TestCase
             'template' => 'static',
             'config' => [],
             'layout' => [
-                'width' =>
-                    SectionWidth::Full->value,
+                'width' => SectionWidth::Full->value,
             ],
             'position' => 10,
             'is_enabled' => true,
@@ -112,8 +111,7 @@ final class PageLayoutPersistenceTest extends TestCase
 
         $this->assertSame(
             [
-                'width' =>
-                    SectionWidth::Full->value,
+                'width' => SectionWidth::Full->value,
             ],
             $section->layout,
         );
@@ -129,8 +127,7 @@ final class PageLayoutPersistenceTest extends TestCase
             'template' => 'static',
             'config' => [],
             'layout' => [
-                'width' =>
-                    SectionWidth::Container->value,
+                'width' => SectionWidth::Container->value,
             ],
             'position' => 10,
             'is_enabled' => true,

@@ -8,6 +8,7 @@ use App\Domain\Catalog\Enums\ProductStatus;
 use App\Domain\PageBuilder\Data\ResolvedPageSectionData;
 use App\Domain\PageBuilder\Enums\SectionType;
 use App\Domain\PageBuilder\Resolvers\PageSectionResolver;
+use App\Models\Category;
 use App\Models\Page;
 use App\Models\PageSection;
 use App\Models\Product;
@@ -214,6 +215,169 @@ final class PageSectionResolverTest extends TestCase
         $this->assertSame(
             [],
             $resolved->data,
+        );
+    }
+
+    public function test_product_categories_section_is_resolved_in_configured_order(): void
+    {
+        $page = Page::factory()->create();
+
+        $first = Category::factory()->create([
+            'name' => 'First Category',
+            'slug' => 'first-category',
+            'is_active' => true,
+        ]);
+
+        $second = Category::factory()->create([
+            'name' => 'Second Category',
+            'slug' => 'second-category',
+            'is_active' => true,
+        ]);
+
+        $third = Category::factory()->create([
+            'name' => 'Third Category',
+            'slug' => 'third-category',
+            'is_active' => true,
+        ]);
+
+        $section = PageSection::factory()->create([
+            'page_id' => $page->id,
+            'type' => SectionType::ProductCategories,
+            'template' => 'grid',
+            'config' => [
+                'title' => 'Shop by Category',
+                'category_ids' => [
+                    $third->id,
+                    $first->id,
+                    $second->id,
+                ],
+                'show_name' => true,
+                'columns' => 4,
+                'show_product_count' => false,
+            ],
+            'position' => 1,
+            'is_enabled' => true,
+        ]);
+
+        $resolved = app(
+            PageSectionResolver::class,
+        )->resolve($section);
+
+        $this->assertSame(
+            SectionType::ProductCategories,
+            $resolved->type,
+        );
+
+        $this->assertSame(
+            'grid',
+            $resolved->template,
+        );
+
+        $this->assertArrayHasKey(
+            'categories',
+            $resolved->data,
+        );
+
+        $categories =
+            $resolved->data['categories'];
+
+        $this->assertCount(
+            3,
+            $categories,
+        );
+
+        $this->assertSame(
+            [
+                $third->id,
+                $first->id,
+                $second->id,
+            ],
+            array_map(
+                static fn ($category): int => $category->id,
+                $categories,
+            ),
+        );
+
+        $this->assertNull(
+            $categories[0]->productCount,
+        );
+    }
+
+    public function test_product_categories_omits_unavailable_categories(): void
+    {
+        $page = Page::factory()->create();
+
+        $active = Category::factory()->create([
+            'is_active' => true,
+        ]);
+
+        $inactive = Category::factory()->create([
+            'is_active' => false,
+        ]);
+
+        $section = PageSection::factory()->create([
+            'page_id' => $page->id,
+            'type' => SectionType::ProductCategories,
+            'template' => 'grid',
+            'config' => [
+                'title' => 'Categories',
+                'category_ids' => [
+                    $inactive->id,
+                    999999,
+                    $active->id,
+                ],
+                'show_name' => true,
+                'columns' => 4,
+                'show_product_count' => false,
+            ],
+            'position' => 1,
+            'is_enabled' => true,
+        ]);
+
+        $resolved = app(
+            PageSectionResolver::class,
+        )->resolve($section);
+
+        $categories =
+            $resolved->data['categories'];
+
+        $this->assertCount(
+            1,
+            $categories,
+        );
+
+        $this->assertSame(
+            $active->id,
+            $categories[0]->id,
+        );
+    }
+
+    public function test_product_categories_with_no_selected_categories_resolves_empty_data(): void
+    {
+        $page = Page::factory()->create();
+
+        $section = PageSection::factory()->create([
+            'page_id' => $page->id,
+            'type' => SectionType::ProductCategories,
+            'template' => 'grid',
+            'config' => [
+                'title' => 'Categories',
+                'category_ids' => [],
+                'show_name' => true,
+                'columns' => 4,
+                'show_product_count' => false,
+            ],
+            'position' => 1,
+            'is_enabled' => true,
+        ]);
+
+        $resolved = app(
+            PageSectionResolver::class,
+        )->resolve($section);
+
+        $this->assertSame(
+            [],
+            $resolved->data['categories'],
         );
     }
 }

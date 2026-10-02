@@ -6,10 +6,7 @@ import StorefrontSeo from '@/Components/Frontend/Seo/StorefrontSeo'
 import FrontendLayout from '@/Layouts/Frontend/FrontendLayout'
 import type { StorefrontHome } from '@/types/storefront'
 
-import type {
-    StorefrontBuilderHomepage,
-    StorefrontResolvedSection,
-} from '@/types/storefront-page'
+import type { StorefrontBuilderHomepage, StorefrontResolvedSection } from '@/types/storefront-page'
 
 interface Props {
     home: StorefrontHome

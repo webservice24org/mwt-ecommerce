@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\PageBuilder\Resolvers;
 
 use App\Domain\PageBuilder\Data\ResolvedPageSectionData;
-use App\Domain\PageBuilder\Enums\SectionType;
 use App\Domain\PageBuilder\Data\SectionLayoutData;
+use App\Domain\PageBuilder\Enums\SectionType;
 use App\Models\PageSection;
 use LogicException;
 
@@ -14,6 +14,7 @@ final readonly class PageSectionResolver
 {
     public function __construct(
         private FeaturedProductsResolver $featuredProducts,
+        private ProductCategoriesResolver $productCategories,
     ) {}
 
     public function resolve(
@@ -23,9 +24,19 @@ final readonly class PageSectionResolver
             SectionType::Hero => [],
 
             SectionType::FeaturedProducts => [
-                'products' => $this->featuredProducts->resolve(
-                    $section->config,
-                ),
+                'products' => $this
+                    ->featuredProducts
+                    ->resolve(
+                        $section->config,
+                    ),
+            ],
+
+            SectionType::ProductCategories => [
+                'categories' => $this
+                    ->productCategories
+                    ->resolve(
+                        $section->config,
+                    ),
             ],
 
             default => throw new LogicException(
@@ -41,10 +52,9 @@ final readonly class PageSectionResolver
             type: $section->type,
             template: $section->template,
             config: $section->config,
-            layout:
-                SectionLayoutData::fromArray(
-                    $section->layout,
-                ),
+            layout: SectionLayoutData::fromArray(
+                $section->layout,
+            ),
             data: $data,
         );
     }

@@ -18,7 +18,7 @@ final class GetSectionDefinitionsQueryTest extends TestCase
         )->handle();
 
         $this->assertCount(
-            2,
+            3,
             $definitions,
         );
 
@@ -332,6 +332,96 @@ final class GetSectionDefinitionsQueryTest extends TestCase
         $this->assertSame(
             'Products',
             $productGrid['category'],
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Product Categories
+        |--------------------------------------------------------------------------
+        */
+
+        $productCategories = $definitions[2];
+
+        $this->assertInstanceOf(
+            SectionDefinitionData::class,
+            $productCategories,
+        );
+
+        $this->assertSame(
+            SectionType::ProductCategories->value,
+            $productCategories->type,
+        );
+
+        $this->assertSame(
+            'Product Categories',
+            $productCategories->label,
+        );
+
+        $this->assertSame(
+            'grid',
+            $productCategories->defaultTemplate,
+        );
+
+        $gridConfig = [
+            'title' => 'Shop by Category',
+            'category_ids' => [],
+            'show_name' => true,
+            'columns' => 4,
+            'show_product_count' => false,
+        ];
+
+        $cardsConfig = [
+            'title' => 'Shop by Category',
+            'category_ids' => [],
+            'show_name' => true,
+            'columns' => 3,
+            'show_product_count' => true,
+        ];
+
+        $carouselConfig = [
+            'title' => 'Shop by Category',
+            'category_ids' => [],
+            'show_name' => true,
+            'columns' => 4,
+            'show_product_count' => false,
+            'autoplay' => true,
+            'autoplay_delay' => 5000,
+            'show_arrows' => true,
+            'show_dots' => true,
+            'effect' => 'fade',
+        ];
+
+        $this->assertSame(
+            $gridConfig,
+            $productCategories->defaultConfig,
+        );
+
+        $this->assertCount(
+            3,
+            $productCategories->templates,
+        );
+
+        $this->assertSame(
+            ['grid', 'cards', 'carousel'],
+            array_column(
+                $productCategories->templates,
+                'key',
+            ),
+        );
+
+        $this->assertSame(
+            $gridConfig,
+            $productCategories->templateDefaultConfigs['grid'],
+        );
+
+        $this->assertSame(
+            $cardsConfig,
+            $productCategories->templateDefaultConfigs['cards'],
+        );
+
+        $this->assertSame(
+            $carouselConfig,
+            $productCategories->templateDefaultConfigs['carousel'],
         );
     }
 }

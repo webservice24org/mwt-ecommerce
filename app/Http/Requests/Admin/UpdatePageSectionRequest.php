@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin;
 
+use App\Domain\PageBuilder\Data\SectionLayoutData;
 use App\Domain\PageBuilder\Data\UpdatePageSectionData;
 use App\Domain\PageBuilder\Enums\SectionType;
+use App\Domain\PageBuilder\Enums\SectionWidth;
 use App\Models\Page;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Domain\PageBuilder\Enums\SectionWidth;
-use App\Domain\PageBuilder\Data\SectionLayoutData;
-
 
 final class UpdatePageSectionRequest extends FormRequest
 {
@@ -81,18 +80,14 @@ final class UpdatePageSectionRequest extends FormRequest
             type: SectionType::from(
                 (string) $validated['type'],
             ),
-            template:
-                (string) $validated['template'],
+            template: (string) $validated['template'],
             config: $config,
-            layout:
-                SectionLayoutData::fromArray(
-                    $layout,
-                ),
-            isEnabled:
-                (bool) $validated[
+            layout: SectionLayoutData::fromArray(
+                $layout,
+            ),
+            isEnabled: (bool) $validated[
                     'is_enabled'
                 ],
         );
     }
-
 }

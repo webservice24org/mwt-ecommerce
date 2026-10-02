@@ -1,19 +1,10 @@
-import type {
-    StorefrontProductCard,
-} from '@/types/storefront'
+import type { StorefrontProductCard } from '@/types/storefront'
 
-export type StorefrontPageContentMode =
-    | 'classic'
-    | 'builder'
+export type StorefrontPageContentMode = 'classic' | 'builder'
 
-export type StorefrontPageLayout =
-    | 'full_width'
-    | 'left_sidebar'
-    | 'right_sidebar'
+export type StorefrontPageLayout = 'full_width' | 'left_sidebar' | 'right_sidebar'
 
-export type StorefrontSectionWidth =
-    | 'container'
-    | 'full'
+export type StorefrontSectionWidth = 'container' | 'full'
 
 export interface StorefrontSectionLayout {
     width: StorefrontSectionWidth
@@ -42,9 +33,38 @@ export interface StorefrontBuilderHomepage {
     sections: StorefrontResolvedSection[]
 }
 
-export interface StorefrontFeaturedProductsSectionData
-    extends Record<string, unknown> {
+export interface StorefrontFeaturedProductsSectionData extends Record<string, unknown> {
     products: StorefrontProductCard[]
+}
+
+export type StorefrontProductCategoriesTemplate = 'grid' | 'cards' | 'carousel'
+
+export interface StorefrontPageBuilderCategory {
+    id: number
+    name: string
+    slug: string
+    description: string | null
+    imageUrl: string | null
+    productCount: number | null
+}
+
+export interface StorefrontProductCategoriesSectionData extends Record<string, unknown> {
+    categories: StorefrontPageBuilderCategory[]
+}
+
+export interface StorefrontProductCategoriesBaseConfig extends Record<string, unknown> {
+    title: string
+    category_ids: number[]
+    show_name: boolean
+    columns: number
+    show_product_count: boolean
+}
+
+export interface StorefrontProductCategoriesCarouselConfig extends StorefrontProductCategoriesBaseConfig {
+    autoplay: boolean
+    autoplay_delay: number
+    show_arrows: boolean
+    show_dots: boolean
 }
 
 export interface StorefrontPage {

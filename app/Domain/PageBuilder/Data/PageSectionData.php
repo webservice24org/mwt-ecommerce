@@ -39,16 +39,11 @@ final readonly class PageSectionData
         return [
             'id' => $this->id,
             'type' => $this->type->value,
-            'template' =>
-                $this->template,
-            'config' =>
-                $this->config,
-            'layout' =>
-                $this->layout->toArray(),
-            'position' =>
-                $this->position,
-            'is_enabled' =>
-                $this->isEnabled,
+            'template' => $this->template,
+            'config' => $this->config,
+            'layout' => $this->layout->toArray(),
+            'position' => $this->position,
+            'is_enabled' => $this->isEnabled,
         ];
     }
 }
