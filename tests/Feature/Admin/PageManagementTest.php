@@ -385,7 +385,7 @@ final class PageManagementTest extends TestCase
                     )
                     ->has(
                         'sectionDefinitions',
-                        3,
+                        6,
                     )
 
                     /*
@@ -579,6 +579,254 @@ final class PageManagementTest extends TestCase
                     ->where(
                         'sectionDefinitions.2.template_default_configs.carousel.show_dots',
                         true,
+                    )
+                    ->where(
+                        'sectionDefinitions.2.template_default_configs.carousel.effect',
+                        'fade',
+                    )
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Product Collection
+                    |--------------------------------------------------------------------------
+                    */
+
+                    ->where(
+                        'sectionDefinitions.3.type',
+                        SectionType::ProductCollection->value,
+                    )
+                    ->where(
+                        'sectionDefinitions.3.label',
+                        'Product Collection',
+                    )
+                    ->where(
+                        'sectionDefinitions.3.default_template',
+                        'grid',
+                    )
+                    ->has(
+                        'sectionDefinitions.3.templates',
+                        3,
+                    )
+                    ->where(
+                        'sectionDefinitions.3.templates.0.key',
+                        'grid',
+                    )
+                    ->where(
+                        'sectionDefinitions.3.templates.1.key',
+                        'cards',
+                    )
+                    ->where(
+                        'sectionDefinitions.3.templates.2.key',
+                        'carousel',
+                    )
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Product Collection default config
+                    |--------------------------------------------------------------------------
+                    */
+
+                    ->where(
+                        'sectionDefinitions.3.default_config.title',
+                        'Products',
+                    )
+                    ->where(
+                        'sectionDefinitions.3.default_config.limit',
+                        8,
+                    )
+                    ->where(
+                        'sectionDefinitions.3.default_config.source.type',
+                        'latest',
+                    )
+                    ->where(
+                        'sectionDefinitions.3.default_config.columns',
+                        4,
+                    )
+                    ->where(
+                        'sectionDefinitions.3.default_config.show_price',
+                        true,
+                    )
+                    ->where(
+                        'sectionDefinitions.3.default_config.show_rating',
+                        true,
+                    )
+                    ->where(
+                        'sectionDefinitions.3.default_config.show_badges',
+                        true,
+                    )
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Product Collection template configs
+                    |--------------------------------------------------------------------------
+                    */
+
+                    ->has(
+                        'sectionDefinitions.3.template_default_configs',
+                        3,
+                    )
+                    ->has(
+                        'sectionDefinitions.3.template_default_configs.grid',
+                    )
+                    ->has(
+                        'sectionDefinitions.3.template_default_configs.cards',
+                    )
+                    ->has(
+                        'sectionDefinitions.3.template_default_configs.carousel',
+                    )
+                    ->where(
+                        'sectionDefinitions.3.template_default_configs.grid.columns',
+                        4,
+                    )
+                    ->where(
+                        'sectionDefinitions.3.template_default_configs.cards.columns',
+                        3,
+                    )
+                    ->where(
+                        'sectionDefinitions.3.template_default_configs.carousel.columns',
+                        4,
+                    )
+                    ->where(
+                        'sectionDefinitions.3.template_default_configs.carousel.autoplay',
+                        true,
+                    )
+                    ->where(
+                        'sectionDefinitions.3.template_default_configs.carousel.autoplay_delay',
+                        5000,
+                    )
+                    ->where(
+                        'sectionDefinitions.3.template_default_configs.carousel.show_arrows',
+                        true,
+                    )
+                    ->where(
+                        'sectionDefinitions.3.template_default_configs.carousel.show_dots',
+                        true,
+                    )
+                    ->where(
+                        'sectionDefinitions.3.template_default_configs.carousel.effect',
+                        'fade',
+                    )
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Promotional Banner
+                    |--------------------------------------------------------------------------
+                    */
+
+                    ->where(
+                        'sectionDefinitions.4.type',
+                        SectionType::PromotionalBanner->value,
+                    )
+                    ->where(
+                        'sectionDefinitions.4.label',
+                        'Promotional Banner',
+                    )
+                    ->where(
+                        'sectionDefinitions.4.default_template',
+                        'image_banner',
+                    )
+                    ->has(
+                        'sectionDefinitions.4.templates',
+                        3,
+                    )
+                    ->where(
+                        'sectionDefinitions.4.templates.0.key',
+                        'image_banner',
+                    )
+                    ->where(
+                        'sectionDefinitions.4.templates.0.label',
+                        'Image Banner',
+                    )
+                    ->where(
+                        'sectionDefinitions.4.templates.0.category',
+                        'Marketing',
+                    )
+                    ->where(
+                        'sectionDefinitions.4.templates.1.key',
+                        'content_banner',
+                    )
+                    ->where(
+                        'sectionDefinitions.4.templates.1.label',
+                        'Content Banner',
+                    )
+                    ->where(
+                        'sectionDefinitions.4.templates.1.category',
+                        'Marketing',
+                    )
+                    ->where(
+                        'sectionDefinitions.4.templates.2.key',
+                        'split_banner',
+                    )
+                    ->where(
+                        'sectionDefinitions.4.templates.2.label',
+                        'Split Banner',
+                    )
+                    ->where(
+                        'sectionDefinitions.4.templates.2.category',
+                        'Marketing',
+                    )
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Promotional Banner default config
+                    |--------------------------------------------------------------------------
+                    */
+
+                    ->where(
+                        'sectionDefinitions.4.default_config.heading',
+                        'Special Offer',
+                    )
+                    ->where(
+                        'sectionDefinitions.4.default_config.description',
+                        '',
+                    )
+                    ->where(
+                        'sectionDefinitions.4.default_config.image',
+                        null,
+                    )
+                    ->where(
+                        'sectionDefinitions.4.default_config.cta_label',
+                        null,
+                    )
+                    ->where(
+                        'sectionDefinitions.4.default_config.cta_url',
+                        null,
+                    )
+                    ->where(
+                        'sectionDefinitions.4.default_config.alignment',
+                        'center',
+                    )
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Promotional Banner template defaults
+                    |--------------------------------------------------------------------------
+                    */
+
+                    ->has(
+                        'sectionDefinitions.4.template_default_configs',
+                        3,
+                    )
+                    ->has(
+                        'sectionDefinitions.4.template_default_configs.image_banner',
+                    )
+                    ->has(
+                        'sectionDefinitions.4.template_default_configs.content_banner',
+                    )
+                    ->has(
+                        'sectionDefinitions.4.template_default_configs.split_banner',
+                    )
+                    ->where(
+                        'sectionDefinitions.4.template_default_configs.image_banner.alignment',
+                        'center',
+                    )
+                    ->where(
+                        'sectionDefinitions.4.template_default_configs.content_banner.alignment',
+                        'center',
+                    )
+                    ->where(
+                        'sectionDefinitions.4.template_default_configs.split_banner.alignment',
+                        'left',
                     ),
             );
     }

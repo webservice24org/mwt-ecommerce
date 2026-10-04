@@ -387,16 +387,25 @@ function formatIdentifier(value: string): string {
 }
 
 function isConfigValid(type: string, config: SectionConfig): boolean {
-    if (type !== 'featured_products') {
+    if (type === 'content') {
+        return isContentConfigValid(config)
+    }
+
+    if (type === 'promotional_banner') {
+        return isPromotionalBannerConfigValid(config)
+    }
+
+    if (type !== 'featured_products' && type !== 'product_collection') {
         return true
     }
 
     const title = config.title
     const limit = config.limit
+
     const source = isJsonObject(config.source)
         ? config.source
         : {
-              type: 'featured',
+              type: type === 'product_collection' ? 'latest' : 'featured',
           }
 
     if (
@@ -411,13 +420,9 @@ function isConfigValid(type: string, config: SectionConfig): boolean {
         return false
     }
 
-    if (!isJsonObject(source)) {
-        return false
-    }
-
     const sourceType = source.type
 
-    if (sourceType === 'featured') {
+    if (sourceType === 'featured' || (type === 'product_collection' && sourceType === 'latest')) {
         return true
     }
 
@@ -445,6 +450,107 @@ function isConfigValid(type: string, config: SectionConfig): boolean {
     }
 
     return false
+}
+
+function isContentConfigValid(config: SectionConfig): boolean {
+    const allowedKeys = new Set(['heading', 'body', 'image', 'image_alt', 'alignment'])
+
+    if (Object.keys(config).some((key) => !allowedKeys.has(key))) {
+        return false
+    }
+
+    const heading = config.heading
+    const body = config.body
+    const image = config.image
+    const imageAlt = config.image_alt
+    const alignment = config.alignment
+
+    if (
+        typeof heading !== 'string' ||
+        characterCount(heading.trim()) > 160 ||
+        typeof body !== 'string' ||
+        body.trim().length === 0 ||
+        characterCount(body.trim()) > 5000
+    ) {
+        return false
+    }
+
+    if (image !== null && typeof image !== 'string') {
+        return false
+    }
+
+    if (
+        imageAlt !== null &&
+        (typeof imageAlt !== 'string' || characterCount(imageAlt.trim()) > 255)
+    ) {
+        return false
+    }
+
+    return alignment === 'left' || alignment === 'center' || alignment === 'right'
+}
+
+function isPromotionalBannerConfigValid(config: SectionConfig): boolean {
+    const allowedKeys = new Set([
+        'heading',
+        'description',
+        'image',
+        'cta_label',
+        'cta_url',
+        'alignment',
+    ])
+
+    if (Object.keys(config).some((key) => !allowedKeys.has(key))) {
+        return false
+    }
+
+    const heading = config.heading
+    const description = config.description
+    const image = config.image
+    const ctaLabel = config.cta_label
+    const ctaUrl = config.cta_url
+    const alignment = config.alignment
+
+    if (
+        typeof heading !== 'string' ||
+        heading.trim().length === 0 ||
+        characterCount(heading.trim()) > 160 ||
+        typeof description !== 'string' ||
+        characterCount(description.trim()) > 500
+    ) {
+        return false
+    }
+
+    if (image !== null && typeof image !== 'string') {
+        return false
+    }
+
+    if (ctaLabel !== null && typeof ctaLabel !== 'string') {
+        return false
+    }
+
+    if (ctaUrl !== null && typeof ctaUrl !== 'string') {
+        return false
+    }
+
+    const normalizedCtaLabel =
+        typeof ctaLabel === 'string' && ctaLabel.trim().length > 0 ? ctaLabel.trim() : null
+
+    const normalizedCtaUrl =
+        typeof ctaUrl === 'string' && ctaUrl.trim().length > 0 ? ctaUrl.trim() : null
+
+    if (
+        (normalizedCtaLabel === null) !== (normalizedCtaUrl === null) ||
+        (normalizedCtaLabel !== null && characterCount(normalizedCtaLabel) > 80) ||
+        (normalizedCtaUrl !== null && characterCount(normalizedCtaUrl) > 2048)
+    ) {
+        return false
+    }
+
+    return alignment === 'left' || alignment === 'center' || alignment === 'right'
+}
+
+function characterCount(value: string): number {
+    return Array.from(value).length
 }
 
 function isJsonObject(value: SectionConfig[string]): value is Record<string, JsonValue> {

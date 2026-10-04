@@ -119,10 +119,16 @@ export default function SectionLibraryDialog({ open, pageId, sectionDefinitions,
             {
                 preserveScroll: true,
 
-                onSuccess: () => {
+                onSuccess: (page) => {
+                    console.log('SECTION INSERT SUCCESS', page)
+
                     setSearch('')
                     setActiveCategory('all')
                     onClose()
+                },
+
+                onError: (errors) => {
+                    console.error('SECTION INSERT ERRORS', errors)
                 },
 
                 onFinish: () => {

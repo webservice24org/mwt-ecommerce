@@ -21,7 +21,7 @@ final class GetSectionDefinitionsQueryTest extends TestCase
         $definitions = $query->handle();
 
         $this->assertCount(
-            3,
+            6,
             $definitions,
         );
 
@@ -314,6 +314,385 @@ final class GetSectionDefinitionsQueryTest extends TestCase
         $this->assertSame(
             'Products',
             $template['category'],
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Product Categories
+        |--------------------------------------------------------------------------
+        */
+
+        $productCategories = $definitions[2];
+
+        $this->assertInstanceOf(
+            SectionDefinitionData::class,
+            $productCategories,
+        );
+
+        $this->assertSame(
+            SectionType::ProductCategories->value,
+            $productCategories->type,
+        );
+
+        $this->assertSame(
+            'Product Categories',
+            $productCategories->label,
+        );
+
+        $this->assertSame(
+            'grid',
+            $productCategories->defaultTemplate,
+        );
+
+        $categoryGridConfig = [
+            'title' => 'Shop by Category',
+            'category_ids' => [],
+            'show_name' => true,
+            'columns' => 4,
+            'show_product_count' => false,
+        ];
+
+        $categoryCardsConfig = [
+            'title' => 'Shop by Category',
+            'category_ids' => [],
+            'show_name' => true,
+            'columns' => 3,
+            'show_product_count' => true,
+        ];
+
+        $categoryCarouselConfig = [
+            'title' => 'Shop by Category',
+            'category_ids' => [],
+            'show_name' => true,
+            'columns' => 4,
+            'show_product_count' => false,
+            'autoplay' => true,
+            'autoplay_delay' => 5000,
+            'show_arrows' => true,
+            'show_dots' => true,
+            'effect' => 'fade',
+        ];
+
+        $this->assertSame(
+            $categoryGridConfig,
+            $productCategories->defaultConfig,
+        );
+
+        $this->assertCount(
+            3,
+            $productCategories->templates,
+        );
+
+        $this->assertSame(
+            [
+                'grid',
+                'cards',
+                'carousel',
+            ],
+            array_column(
+                $productCategories->templates,
+                'key',
+            ),
+        );
+
+        $this->assertSame(
+            [
+                'Categories',
+                'Categories',
+                'Categories',
+            ],
+            array_column(
+                $productCategories->templates,
+                'category',
+            ),
+        );
+
+        $this->assertCount(
+            3,
+            $productCategories->templateDefaultConfigs,
+        );
+
+        $this->assertSame(
+            $categoryGridConfig,
+            $productCategories
+                ->templateDefaultConfigs['grid'],
+        );
+
+        $this->assertSame(
+            $categoryCardsConfig,
+            $productCategories
+                ->templateDefaultConfigs['cards'],
+        );
+
+        $this->assertSame(
+            $categoryCarouselConfig,
+            $productCategories
+                ->templateDefaultConfigs['carousel'],
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Product Collection
+        |--------------------------------------------------------------------------
+        */
+
+        $productCollection = $definitions[3];
+
+        $this->assertInstanceOf(
+            SectionDefinitionData::class,
+            $productCollection,
+        );
+
+        $this->assertSame(
+            SectionType::ProductCollection->value,
+            $productCollection->type,
+        );
+
+        $this->assertSame(
+            'Product Collection',
+            $productCollection->label,
+        );
+
+        $this->assertSame(
+            'grid',
+            $productCollection->defaultTemplate,
+        );
+
+        $collectionGridConfig = [
+            'title' => 'Products',
+            'limit' => 8,
+            'source' => [
+                'type' => 'latest',
+            ],
+            'show_price' => true,
+            'show_rating' => true,
+            'show_badges' => true,
+            'columns' => 4,
+        ];
+
+        $collectionCardsConfig = [
+            'title' => 'Products',
+            'limit' => 8,
+            'source' => [
+                'type' => 'latest',
+            ],
+            'show_price' => true,
+            'show_rating' => true,
+            'show_badges' => true,
+            'columns' => 3,
+        ];
+
+        $collectionCarouselConfig = [
+            'title' => 'Products',
+            'limit' => 8,
+            'source' => [
+                'type' => 'latest',
+            ],
+            'show_price' => true,
+            'show_rating' => true,
+            'show_badges' => true,
+            'columns' => 4,
+            'autoplay' => true,
+            'autoplay_delay' => 5000,
+            'show_arrows' => true,
+            'show_dots' => true,
+            'effect' => 'fade',
+        ];
+
+        $this->assertSame(
+            $collectionGridConfig,
+            $productCollection->defaultConfig,
+        );
+
+        $this->assertCount(
+            3,
+            $productCollection->templates,
+        );
+
+        $this->assertSame(
+            [
+                'grid',
+                'cards',
+                'carousel',
+            ],
+            array_column(
+                $productCollection->templates,
+                'key',
+            ),
+        );
+
+        $this->assertSame(
+            [
+                'Products',
+                'Products',
+                'Products',
+            ],
+            array_column(
+                $productCollection->templates,
+                'category',
+            ),
+        );
+
+        $this->assertCount(
+            3,
+            $productCollection->templateDefaultConfigs,
+        );
+
+        $this->assertArrayHasKey(
+            'grid',
+            $productCollection->templateDefaultConfigs,
+        );
+
+        $this->assertArrayHasKey(
+            'cards',
+            $productCollection->templateDefaultConfigs,
+        );
+
+        $this->assertArrayHasKey(
+            'carousel',
+            $productCollection->templateDefaultConfigs,
+        );
+
+        $this->assertSame(
+            $collectionGridConfig,
+            $productCollection
+                ->templateDefaultConfigs['grid'],
+        );
+
+        $this->assertSame(
+            $collectionCardsConfig,
+            $productCollection
+                ->templateDefaultConfigs['cards'],
+        );
+
+        $this->assertSame(
+            $collectionCarouselConfig,
+            $productCollection
+                ->templateDefaultConfigs['carousel'],
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Promotional Banner
+        |--------------------------------------------------------------------------
+        */
+
+        $promotionalBanner = $definitions[4];
+
+        $this->assertInstanceOf(
+            SectionDefinitionData::class,
+            $promotionalBanner,
+        );
+
+        $this->assertSame(
+            SectionType::PromotionalBanner->value,
+            $promotionalBanner->type,
+        );
+
+        $this->assertSame(
+            'Promotional Banner',
+            $promotionalBanner->label,
+        );
+
+        $this->assertSame(
+            'image_banner',
+            $promotionalBanner->defaultTemplate,
+        );
+
+        $this->assertCount(
+            3,
+            $promotionalBanner->templates,
+        );
+
+        $this->assertSame(
+            [
+                'image_banner',
+                'content_banner',
+                'split_banner',
+            ],
+            array_column(
+                $promotionalBanner->templates,
+                'key',
+            ),
+        );
+
+        $this->assertSame(
+            [
+                'Image Banner',
+                'Content Banner',
+                'Split Banner',
+            ],
+            array_column(
+                $promotionalBanner->templates,
+                'label',
+            ),
+        );
+
+        $this->assertSame(
+            [
+                'Marketing',
+                'Marketing',
+                'Marketing',
+            ],
+            array_column(
+                $promotionalBanner->templates,
+                'category',
+            ),
+        );
+
+        $imageBannerConfig = [
+            'heading' => 'Special Offer',
+            'description' => '',
+            'image' => null,
+            'cta_label' => null,
+            'cta_url' => null,
+            'alignment' => 'center',
+        ];
+
+        $contentBannerConfig = [
+            'heading' => 'Special Offer',
+            'description' => '',
+            'image' => null,
+            'cta_label' => null,
+            'cta_url' => null,
+            'alignment' => 'center',
+        ];
+
+        $splitBannerConfig = [
+            'heading' => 'Special Offer',
+            'description' => '',
+            'image' => null,
+            'cta_label' => null,
+            'cta_url' => null,
+            'alignment' => 'left',
+        ];
+
+        $this->assertSame(
+            $imageBannerConfig,
+            $promotionalBanner->defaultConfig,
+        );
+
+        $this->assertCount(
+            3,
+            $promotionalBanner->templateDefaultConfigs,
+        );
+
+        $this->assertSame(
+            $imageBannerConfig,
+            $promotionalBanner
+                ->templateDefaultConfigs['image_banner'],
+        );
+
+        $this->assertSame(
+            $contentBannerConfig,
+            $promotionalBanner
+                ->templateDefaultConfigs['content_banner'],
+        );
+
+        $this->assertSame(
+            $splitBannerConfig,
+            $promotionalBanner
+                ->templateDefaultConfigs['split_banner'],
         );
 
     }

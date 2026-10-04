@@ -5,9 +5,15 @@ import { Link } from '@inertiajs/react'
 
 interface ProductCardProps {
     product: ProductCardData
+    showPrice?: boolean
+    showBadges?: boolean
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({
+    product,
+    showPrice = true,
+    showBadges = true,
+}: ProductCardProps) {
     const productUrl = `/products/${product.slug}`
 
     return (
@@ -26,7 +32,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                     />
                 </div>
 
-                {product.is_featured && (
+                {showBadges && product.is_featured && (
                     <span className="absolute left-3 top-3 max-w-[calc(100%-1.5rem)] truncate rounded-full bg-neutral-950 px-2.5 py-1 text-xs font-medium text-white">
                         Featured
                     </span>
@@ -58,11 +64,13 @@ export default function ProductCard({ product }: ProductCardProps) {
                     </p>
                 )}
 
-                <ProductPrice
-                    mode="listing"
-                    pricing={product.pricing}
-                    className="mt-auto min-w-0 pt-4"
-                />
+                {showPrice && (
+                    <ProductPrice
+                        mode="listing"
+                        pricing={product.pricing}
+                        className="mt-auto min-w-0 pt-4"
+                    />
+                )}
             </div>
         </article>
     )

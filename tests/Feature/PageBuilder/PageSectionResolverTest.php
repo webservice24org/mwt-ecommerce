@@ -380,4 +380,363 @@ final class PageSectionResolverTest extends TestCase
             $resolved->data['categories'],
         );
     }
+
+    public function test_product_collection_latest_section_is_resolved(): void
+    {
+        $page = Page::factory()->create();
+
+        $older = Product::factory()->create([
+            'status' => ProductStatus::Published,
+            'published_at' => now()->subDays(2),
+        ]);
+
+        $newer = Product::factory()->create([
+            'status' => ProductStatus::Published,
+            'published_at' => now()->subDay(),
+        ]);
+
+        Product::factory()->create([
+            'status' => ProductStatus::Draft,
+            'published_at' => null,
+        ]);
+
+        $section = PageSection::factory()->create([
+            'page_id' => $page->id,
+            'type' => SectionType::ProductCollection,
+            'template' => 'grid',
+            'config' => [
+                'title' => 'Latest Products',
+                'limit' => 2,
+                'source' => [
+                    'type' => 'latest',
+                ],
+                'columns' => 4,
+                'show_price' => true,
+                'show_rating' => false,
+                'show_badges' => true,
+            ],
+            'position' => 1,
+            'is_enabled' => true,
+        ]);
+
+        $resolved = app(
+            PageSectionResolver::class,
+        )->resolve($section);
+
+        $this->assertSame(
+            SectionType::ProductCollection,
+            $resolved->type,
+        );
+
+        $this->assertSame(
+            'grid',
+            $resolved->template,
+        );
+
+        $this->assertSame(
+            'Latest Products',
+            $resolved->config['title'],
+        );
+
+        $this->assertSame(
+            'latest',
+            $resolved->config['source']['type'],
+        );
+
+        $this->assertArrayHasKey(
+            'products',
+            $resolved->data,
+        );
+
+        $products = $resolved->data['products'];
+
+        $this->assertCount(2, $products);
+
+        $this->assertSame(
+            [
+                $newer->id,
+                $older->id,
+            ],
+            array_map(
+                static fn ($product): int => $product->id,
+                $products,
+            ),
+        );
+    }
+
+    public function test_product_collection_featured_section_is_resolved(): void
+    {
+        $page = Page::factory()->create();
+
+        $featured = Product::factory()->create([
+            'is_featured' => true,
+            'status' => ProductStatus::Published,
+            'published_at' => now()->subDay(),
+        ]);
+
+        Product::factory()->create([
+            'is_featured' => false,
+            'status' => ProductStatus::Published,
+            'published_at' => now()->subDay(),
+        ]);
+
+        $section = PageSection::factory()->create([
+            'page_id' => $page->id,
+            'type' => SectionType::ProductCollection,
+            'template' => 'cards',
+            'config' => [
+                'title' => 'Featured Collection',
+                'limit' => 8,
+                'source' => [
+                    'type' => 'featured',
+                ],
+                'columns' => 3,
+                'show_price' => true,
+                'show_rating' => false,
+                'show_badges' => true,
+            ],
+            'position' => 1,
+            'is_enabled' => true,
+        ]);
+
+        $resolved = app(
+            PageSectionResolver::class,
+        )->resolve($section);
+
+        $this->assertSame(
+            SectionType::ProductCollection,
+            $resolved->type,
+        );
+
+        $this->assertSame(
+            'cards',
+            $resolved->template,
+        );
+
+        $products = $resolved->data['products'];
+
+        $this->assertCount(1, $products);
+
+        $this->assertSame(
+            $featured->id,
+            $products[0]->id,
+        );
+    }
+
+    public function test_product_collection_manual_section_preserves_configured_order(): void
+    {
+        $page = Page::factory()->create();
+
+        $first = Product::factory()->create([
+            'status' => ProductStatus::Published,
+            'published_at' => now()->subDay(),
+        ]);
+
+        $second = Product::factory()->create([
+            'status' => ProductStatus::Published,
+            'published_at' => now()->subDay(),
+        ]);
+
+        $third = Product::factory()->create([
+            'status' => ProductStatus::Published,
+            'published_at' => now()->subDay(),
+        ]);
+
+        $section = PageSection::factory()->create([
+            'page_id' => $page->id,
+            'type' => SectionType::ProductCollection,
+            'template' => 'grid',
+            'config' => [
+                'title' => 'Selected Products',
+                'limit' => 3,
+                'source' => [
+                    'type' => 'manual',
+                    'product_ids' => [
+                        $third->id,
+                        $first->id,
+                        $second->id,
+                    ],
+                ],
+                'columns' => 3,
+                'show_price' => true,
+                'show_rating' => false,
+                'show_badges' => true,
+            ],
+            'position' => 1,
+            'is_enabled' => true,
+        ]);
+
+        $resolved = app(
+            PageSectionResolver::class,
+        )->resolve($section);
+
+        $products = $resolved->data['products'];
+
+        $this->assertCount(3, $products);
+
+        $this->assertSame(
+            [
+                $third->id,
+                $first->id,
+                $second->id,
+            ],
+            array_map(
+                static fn ($product): int => $product->id,
+                $products,
+            ),
+        );
+    }
+
+    public function test_product_collection_category_section_is_resolved(): void
+    {
+        $page = Page::factory()->create();
+
+        $category = Category::factory()->create([
+            'is_active' => true,
+        ]);
+
+        $included = Product::factory()->create([
+            'status' => ProductStatus::Published,
+            'published_at' => now()->subDay(),
+        ]);
+
+        $excluded = Product::factory()->create([
+            'status' => ProductStatus::Published,
+            'published_at' => now()->subDay(),
+        ]);
+
+        $included->categories()->attach(
+            $category->id,
+        );
+
+        $section = PageSection::factory()->create([
+            'page_id' => $page->id,
+            'type' => SectionType::ProductCollection,
+            'template' => 'grid',
+            'config' => [
+                'title' => 'Category Products',
+                'limit' => 8,
+                'source' => [
+                    'type' => 'category',
+                    'category_id' => $category->id,
+                ],
+                'columns' => 4,
+                'show_price' => true,
+                'show_rating' => false,
+                'show_badges' => true,
+            ],
+            'position' => 1,
+            'is_enabled' => true,
+        ]);
+
+        $resolved = app(
+            PageSectionResolver::class,
+        )->resolve($section);
+
+        $products = $resolved->data['products'];
+
+        $this->assertCount(1, $products);
+
+        $this->assertSame(
+            $included->id,
+            $products[0]->id,
+        );
+
+        $this->assertNotSame(
+            $excluded->id,
+            $products[0]->id,
+        );
+    }
+
+    public function test_product_collection_carousel_configuration_is_preserved(): void
+    {
+        $page = Page::factory()->create();
+
+        Product::factory()->create([
+            'status' => ProductStatus::Published,
+            'published_at' => now()->subDay(),
+        ]);
+
+        $section = PageSection::factory()->create([
+            'page_id' => $page->id,
+            'type' => SectionType::ProductCollection,
+            'template' => 'carousel',
+            'config' => [
+                'title' => 'Product Slider',
+                'limit' => 12,
+                'source' => [
+                    'type' => 'latest',
+                ],
+                'columns' => 4,
+                'show_price' => true,
+                'show_rating' => false,
+                'show_badges' => true,
+                'autoplay' => true,
+                'autoplay_delay' => 6000,
+                'show_arrows' => true,
+                'show_dots' => false,
+                'effect' => 'slide_left',
+            ],
+            'position' => 1,
+            'is_enabled' => true,
+        ]);
+
+        $resolved = app(
+            PageSectionResolver::class,
+        )->resolve($section);
+
+        $this->assertSame(
+            'carousel',
+            $resolved->template,
+        );
+
+        $this->assertSame(
+            'Product Slider',
+            $resolved->config['title'],
+        );
+
+        $this->assertSame(
+            12,
+            $resolved->config['limit'],
+        );
+
+        $this->assertSame(
+            4,
+            $resolved->config['columns'],
+        );
+
+        $this->assertTrue(
+            $resolved->config['show_price'],
+        );
+
+        $this->assertFalse(
+            $resolved->config['show_rating'],
+        );
+
+        $this->assertTrue(
+            $resolved->config['show_badges'],
+        );
+
+        $this->assertTrue(
+            $resolved->config['autoplay'],
+        );
+
+        $this->assertSame(
+            6000,
+            $resolved->config['autoplay_delay'],
+        );
+
+        $this->assertTrue(
+            $resolved->config['show_arrows'],
+        );
+
+        $this->assertFalse(
+            $resolved->config['show_dots'],
+        );
+
+        $this->assertSame(
+            'slide_left',
+            $resolved->config['effect'],
+        );
+    }
 }

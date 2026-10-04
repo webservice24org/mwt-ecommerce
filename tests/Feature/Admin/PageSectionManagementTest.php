@@ -913,4 +913,88 @@ final class PageSectionManagementTest extends TestCase
             ],
         );
     }
+
+    public function test_editor_can_create_promotional_banner_section(): void
+    {
+        $admin = Admin::factory()->create([
+            'role' => AdminRole::Editor,
+        ]);
+
+        $page = Page::factory()->create();
+
+        $response = $this
+            ->actingAs($admin, 'admin')
+            ->post(
+                route(
+                    'admin.pages.sections.store',
+                    $page,
+                ),
+                [
+                    'type' => SectionType::PromotionalBanner->value,
+
+                    'template' => 'image_banner',
+
+                    'config' => [
+                        'heading' => 'Special Offer',
+
+                        /*
+                         * This is intentionally empty.
+                         *
+                         * Laravel converts it to null before
+                         * domain validation.
+                         */
+                        'description' => '',
+
+                        'image' => null,
+
+                        'cta_label' => null,
+
+                        'cta_url' => null,
+
+                        'alignment' => 'center',
+                    ],
+
+                    'is_enabled' => true,
+                ],
+            );
+
+        $response->assertRedirect();
+
+        $section = PageSection::query()
+            ->where(
+                'page_id',
+                $page->id,
+            )
+            ->where(
+                'type',
+                SectionType::PromotionalBanner->value,
+            )
+            ->firstOrFail();
+
+        $this->assertSame(
+            'image_banner',
+            $section->template,
+        );
+
+        $this->assertSame(
+            [
+                'heading' => 'Special Offer',
+
+                'description' => '',
+
+                'image' => null,
+
+                'cta_label' => null,
+
+                'cta_url' => null,
+
+                'alignment' => 'center',
+            ],
+            $section->config,
+        );
+
+        $this->assertTrue(
+            $section->is_enabled,
+        );
+    }
 }

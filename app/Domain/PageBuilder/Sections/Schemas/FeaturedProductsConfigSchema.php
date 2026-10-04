@@ -136,7 +136,26 @@ final class FeaturedProductsConfigSchema implements SectionConfigSchema
                 $source,
                 $errors,
             ),
+
+            CatalogSourceType::Latest => $this->rejectLatestSource(
+                $errors,
+            ),
         };
+    }
+
+    /**
+     * @param  array<string, list<string>>  $errors
+     * @return array<string, mixed>
+     */
+    private function rejectLatestSource(
+        array &$errors,
+    ): array {
+        $errors['source.type'][] =
+            'The latest source type is not supported by Featured Products.';
+
+        return [
+            'type' => CatalogSourceType::Featured->value,
+        ];
     }
 
     /**

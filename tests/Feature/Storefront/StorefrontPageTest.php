@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Storefront;
 
+use App\Domain\Catalog\Enums\ProductStatus;
 use App\Domain\PageBuilder\Enums\PageContentMode;
 use App\Domain\PageBuilder\Enums\PageLayout;
 use App\Domain\PageBuilder\Enums\PageStatus;
@@ -11,6 +12,7 @@ use App\Domain\PageBuilder\Enums\SectionType;
 use App\Domain\PageBuilder\Enums\SectionWidth;
 use App\Models\Category;
 use App\Models\Page;
+use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -544,6 +546,317 @@ final class StorefrontPageTest extends TestCase
                             'imageUrl' => null,
                             'productCount' => null,
                         ],
+                    ),
+            );
+    }
+
+    public function test_published_builder_page_exposes_product_collection_grid_section(): void
+    {
+        $page = Page::factory()->create([
+            'title' => 'Latest Products',
+            'slug' => 'latest-products',
+            'status' => PageStatus::Published,
+            'content_mode' => PageContentMode::Builder,
+            'published_at' => now()->subMinute(),
+        ]);
+
+        $product = Product::factory()->create([
+            'status' => ProductStatus::Published,
+            'published_at' => now()->subDay(),
+        ]);
+
+        $section = $page->sections()->create([
+            'type' => SectionType::ProductCollection,
+            'template' => 'grid',
+            'position' => 10,
+            'is_enabled' => true,
+            'layout' => [
+                'width' => SectionWidth::Container->value,
+            ],
+            'config' => [
+                'title' => 'Latest Products',
+                'limit' => 8,
+                'source' => [
+                    'type' => 'latest',
+                ],
+                'columns' => 4,
+                'show_price' => true,
+                'show_rating' => false,
+                'show_badges' => true,
+            ],
+        ]);
+
+        $response = $this->get(
+            route(
+                'frontend.pages.show',
+                $page->slug,
+            ),
+        );
+
+        $response
+            ->assertOk()
+            ->assertInertia(
+                fn (Assert $inertia) => $inertia
+                    ->component(
+                        'Frontend/Pages/Show',
+                    )
+                    ->where(
+                        'page.sections.0.id',
+                        $section->id,
+                    )
+                    ->where(
+                        'page.sections.0.type',
+                        'product_collection',
+                    )
+                    ->where(
+                        'page.sections.0.template',
+                        'grid',
+                    )
+                    ->where(
+                        'page.sections.0.layout.width',
+                        SectionWidth::Container
+                            ->value,
+                    )
+                    ->where(
+                        'page.sections.0.config.title',
+                        'Latest Products',
+                    )
+                    ->where(
+                        'page.sections.0.config.limit',
+                        8,
+                    )
+                    ->where(
+                        'page.sections.0.config.source.type',
+                        'latest',
+                    )
+                    ->where(
+                        'page.sections.0.config.columns',
+                        4,
+                    )
+                    ->where(
+                        'page.sections.0.config.show_price',
+                        true,
+                    )
+                    ->where(
+                        'page.sections.0.config.show_rating',
+                        false,
+                    )
+                    ->where(
+                        'page.sections.0.config.show_badges',
+                        true,
+                    )
+                    ->has(
+                        'page.sections.0.data.products',
+                        1,
+                    )
+                    ->where(
+                        'page.sections.0.data.products.0.id',
+                        $product->id,
+                    ),
+            );
+    }
+
+    public function test_published_builder_page_exposes_product_collection_cards_section(): void
+    {
+        $page = Page::factory()->create([
+            'title' => 'Featured Collection',
+            'slug' => 'featured-collection',
+            'status' => PageStatus::Published,
+            'content_mode' => PageContentMode::Builder,
+            'published_at' => now()->subMinute(),
+        ]);
+
+        $product = Product::factory()->create([
+            'is_featured' => true,
+            'status' => ProductStatus::Published,
+            'published_at' => now()->subDay(),
+        ]);
+
+        $section = $page->sections()->create([
+            'type' => SectionType::ProductCollection,
+            'template' => 'cards',
+            'position' => 10,
+            'is_enabled' => true,
+            'layout' => [
+                'width' => SectionWidth::Container->value,
+            ],
+            'config' => [
+                'title' => 'Featured Collection',
+                'limit' => 6,
+                'source' => [
+                    'type' => 'featured',
+                ],
+                'columns' => 3,
+                'show_price' => true,
+                'show_rating' => false,
+                'show_badges' => true,
+            ],
+        ]);
+
+        $response = $this->get(
+            route(
+                'frontend.pages.show',
+                $page->slug,
+            ),
+        );
+
+        $response
+            ->assertOk()
+            ->assertInertia(
+                fn (Assert $inertia) => $inertia
+                    ->where(
+                        'page.sections.0.id',
+                        $section->id,
+                    )
+                    ->where(
+                        'page.sections.0.type',
+                        'product_collection',
+                    )
+                    ->where(
+                        'page.sections.0.template',
+                        'cards',
+                    )
+                    ->where(
+                        'page.sections.0.config.source.type',
+                        'featured',
+                    )
+                    ->where(
+                        'page.sections.0.config.columns',
+                        3,
+                    )
+                    ->has(
+                        'page.sections.0.data.products',
+                        1,
+                    )
+                    ->where(
+                        'page.sections.0.data.products.0.id',
+                        $product->id,
+                    ),
+            );
+    }
+
+    public function test_published_builder_page_exposes_product_collection_carousel_configuration(): void
+    {
+        $page = Page::factory()->create([
+            'title' => 'Product Slider',
+            'slug' => 'product-slider',
+            'status' => PageStatus::Published,
+            'content_mode' => PageContentMode::Builder,
+            'published_at' => now()->subMinute(),
+        ]);
+
+        $product = Product::factory()->create([
+            'status' => ProductStatus::Published,
+            'published_at' => now()->subDay(),
+        ]);
+
+        $section = $page->sections()->create([
+            'type' => SectionType::ProductCollection,
+            'template' => 'carousel',
+            'position' => 10,
+            'is_enabled' => true,
+            'layout' => [
+                'width' => SectionWidth::Container->value,
+            ],
+            'config' => [
+                'title' => 'Product Slider',
+                'limit' => 12,
+                'source' => [
+                    'type' => 'latest',
+                ],
+                'columns' => 4,
+                'show_price' => true,
+                'show_rating' => false,
+                'show_badges' => true,
+                'autoplay' => true,
+                'autoplay_delay' => 6000,
+                'show_arrows' => true,
+                'show_dots' => false,
+                'effect' => 'slide_left',
+            ],
+        ]);
+
+        $response = $this->get(
+            route(
+                'frontend.pages.show',
+                $page->slug,
+            ),
+        );
+
+        $response
+            ->assertOk()
+            ->assertInertia(
+                fn (Assert $inertia) => $inertia
+                    ->component(
+                        'Frontend/Pages/Show',
+                    )
+                    ->where(
+                        'page.sections.0.id',
+                        $section->id,
+                    )
+                    ->where(
+                        'page.sections.0.type',
+                        'product_collection',
+                    )
+                    ->where(
+                        'page.sections.0.template',
+                        'carousel',
+                    )
+                    ->where(
+                        'page.sections.0.config.title',
+                        'Product Slider',
+                    )
+                    ->where(
+                        'page.sections.0.config.limit',
+                        12,
+                    )
+                    ->where(
+                        'page.sections.0.config.source.type',
+                        'latest',
+                    )
+                    ->where(
+                        'page.sections.0.config.columns',
+                        4,
+                    )
+                    ->where(
+                        'page.sections.0.config.show_price',
+                        true,
+                    )
+                    ->where(
+                        'page.sections.0.config.show_rating',
+                        false,
+                    )
+                    ->where(
+                        'page.sections.0.config.show_badges',
+                        true,
+                    )
+                    ->where(
+                        'page.sections.0.config.autoplay',
+                        true,
+                    )
+                    ->where(
+                        'page.sections.0.config.autoplay_delay',
+                        6000,
+                    )
+                    ->where(
+                        'page.sections.0.config.show_arrows',
+                        true,
+                    )
+                    ->where(
+                        'page.sections.0.config.show_dots',
+                        false,
+                    )
+                    ->where(
+                        'page.sections.0.config.effect',
+                        'slide_left',
+                    )
+                    ->has(
+                        'page.sections.0.data.products',
+                        1,
+                    )
+                    ->where(
+                        'page.sections.0.data.products.0.id',
+                        $product->id,
                     ),
             );
     }

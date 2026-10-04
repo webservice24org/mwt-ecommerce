@@ -19,7 +19,16 @@ final readonly class CatalogSourceReferenceValidator
         SectionType $sectionType,
         array $config,
     ): void {
-        if ($sectionType !== SectionType::FeaturedProducts) {
+        if (
+            ! in_array(
+                $sectionType,
+                [
+                    SectionType::FeaturedProducts,
+                    SectionType::ProductCollection,
+                ],
+                true,
+            )
+        ) {
             return;
         }
 
@@ -38,11 +47,16 @@ final readonly class CatalogSourceReferenceValidator
         }
 
         match ($sourceType) {
-            CatalogSourceType::Featured => null,
+            CatalogSourceType::Featured,
+            CatalogSourceType::Latest => null,
 
-            CatalogSourceType::Category => $this->validateCategory($source),
+            CatalogSourceType::Category => $this->validateCategory(
+                $source,
+            ),
 
-            CatalogSourceType::Manual => $this->validateProducts($source),
+            CatalogSourceType::Manual => $this->validateProducts(
+                $source,
+            ),
         };
     }
 
@@ -52,7 +66,8 @@ final readonly class CatalogSourceReferenceValidator
     private function validateCategory(
         array $source,
     ): void {
-        $categoryId = $source['category_id'] ?? null;
+        $categoryId =
+            $source['category_id'] ?? null;
 
         /*
          * Structural validation has already guaranteed this,
@@ -85,7 +100,8 @@ final readonly class CatalogSourceReferenceValidator
     private function validateProducts(
         array $source,
     ): void {
-        $productIds = $source['product_ids'] ?? null;
+        $productIds =
+            $source['product_ids'] ?? null;
 
         if (! is_array($productIds)) {
             return;
@@ -93,23 +109,36 @@ final readonly class CatalogSourceReferenceValidator
 
         /** @var list<int> $productIds */
         $existingIds = Product::query()
-            ->whereIn('id', $productIds)
+            ->whereIn(
+                'id',
+                $productIds,
+            )
             ->pluck('id')
             ->map(
                 static fn (mixed $id): int => (int) $id,
             )
             ->all();
 
-        $existingLookup = array_fill_keys(
-            $existingIds,
-            true,
-        );
+        $existingLookup =
+            array_fill_keys(
+                $existingIds,
+                true,
+            );
 
         $missingIds = [];
 
-        foreach ($productIds as $productId) {
-            if (! isset($existingLookup[$productId])) {
-                $missingIds[] = $productId;
+        foreach (
+            $productIds as $productId
+        ) {
+            if (
+                ! isset(
+                    $existingLookup[
+                        $productId
+                    ],
+                )
+            ) {
+                $missingIds[] =
+                    $productId;
             }
         }
 
@@ -121,7 +150,10 @@ final readonly class CatalogSourceReferenceValidator
             'source.product_ids' => [
                 sprintf(
                     'The following selected products do not exist: %s.',
-                    implode(', ', $missingIds),
+                    implode(
+                        ', ',
+                        $missingIds,
+                    ),
                 ),
             ],
         ]);

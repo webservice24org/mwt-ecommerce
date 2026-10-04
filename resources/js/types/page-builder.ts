@@ -147,4 +147,4 @@ export interface CatalogProductOption {
     sku: string | null
 }
 
-export type CatalogSourceType = 'featured' | 'manual' | 'category'
+export type CatalogSourceType = 'latest' | 'featured' | 'manual' | 'category'

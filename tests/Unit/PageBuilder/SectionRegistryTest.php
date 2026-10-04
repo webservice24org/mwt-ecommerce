@@ -10,6 +10,8 @@ use App\Domain\PageBuilder\Registry\SectionRegistry;
 use App\Domain\PageBuilder\Sections\FeaturedProductsSection;
 use App\Domain\PageBuilder\Sections\HeroSection;
 use App\Domain\PageBuilder\Sections\ProductCategoriesSection;
+use App\Domain\PageBuilder\Sections\ProductCollectionSection;
+use App\Domain\PageBuilder\Sections\PromotionalBannerSection;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
@@ -80,6 +82,18 @@ final class SectionRegistryTest extends TestCase
             ),
         );
 
+        $this->assertTrue(
+            $registry->has(
+                SectionType::ProductCollection,
+            ),
+        );
+
+        $this->assertTrue(
+            $registry->has(
+                SectionType::PromotionalBanner,
+            ),
+        );
+
         $this->assertFalse(
             $registry->has(
                 SectionType::ProductGrid,
@@ -100,12 +114,6 @@ final class SectionRegistryTest extends TestCase
 
         $this->assertFalse(
             $registry->has(
-                SectionType::PromotionalBanner,
-            ),
-        );
-
-        $this->assertFalse(
-            $registry->has(
                 SectionType::NewArrivals,
             ),
         );
@@ -118,7 +126,7 @@ final class SectionRegistryTest extends TestCase
         $definitions = $registry->all();
 
         $this->assertCount(
-            3,
+            6,
             $definitions,
         );
 
@@ -135,6 +143,16 @@ final class SectionRegistryTest extends TestCase
         $this->assertInstanceOf(
             ProductCategoriesSection::class,
             $definitions[2],
+        );
+
+        $this->assertInstanceOf(
+            ProductCollectionSection::class,
+            $definitions[3],
+        );
+
+        $this->assertInstanceOf(
+            PromotionalBannerSection::class,
+            $definitions[4],
         );
     }
 
@@ -317,6 +335,20 @@ final class SectionRegistryTest extends TestCase
                 'unknown',
             ),
         );
+
+        $this->assertFalse(
+            $registry->supportsTemplate(
+                SectionType::ProductCollection,
+                'unknown',
+            ),
+        );
+
+        $this->assertFalse(
+            $registry->supportsTemplate(
+                SectionType::PromotionalBanner,
+                'unknown',
+            ),
+        );
     }
 
     public function test_featured_products_has_safe_default_configuration(): void
@@ -451,5 +483,335 @@ final class SectionRegistryTest extends TestCase
                 ),
             );
         }
+    }
+
+    public function test_product_collection_section_can_be_resolved(): void
+    {
+        $registry = new SectionRegistry;
+
+        $definition = $registry->get(
+            SectionType::ProductCollection,
+        );
+
+        $this->assertInstanceOf(
+            ProductCollectionSection::class,
+            $definition,
+        );
+
+        $this->assertSame(
+            SectionType::ProductCollection,
+            $definition->type(),
+        );
+
+        $this->assertSame(
+            'Product Collection',
+            $definition->label(),
+        );
+    }
+
+    public function test_product_collection_exposes_three_typed_templates(): void
+    {
+        $registry = new SectionRegistry;
+
+        $definition = $registry->get(
+            SectionType::ProductCollection,
+        );
+
+        $templates = $definition->templates();
+
+        $this->assertCount(
+            3,
+            $templates,
+        );
+
+        foreach ($templates as $template) {
+            $this->assertInstanceOf(
+                SectionTemplateData::class,
+                $template,
+            );
+        }
+
+        $this->assertSame(
+            [
+                'grid',
+                'cards',
+                'carousel',
+            ],
+            array_map(
+                static fn (
+                    SectionTemplateData $template,
+                ): string => $template->key,
+                $templates,
+            ),
+        );
+
+        $this->assertSame(
+            [
+                'Product Grid',
+                'Product Cards',
+                'Product Carousel',
+            ],
+            array_map(
+                static fn (
+                    SectionTemplateData $template,
+                ): string => $template->label,
+                $templates,
+            ),
+        );
+
+        $this->assertSame(
+            [
+                'Products',
+                'Products',
+                'Products',
+            ],
+            array_map(
+                static fn (
+                    SectionTemplateData $template,
+                ): string => $template->category,
+                $templates,
+            ),
+        );
+    }
+
+    public function test_product_collection_supports_all_registered_templates(): void
+    {
+        $registry = new SectionRegistry;
+
+        foreach (
+            [
+                'grid',
+                'cards',
+                'carousel',
+            ] as $template
+        ) {
+            $this->assertTrue(
+                $registry->supportsTemplate(
+                    SectionType::ProductCollection,
+                    $template,
+                ),
+            );
+        }
+    }
+
+    public function test_product_collection_rejects_unknown_default_template(): void
+    {
+        $registry = new SectionRegistry;
+
+        $definition = $registry->get(
+            SectionType::ProductCollection,
+        );
+
+        $this->expectException(
+            InvalidArgumentException::class,
+        );
+
+        $definition
+            ->defaultConfigForTemplate(
+                'unknown',
+            );
+    }
+
+    public function test_promotional_banner_section_can_be_resolved(): void
+    {
+        $registry = new SectionRegistry;
+
+        $definition = $registry->get(
+            SectionType::PromotionalBanner,
+        );
+
+        $this->assertInstanceOf(
+            PromotionalBannerSection::class,
+            $definition,
+        );
+
+        $this->assertSame(
+            SectionType::PromotionalBanner,
+            $definition->type(),
+        );
+
+        $this->assertSame(
+            'Promotional Banner',
+            $definition->label(),
+        );
+    }
+
+    public function test_promotional_banner_exposes_three_typed_templates(): void
+    {
+        $registry = new SectionRegistry;
+
+        $definition = $registry->get(
+            SectionType::PromotionalBanner,
+        );
+
+        $templates = $definition->templates();
+
+        $this->assertCount(
+            3,
+            $templates,
+        );
+
+        foreach ($templates as $template) {
+            $this->assertInstanceOf(
+                SectionTemplateData::class,
+                $template,
+            );
+        }
+
+        $this->assertSame(
+            [
+                'image_banner',
+                'content_banner',
+                'split_banner',
+            ],
+            array_map(
+                static fn (
+                    SectionTemplateData $template,
+                ): string => $template->key,
+                $templates,
+            ),
+        );
+
+        $this->assertSame(
+            [
+                'Image Banner',
+                'Content Banner',
+                'Split Banner',
+            ],
+            array_map(
+                static fn (
+                    SectionTemplateData $template,
+                ): string => $template->label,
+                $templates,
+            ),
+        );
+
+        $this->assertSame(
+            [
+                'Marketing',
+                'Marketing',
+                'Marketing',
+            ],
+            array_map(
+                static fn (
+                    SectionTemplateData $template,
+                ): string => $template->category,
+                $templates,
+            ),
+        );
+    }
+
+    public function test_promotional_banner_supports_all_registered_templates(): void
+    {
+        $registry = new SectionRegistry;
+
+        foreach (
+            [
+                'image_banner',
+                'content_banner',
+                'split_banner',
+            ] as $template
+        ) {
+            $this->assertTrue(
+                $registry->supportsTemplate(
+                    SectionType::PromotionalBanner,
+                    $template,
+                ),
+            );
+        }
+    }
+
+    public function test_promotional_banner_has_template_specific_default_configuration(): void
+    {
+        $registry = new SectionRegistry;
+
+        $definition = $registry->get(
+            SectionType::PromotionalBanner,
+        );
+
+        $this->assertSame(
+            'image_banner',
+            $definition->defaultTemplate(),
+        );
+
+        $imageBannerConfig = [
+            'heading' => 'Special Offer',
+            'description' => '',
+            'image' => null,
+            'cta_label' => null,
+            'cta_url' => null,
+            'alignment' => 'center',
+        ];
+
+        $contentBannerConfig = [
+            'heading' => 'Special Offer',
+            'description' => '',
+            'image' => null,
+            'cta_label' => null,
+            'cta_url' => null,
+            'alignment' => 'center',
+        ];
+
+        $splitBannerConfig = [
+            'heading' => 'Special Offer',
+            'description' => '',
+            'image' => null,
+            'cta_label' => null,
+            'cta_url' => null,
+            'alignment' => 'left',
+        ];
+
+        $this->assertSame(
+            $imageBannerConfig,
+            $definition->defaultConfig(),
+        );
+
+        $this->assertSame(
+            $imageBannerConfig,
+            $definition->defaultConfigForTemplate(
+                'image_banner',
+            ),
+        );
+
+        $this->assertSame(
+            $contentBannerConfig,
+            $definition->defaultConfigForTemplate(
+                'content_banner',
+            ),
+        );
+
+        $this->assertSame(
+            $splitBannerConfig,
+            $definition->defaultConfigForTemplate(
+                'split_banner',
+            ),
+        );
+
+        $this->assertSame(
+            [
+                'image_banner' => $imageBannerConfig,
+                'content_banner' => $contentBannerConfig,
+                'split_banner' => $splitBannerConfig,
+            ],
+            $definition->templateDefaultConfigs(),
+        );
+    }
+
+    public function test_promotional_banner_rejects_unknown_default_template(): void
+    {
+        $registry = new SectionRegistry;
+
+        $definition = $registry->get(
+            SectionType::PromotionalBanner,
+        );
+
+        $this->expectException(
+            InvalidArgumentException::class,
+        );
+
+        $definition
+            ->defaultConfigForTemplate(
+                'unknown',
+            );
     }
 }

@@ -205,4 +205,31 @@ final class FeaturedProductsConfigSchemaTest extends TestCase
             $config['source'],
         );
     }
+
+    public function test_latest_source_is_rejected(): void
+    {
+        $schema =
+            new FeaturedProductsConfigSchema;
+
+        try {
+            $schema->validate([
+                'title' => 'Featured Products',
+                'limit' => 8,
+                'source' => [
+                    'type' => 'latest',
+                ],
+            ]);
+
+            $this->fail(
+                'Expected latest source to be rejected.',
+            );
+        } catch (
+            InvalidSectionConfiguration $exception
+        ) {
+            $this->assertArrayHasKey(
+                'source.type',
+                $exception->errors(),
+            );
+        }
+    }
 }

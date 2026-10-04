@@ -12,14 +12,14 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use LogicException;
 
-final readonly class FeaturedProductsResolver
+final readonly class ProductCollectionResolver
 {
     public function __construct(
         private StorefrontProductDataFactory $productData,
     ) {}
 
     /**
-     * Resolve a validated Featured Products section configuration
+     * Resolve a validated Product Collection section configuration
      * into storefront-safe product card data.
      *
      * @param  array<string, mixed>  $config
@@ -33,7 +33,7 @@ final readonly class FeaturedProductsResolver
 
         if (! is_array($source)) {
             throw new LogicException(
-                'Featured Products configuration must contain a valid source.',
+                'Product Collection configuration must contain a valid source.',
             );
         }
 
@@ -43,11 +43,14 @@ final readonly class FeaturedProductsResolver
 
         if ($sourceType === null) {
             throw new LogicException(
-                'Featured Products configuration contains an unsupported source type.',
+                'Product Collection configuration contains an unsupported source type.',
             );
         }
 
         $products = match ($sourceType) {
+            CatalogSourceType::Latest => $this
+                ->resolveLatest($limit),
+
             CatalogSourceType::Featured => $this
                 ->resolveFeatured($limit),
 
@@ -62,10 +65,6 @@ final readonly class FeaturedProductsResolver
                     source: $source,
                     limit: $limit,
                 ),
-
-            CatalogSourceType::Latest => throw new LogicException(
-                'Featured Products does not support the latest source type.',
-            ),
         };
 
         return $products
@@ -76,6 +75,24 @@ final readonly class FeaturedProductsResolver
             )
             ->values()
             ->all();
+    }
+
+    /**
+     * @return Collection<int, Product>
+     */
+    private function resolveLatest(
+        int $limit,
+    ): Collection {
+        return $this
+            ->baseQuery()
+            ->orderByDesc(
+                'products.published_at',
+            )
+            ->orderByDesc(
+                'products.id',
+            )
+            ->limit($limit)
+            ->get();
     }
 
     /**
@@ -108,9 +125,13 @@ final readonly class FeaturedProductsResolver
         array $source,
         int $limit,
     ): Collection {
-        $categoryId = $source['category_id'] ?? null;
+        $categoryId =
+            $source['category_id'] ?? null;
 
-        if (! is_int($categoryId) || $categoryId < 1) {
+        if (
+            ! is_int($categoryId)
+            || $categoryId < 1
+        ) {
             throw new LogicException(
                 'Category source must contain a valid category_id.',
             );
@@ -144,7 +165,8 @@ final readonly class FeaturedProductsResolver
         array $source,
         int $limit,
     ): Collection {
-        $productIds = $source['product_ids'] ?? null;
+        $productIds =
+            $source['product_ids'] ?? null;
 
         if (! is_array($productIds)) {
             throw new LogicException(
@@ -171,22 +193,31 @@ final readonly class FeaturedProductsResolver
             )
             ->get()
             ->keyBy(
-                static fn (Product $product): int => $product->id,
+                static fn (
+                    Product $product,
+                ): int => $product->id,
             );
 
         /*
          * whereIn() does not guarantee the configured order.
          *
-         * Rebuild the collection from the saved product ID order.
+         * Rebuild from product_ids so manual Product Collections
+         * follow the exact order selected in Page Builder.
+         *
          * Products that are no longer publicly available are omitted.
          */
         return collect($limitedIds)
             ->map(
-                static fn (int $productId): ?Product => $products
+                static fn (
+                    int $productId,
+                ): ?Product => $products
                     ->get($productId),
             )
             ->filter(
-                static fn (?Product $product): bool => $product instanceof Product,
+                static fn (
+                    ?Product $product,
+                ): bool => $product
+                    instanceof Product,
             )
             ->values();
     }
@@ -227,9 +258,12 @@ final readonly class FeaturedProductsResolver
     ): int {
         $limit = $config['limit'] ?? null;
 
-        if (! is_int($limit) || $limit < 1) {
+        if (
+            ! is_int($limit)
+            || $limit < 1
+        ) {
             throw new LogicException(
-                'Featured Products configuration must contain a valid limit.',
+                'Product Collection configuration must contain a valid limit.',
             );
         }
 

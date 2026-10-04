@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace App\Domain\PageBuilder\Registry;
 
 use App\Domain\PageBuilder\Enums\SectionType;
+use App\Domain\PageBuilder\Sections\ContentSection;
 use App\Domain\PageBuilder\Sections\Contracts\SectionDefinition;
 use App\Domain\PageBuilder\Sections\FeaturedProductsSection;
 use App\Domain\PageBuilder\Sections\HeroSection;
 use App\Domain\PageBuilder\Sections\ProductCategoriesSection;
+use App\Domain\PageBuilder\Sections\ProductCollectionSection;
+use App\Domain\PageBuilder\Sections\PromotionalBannerSection;
 use InvalidArgumentException;
 
 final class SectionRegistry
@@ -30,6 +33,18 @@ final class SectionRegistry
 
         $this->register(
             new ProductCategoriesSection,
+        );
+
+        $this->register(
+            new ProductCollectionSection,
+        );
+
+        $this->register(
+            new PromotionalBannerSection,
+        );
+
+        $this->register(
+            new ContentSection,
         );
     }
 
