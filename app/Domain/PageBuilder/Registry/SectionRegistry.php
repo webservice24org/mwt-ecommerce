@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\PageBuilder\Registry;
 
 use App\Domain\PageBuilder\Enums\SectionType;
+use App\Domain\PageBuilder\Sections\CallToActionSection;
 use App\Domain\PageBuilder\Sections\ContentSection;
 use App\Domain\PageBuilder\Sections\Contracts\SectionDefinition;
 use App\Domain\PageBuilder\Sections\FeaturedProductsSection;
@@ -45,6 +46,10 @@ final class SectionRegistry
 
         $this->register(
             new ContentSection,
+        );
+
+        $this->register(
+            new CallToActionSection,
         );
     }
 

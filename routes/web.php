@@ -6,6 +6,7 @@ use App\Http\Controllers\Frontend\CategoryController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\PageController as StorefrontPageController;
 use App\Http\Controllers\Frontend\ProductController;
+use App\Http\Controllers\NewsletterSubscriberController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -21,6 +22,14 @@ Route::get('/products', [ProductController::class, 'index'])->name('products.ind
 Route::get('/products/{slug}', [ProductController::class, 'show'])->name('products.show');
 Route::get('/category/{slug}', [CategoryController::class, 'show'])->name('categories.show');
 Route::get('/pages/{slug}', StorefrontPageController::class)->name('frontend.pages.show');
+Route::post('/newsletter/subscribe',
+    [
+        NewsletterSubscriberController::class,
+        'store',
+    ],
+)
+    ->middleware('throttle:5,1')
+    ->name('newsletter.subscribe');
 
 /*
 |--------------------------------------------------------------------------

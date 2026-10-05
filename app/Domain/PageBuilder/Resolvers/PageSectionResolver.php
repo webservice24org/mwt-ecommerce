@@ -25,6 +25,7 @@ final readonly class PageSectionResolver
             SectionType::Hero,
             SectionType::PromotionalBanner => [],
             SectionType::Content => [],
+            SectionType::CallToAction => [],
 
             SectionType::FeaturedProducts => [
                 'products' => $this

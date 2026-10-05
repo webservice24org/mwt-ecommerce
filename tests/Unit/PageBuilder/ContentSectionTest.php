@@ -18,7 +18,7 @@ final class ContentSectionTest extends TestCase
         $registry = new SectionRegistry;
 
         $this->assertCount(
-            6,
+            7,
             $registry->all(),
         );
 

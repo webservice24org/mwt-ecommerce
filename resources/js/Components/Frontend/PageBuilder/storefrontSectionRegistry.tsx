@@ -7,7 +7,7 @@ import ProductCategoriesGridSection from '@/Components/Frontend/PageBuilder/Sect
 import ProductCollectionCardsSection from '@/Components/Frontend/PageBuilder/Sections/ProductCollection/ProductCollectionCardsSection'
 import ProductCollectionCarouselSection from '@/Components/Frontend/PageBuilder/Sections/ProductCollection/ProductCollectionCarouselSection'
 import ProductCollectionGridSection from '@/Components/Frontend/PageBuilder/Sections/ProductCollection/ProductCollectionGridSection'
-
+import CallToActionSection from '@/Components/Frontend/PageBuilder/Sections/CallToAction/CallToActionSection'
 import PromotionalBannerSection from '@/Components/Frontend/PageBuilder/Sections/PromotionalBanner/PromotionalBannerSection'
 
 import type {
@@ -59,6 +59,10 @@ function renderProductCollectionCarousel({ section }: StorefrontSectionProps) {
     return <ProductCollectionCarouselSection section={section} />
 }
 
+function renderCallToAction({ section }: StorefrontSectionProps) {
+    return <CallToActionSection section={section} />
+}
+
 const storefrontSectionRegistry: Record<string, StorefrontSectionRegistration> = {
     content: {
         templates: {
@@ -104,6 +108,16 @@ const storefrontSectionRegistry: Record<string, StorefrontSectionRegistration> =
             grid: renderProductCollectionGrid,
             cards: renderProductCollectionCards,
             carousel: renderProductCollectionCarousel,
+        },
+    },
+
+    call_to_action: {
+        templates: {
+            high_impact: renderCallToAction,
+
+            split_lead_capture: renderCallToAction,
+
+            contact_grid: renderCallToAction,
         },
     },
 }

@@ -126,7 +126,7 @@ final class SectionRegistryTest extends TestCase
         $definitions = $registry->all();
 
         $this->assertCount(
-            6,
+            7,
             $definitions,
         );
 

@@ -387,6 +387,10 @@ function formatIdentifier(value: string): string {
 }
 
 function isConfigValid(type: string, config: SectionConfig): boolean {
+    if (type === 'call_to_action') {
+        return isCallToActionConfigValid(config)
+    }
+
     if (type === 'content') {
         return isContentConfigValid(config)
     }
@@ -450,6 +454,174 @@ function isConfigValid(type: string, config: SectionConfig): boolean {
     }
 
     return false
+}
+
+function isCallToActionConfigValid(config: SectionConfig): boolean {
+    const allowedKeys = new Set([
+        'eyebrow',
+        'heading',
+        'description',
+        'background_type',
+        'background_color',
+        'background_image',
+        'background_overlay',
+        'text_theme',
+        'phone_label',
+        'phone_number',
+        'email_label',
+        'email',
+        'whatsapp_label',
+        'whatsapp_number',
+        'whatsapp_message',
+        'newsletter_placeholder',
+        'newsletter_button_label',
+        'newsletter_note',
+    ])
+
+    if (Object.keys(config).some((key) => !allowedKeys.has(key))) {
+        return false
+    }
+
+    const eyebrow = config.eyebrow
+    const heading = config.heading
+    const description = config.description
+    const backgroundType = config.background_type
+    const backgroundColor = config.background_color
+    const backgroundImage = config.background_image
+    const backgroundOverlay = config.background_overlay
+    const textTheme = config.text_theme
+    const phoneLabel = config.phone_label
+    const phoneNumber = config.phone_number
+    const emailLabel = config.email_label
+    const email = config.email
+    const whatsappLabel = config.whatsapp_label
+    const whatsappNumber = config.whatsapp_number
+    const whatsappMessage = config.whatsapp_message
+    const newsletterPlaceholder = config.newsletter_placeholder
+    const newsletterButtonLabel = config.newsletter_button_label
+    const newsletterNote = config.newsletter_note
+
+    if (
+        !isNullableStringWithin(eyebrow, 120) ||
+        typeof heading !== 'string' ||
+        heading.trim().length === 0 ||
+        characterCount(heading.trim()) > 180 ||
+        typeof description !== 'string' ||
+        characterCount(description.trim()) > 1000
+    ) {
+        return false
+    }
+
+    if (backgroundType !== 'color' && backgroundType !== 'image') {
+        return false
+    }
+
+    if (typeof backgroundColor !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(backgroundColor.trim())) {
+        return false
+    }
+
+    if (!isNullableStringWithin(backgroundImage, 2048)) {
+        return false
+    }
+
+    if (
+        backgroundType === 'image' &&
+        (typeof backgroundImage !== 'string' || backgroundImage.trim().length === 0)
+    ) {
+        return false
+    }
+
+    if (
+        typeof backgroundOverlay !== 'number' ||
+        !Number.isInteger(backgroundOverlay) ||
+        backgroundOverlay < 0 ||
+        backgroundOverlay > 100
+    ) {
+        return false
+    }
+
+    if (textTheme !== 'light' && textTheme !== 'dark') {
+        return false
+    }
+
+    if (
+        !isNullableStringWithin(phoneLabel, 80) ||
+        !isContactNumberValid(phoneNumber) ||
+        !isNullableStringWithin(emailLabel, 80) ||
+        !isEmailValueValid(email) ||
+        !isNullableStringWithin(whatsappLabel, 80) ||
+        !isContactNumberValid(whatsappNumber) ||
+        !isNullableStringWithin(whatsappMessage, 500) ||
+        !isNullableStringWithin(newsletterPlaceholder, 160) ||
+        !isNullableStringWithin(newsletterButtonLabel, 80) ||
+        !isNullableStringWithin(newsletterNote, 255)
+    ) {
+        return false
+    }
+
+    return true
+}
+
+function isNullableStringWithin(value: SectionConfig[string], maxLength: number): boolean {
+    if (value === null || value === undefined) {
+        return true
+    }
+
+    if (typeof value !== 'string') {
+        return false
+    }
+
+    return characterCount(value.trim()) <= maxLength
+}
+
+function isContactNumberValid(value: SectionConfig[string]): boolean {
+    if (value === null || value === undefined) {
+        return true
+    }
+
+    if (typeof value !== 'string') {
+        return false
+    }
+
+    const normalized = value.trim()
+
+    if (normalized.length === 0) {
+        return true
+    }
+
+    if (characterCount(normalized) > 80) {
+        return false
+    }
+
+    if (!/^[0-9+()\-\s.]+$/.test(normalized)) {
+        return false
+    }
+
+    const digits = normalized.replace(/\D+/g, '')
+
+    return digits.length >= 6
+}
+
+function isEmailValueValid(value: SectionConfig[string]): boolean {
+    if (value === null || value === undefined) {
+        return true
+    }
+
+    if (typeof value !== 'string') {
+        return false
+    }
+
+    const normalized = value.trim()
+
+    if (normalized.length === 0) {
+        return true
+    }
+
+    if (characterCount(normalized) > 254) {
+        return false
+    }
+
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)
 }
 
 function isContentConfigValid(config: SectionConfig): boolean {

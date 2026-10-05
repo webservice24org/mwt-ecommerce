@@ -1,3 +1,4 @@
+import CallToActionEditor from './CallToActionEditor'
 import ContentEditor from './ContentEditor'
 import FeaturedProductsEditor from './FeaturedProductsEditor'
 import HeroEditor from './HeroEditor'
@@ -10,6 +11,9 @@ import type { SectionEditorProps } from '../types'
 
 export default function SectionEditorRenderer(props: SectionEditorProps) {
     switch (props.section.type) {
+        case 'call_to_action':
+            return <CallToActionEditor {...props} />
+
         case 'content':
             return <ContentEditor {...props} />
 
