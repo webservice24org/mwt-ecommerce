@@ -9,6 +9,7 @@ import ProductCollectionCarouselSection from '@/Components/Frontend/PageBuilder/
 import ProductCollectionGridSection from '@/Components/Frontend/PageBuilder/Sections/ProductCollection/ProductCollectionGridSection'
 import CallToActionSection from '@/Components/Frontend/PageBuilder/Sections/CallToAction/CallToActionSection'
 import PromotionalBannerSection from '@/Components/Frontend/PageBuilder/Sections/PromotionalBanner/PromotionalBannerSection'
+import FeaturesBenefitsSection from '@/Components/Frontend/PageBuilder/Sections/FeaturesBenefits/FeaturesBenefitsSection'
 
 import type {
     StorefrontSectionProps,
@@ -61,6 +62,10 @@ function renderProductCollectionCarousel({ section }: StorefrontSectionProps) {
 
 function renderCallToAction({ section }: StorefrontSectionProps) {
     return <CallToActionSection section={section} />
+}
+
+function renderFeaturesBenefits({ section }: StorefrontSectionProps) {
+    return <FeaturesBenefitsSection section={section} />
 }
 
 const storefrontSectionRegistry: Record<string, StorefrontSectionRegistration> = {
@@ -118,6 +123,16 @@ const storefrontSectionRegistry: Record<string, StorefrontSectionRegistration> =
             split_lead_capture: renderCallToAction,
 
             contact_grid: renderCallToAction,
+        },
+    },
+
+    features_benefits: {
+        templates: {
+            icon_grid: renderFeaturesBenefits,
+
+            image_grid: renderFeaturesBenefits,
+
+            horizontal_benefits: renderFeaturesBenefits,
         },
     },
 }

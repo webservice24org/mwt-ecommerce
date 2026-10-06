@@ -9,6 +9,7 @@ use App\Domain\PageBuilder\Sections\CallToActionSection;
 use App\Domain\PageBuilder\Sections\ContentSection;
 use App\Domain\PageBuilder\Sections\Contracts\SectionDefinition;
 use App\Domain\PageBuilder\Sections\FeaturedProductsSection;
+use App\Domain\PageBuilder\Sections\FeaturesBenefitsSection;
 use App\Domain\PageBuilder\Sections\HeroSection;
 use App\Domain\PageBuilder\Sections\ProductCategoriesSection;
 use App\Domain\PageBuilder\Sections\ProductCollectionSection;
@@ -51,6 +52,11 @@ final class SectionRegistry
         $this->register(
             new CallToActionSection,
         );
+
+        $this->register(
+            new FeaturesBenefitsSection,
+        );
+
     }
 
     /**

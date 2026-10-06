@@ -10,9 +10,9 @@ use App\Domain\PageBuilder\Queries\GetSectionDefinitionsQuery;
 use App\Domain\PageBuilder\Registry\SectionRegistry;
 use PHPUnit\Framework\TestCase;
 
-final class CallToActionDefinitionQueryTest extends TestCase
+final class FeaturesBenefitsDefinitionQueryTest extends TestCase
 {
-    public function test_call_to_action_definition_is_exposed_to_the_builder(): void
+    public function test_features_benefits_definition_is_exposed_to_the_builder(): void
     {
         $definitions = (
             new GetSectionDefinitionsQuery(
@@ -25,83 +25,88 @@ final class CallToActionDefinitionQueryTest extends TestCase
             $definitions,
         );
 
-        $cta =
-            $definitions[6];
+        $features =
+            $definitions[7];
 
         $this->assertInstanceOf(
             SectionDefinitionData::class,
-            $cta,
+            $features,
         );
 
         $this->assertSame(
-            SectionType::CallToAction->value,
-            $cta->type,
+            SectionType::FeaturesBenefits->value,
+            $features->type,
         );
 
         $this->assertSame(
-            'Call to Action',
-            $cta->label,
+            'Features / Benefits',
+            $features->label,
         );
 
         $this->assertSame(
-            'high_impact',
-            $cta->defaultTemplate,
+            'icon_grid',
+            $features->defaultTemplate,
         );
 
         $this->assertCount(
             3,
-            $cta->templates,
+            $features->templates,
         );
 
         $this->assertSame(
             [
-                'high_impact',
-                'split_lead_capture',
-                'contact_grid',
+                'icon_grid',
+                'image_grid',
+                'horizontal_benefits',
             ],
             array_column(
-                $cta->templates,
+                $features->templates,
                 'key',
             ),
         );
 
         $this->assertSame(
             [
-                'High Impact',
-                'Split Lead Capture',
-                'Contact Grid',
+                'Icon Grid',
+                'Image Grid',
+                'Horizontal Benefits',
             ],
             array_column(
-                $cta->templates,
+                $features->templates,
                 'label',
             ),
         );
 
         $this->assertCount(
             3,
-            $cta->templateDefaultConfigs,
+            $features
+                ->templateDefaultConfigs,
         );
 
         $this->assertArrayHasKey(
-            'high_impact',
-            $cta->templateDefaultConfigs,
+            'icon_grid',
+            $features
+                ->templateDefaultConfigs,
         );
 
         $this->assertArrayHasKey(
-            'split_lead_capture',
-            $cta->templateDefaultConfigs,
+            'image_grid',
+            $features
+                ->templateDefaultConfigs,
         );
 
         $this->assertArrayHasKey(
-            'contact_grid',
-            $cta->templateDefaultConfigs,
+            'horizontal_benefits',
+            $features
+                ->templateDefaultConfigs,
         );
 
         $this->assertSame(
-            $cta->templateDefaultConfigs[
-                'high_impact'
-            ],
-            $cta->defaultConfig,
+            $features
+                ->templateDefaultConfigs[
+                    'icon_grid'
+                ],
+            $features->defaultConfig,
         );
     }
 }

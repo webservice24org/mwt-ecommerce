@@ -21,7 +21,7 @@ final class ContentDefinitionQueryTest extends TestCase
         )->handle();
 
         $this->assertCount(
-            7,
+            8,
             $definitions,
         );
 

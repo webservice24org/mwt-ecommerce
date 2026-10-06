@@ -1,6 +1,7 @@
 const sectionEditorTypes = new Set<string>([
     'call_to_action',
     'content',
+    'features_benefits',
     'featured_products',
     'hero',
     'product_categories',

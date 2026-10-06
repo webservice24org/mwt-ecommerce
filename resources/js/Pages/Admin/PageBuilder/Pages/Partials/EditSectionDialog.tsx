@@ -16,6 +16,11 @@ import type {
 
 import SectionEditorRenderer from '../../Sections/Editors/SectionEditorRenderer'
 import { hasSectionEditor } from '../../Sections/section-editor-registry'
+import { isFeatureBenefitIconName } from '@/PageBuilder/feature-benefit-icon-options'
+import {
+    getSafeFeatureImageUrl,
+    getSafeFeatureLinkUrl,
+} from '@/PageBuilder/features-benefits-security'
 
 interface Props {
     open: boolean
@@ -387,6 +392,9 @@ function formatIdentifier(value: string): string {
 }
 
 function isConfigValid(type: string, config: SectionConfig): boolean {
+    if (type === 'features_benefits') {
+        return isFeaturesBenefitsConfigValid(config)
+    }
     if (type === 'call_to_action') {
         return isCallToActionConfigValid(config)
     }
@@ -454,6 +462,180 @@ function isConfigValid(type: string, config: SectionConfig): boolean {
     }
 
     return false
+}
+
+function isFeaturesBenefitsConfigValid(config: SectionConfig): boolean {
+    const allowedKeys = new Set([
+        'eyebrow',
+        'heading',
+        'description',
+        'items',
+        'columns',
+        'alignment',
+        'background_color',
+        'text_theme',
+    ])
+
+    if (Object.keys(config).some((key) => !allowedKeys.has(key))) {
+        return false
+    }
+
+    const eyebrow = config.eyebrow
+
+    const heading = config.heading
+
+    const description = config.description
+
+    const items = config.items
+
+    const columns = config.columns
+
+    const alignment = config.alignment
+
+    const backgroundColor = config.background_color
+
+    const textTheme = config.text_theme
+
+    if (
+        !isNullableFeatureStringWithin(eyebrow, 120) ||
+        typeof heading !== 'string' ||
+        heading.trim().length === 0 ||
+        characterCount(heading.trim()) > 180 ||
+        typeof description !== 'string' ||
+        characterCount(description.trim()) > 1000
+    ) {
+        return false
+    }
+
+    if (!Array.isArray(items) || items.length < 1 || items.length > 12) {
+        return false
+    }
+
+    if (!items.every((item) => isFeatureBenefitItemValid(item))) {
+        return false
+    }
+
+    if (typeof columns !== 'number' || !Number.isInteger(columns) || ![2, 3, 4].includes(columns)) {
+        return false
+    }
+
+    if (alignment !== 'left' && alignment !== 'center') {
+        return false
+    }
+
+    if (typeof backgroundColor !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(backgroundColor.trim())) {
+        return false
+    }
+
+    return textTheme === 'light' || textTheme === 'dark'
+}
+
+function isFeatureBenefitItemValid(value: unknown): boolean {
+    if (!isPlainObject(value)) {
+        return false
+    }
+
+    const allowedKeys = new Set([
+        'title',
+        'description',
+        'icon',
+        'image',
+        'image_alt',
+        'link_label',
+        'link_url',
+    ])
+
+    if (Object.keys(value).some((key) => !allowedKeys.has(key))) {
+        return false
+    }
+
+    const title = value.title
+
+    const description = value.description
+
+    const icon = value.icon
+
+    const image = value.image
+
+    const imageAlt = value.image_alt
+
+    const linkLabel = value.link_label
+
+    const linkUrl = value.link_url
+
+    if (
+        typeof title !== 'string' ||
+        title.trim().length === 0 ||
+        characterCount(title.trim()) > 160
+    ) {
+        return false
+    }
+
+    if (typeof description !== 'string' || characterCount(description.trim()) > 1000) {
+        return false
+    }
+
+    if (
+        !isNullableFeatureStringWithin(icon, 80) ||
+        !isNullableFeatureStringWithin(image, 2048) ||
+        !isNullableFeatureStringWithin(imageAlt, 255) ||
+        !isNullableFeatureStringWithin(linkLabel, 80) ||
+        !isNullableFeatureStringWithin(linkUrl, 2048)
+    ) {
+        return false
+    }
+
+    const normalizedIcon = normalizeNullableFeatureString(icon)
+
+    const normalizedImage = normalizeNullableFeatureString(image)
+
+    const normalizedLinkLabel = normalizeNullableFeatureString(linkLabel)
+
+    const normalizedLinkUrl = normalizeNullableFeatureString(linkUrl)
+
+    if (normalizedIcon !== null && !isFeatureBenefitIconName(normalizedIcon)) {
+        return false
+    }
+
+    if (normalizedImage !== null && getSafeFeatureImageUrl(normalizedImage) === null) {
+        return false
+    }
+
+    if ((normalizedLinkLabel === null) !== (normalizedLinkUrl === null)) {
+        return false
+    }
+
+    if (normalizedLinkUrl !== null && getSafeFeatureLinkUrl(normalizedLinkUrl) === null) {
+        return false
+    }
+
+    return true
+}
+
+function isNullableFeatureStringWithin(value: unknown, maxLength: number): boolean {
+    if (value === null || value === undefined) {
+        return true
+    }
+
+    if (typeof value !== 'string') {
+        return false
+    }
+
+    return characterCount(value.trim()) <= maxLength
+}
+
+function normalizeNullableFeatureString(value: unknown): string | null {
+    if (typeof value !== 'string') {
+        return null
+    }
+
+    const normalized = value.trim()
+
+    return normalized === '' ? null : normalized
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 function isCallToActionConfigValid(config: SectionConfig): boolean {

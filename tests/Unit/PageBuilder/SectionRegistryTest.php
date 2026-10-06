@@ -7,7 +7,10 @@ namespace Tests\Unit\PageBuilder;
 use App\Domain\PageBuilder\Data\SectionTemplateData;
 use App\Domain\PageBuilder\Enums\SectionType;
 use App\Domain\PageBuilder\Registry\SectionRegistry;
+use App\Domain\PageBuilder\Sections\CallToActionSection;
+use App\Domain\PageBuilder\Sections\ContentSection;
 use App\Domain\PageBuilder\Sections\FeaturedProductsSection;
+use App\Domain\PageBuilder\Sections\FeaturesBenefitsSection;
 use App\Domain\PageBuilder\Sections\HeroSection;
 use App\Domain\PageBuilder\Sections\ProductCategoriesSection;
 use App\Domain\PageBuilder\Sections\ProductCollectionSection;
@@ -126,7 +129,7 @@ final class SectionRegistryTest extends TestCase
         $definitions = $registry->all();
 
         $this->assertCount(
-            7,
+            8,
             $definitions,
         );
 
@@ -153,6 +156,21 @@ final class SectionRegistryTest extends TestCase
         $this->assertInstanceOf(
             PromotionalBannerSection::class,
             $definitions[4],
+        );
+
+        $this->assertInstanceOf(
+            ContentSection::class,
+            $definitions[5],
+        );
+
+        $this->assertInstanceOf(
+            CallToActionSection::class,
+            $definitions[6],
+        );
+
+        $this->assertInstanceOf(
+            FeaturesBenefitsSection::class,
+            $definitions[7],
         );
     }
 

@@ -7,13 +7,13 @@ namespace Tests\Unit\PageBuilder;
 use App\Domain\PageBuilder\Data\SectionTemplateData;
 use App\Domain\PageBuilder\Enums\SectionType;
 use App\Domain\PageBuilder\Registry\SectionRegistry;
-use App\Domain\PageBuilder\Sections\CallToActionSection;
+use App\Domain\PageBuilder\Sections\FeaturesBenefitsSection;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
-final class CallToActionSectionTest extends TestCase
+final class FeaturesBenefitsSectionTest extends TestCase
 {
-    public function test_call_to_action_section_is_registered(): void
+    public function test_features_benefits_section_is_registered(): void
     {
         $registry =
             new SectionRegistry;
@@ -25,24 +25,24 @@ final class CallToActionSectionTest extends TestCase
 
         $this->assertTrue(
             $registry->has(
-                SectionType::CallToAction,
+                SectionType::FeaturesBenefits,
             ),
         );
 
         $this->assertInstanceOf(
-            CallToActionSection::class,
+            FeaturesBenefitsSection::class,
             $registry->get(
-                SectionType::CallToAction,
+                SectionType::FeaturesBenefits,
             ),
         );
     }
 
-    public function test_call_to_action_section_exposes_three_typed_templates(): void
+    public function test_features_benefits_exposes_three_typed_templates(): void
     {
         $definition = (
             new SectionRegistry
         )->get(
-            SectionType::CallToAction,
+            SectionType::FeaturesBenefits,
         );
 
         $templates =
@@ -62,9 +62,9 @@ final class CallToActionSectionTest extends TestCase
 
         $this->assertSame(
             [
-                'high_impact',
-                'split_lead_capture',
-                'contact_grid',
+                'icon_grid',
+                'image_grid',
+                'horizontal_benefits',
             ],
             array_map(
                 static fn (
@@ -76,9 +76,9 @@ final class CallToActionSectionTest extends TestCase
 
         $this->assertSame(
             [
-                'High Impact',
-                'Split Lead Capture',
-                'Contact Grid',
+                'Icon Grid',
+                'Image Grid',
+                'Horizontal Benefits',
             ],
             array_map(
                 static fn (
@@ -90,9 +90,9 @@ final class CallToActionSectionTest extends TestCase
 
         $this->assertSame(
             [
-                'Marketing',
-                'Marketing',
-                'Marketing',
+                'Content',
+                'Content',
+                'Content',
             ],
             array_map(
                 static fn (
@@ -103,42 +103,42 @@ final class CallToActionSectionTest extends TestCase
         );
     }
 
-    public function test_call_to_action_section_supports_all_three_templates(): void
+    public function test_registry_supports_all_features_benefits_templates(): void
     {
         $registry =
             new SectionRegistry;
 
         foreach (
             [
-                'high_impact',
-                'split_lead_capture',
-                'contact_grid',
+                'icon_grid',
+                'image_grid',
+                'horizontal_benefits',
             ] as $template
         ) {
             $this->assertTrue(
                 $registry->supportsTemplate(
-                    SectionType::CallToAction,
+                    SectionType::FeaturesBenefits,
                     $template,
                 ),
             );
         }
     }
 
-    public function test_every_call_to_action_template_default_is_valid(): void
+    public function test_every_template_default_is_valid(): void
     {
         $definition =
-            new CallToActionSection;
+            new FeaturesBenefitsSection;
 
         $this->assertSame(
-            'high_impact',
+            'icon_grid',
             $definition->defaultTemplate(),
         );
 
         foreach (
             [
-                'high_impact',
-                'split_lead_capture',
-                'contact_grid',
+                'icon_grid',
+                'image_grid',
+                'horizontal_benefits',
             ] as $template
         ) {
             $config =
@@ -158,68 +158,60 @@ final class CallToActionSectionTest extends TestCase
         }
     }
 
-    public function test_template_defaults_include_background_choice_and_contact_contract(): void
+    public function test_template_defaults_include_expected_media_contract(): void
     {
         $definition =
-            new CallToActionSection;
+            new FeaturesBenefitsSection;
 
-        $highImpact =
+        $iconGrid =
             $definition
                 ->defaultConfigForTemplate(
-                    'high_impact',
+                    'icon_grid',
                 );
 
-        $split =
+        $imageGrid =
             $definition
                 ->defaultConfigForTemplate(
-                    'split_lead_capture',
+                    'image_grid',
                 );
 
-        $contactGrid =
+        $horizontal =
             $definition
                 ->defaultConfigForTemplate(
-                    'contact_grid',
+                    'horizontal_benefits',
                 );
 
         $this->assertSame(
-            'color',
-            $highImpact[
-                'background_type'
-            ],
-        );
-
-        $this->assertSame(
-            '#0f172a',
-            $highImpact[
-                'background_color'
+            'truck',
+            $iconGrid['items'][0][
+                'icon'
             ],
         );
 
         $this->assertNull(
-            $highImpact[
-                'background_image'
+            $imageGrid['items'][0][
+                'icon'
+            ],
+        );
+
+        $this->assertNull(
+            $imageGrid['items'][0][
+                'image'
             ],
         );
 
         $this->assertSame(
-            'Subscribe',
-            $split[
-                'newsletter_button_label'
-            ],
-        );
-
-        $this->assertSame(
-            'dark',
-            $contactGrid[
-                'text_theme'
+            'left',
+            $horizontal[
+                'alignment'
             ],
         );
 
         $this->assertSame(
             [
-                'high_impact',
-                'split_lead_capture',
-                'contact_grid',
+                'icon_grid',
+                'image_grid',
+                'horizontal_benefits',
             ],
             array_keys(
                 $definition
@@ -228,14 +220,14 @@ final class CallToActionSectionTest extends TestCase
         );
     }
 
-    public function test_unknown_call_to_action_template_is_rejected(): void
+    public function test_unknown_features_benefits_template_is_rejected(): void
     {
         $this->expectException(
             InvalidArgumentException::class,
         );
 
         (
-            new CallToActionSection
+            new FeaturesBenefitsSection
         )->defaultConfigForTemplate(
             'unknown',
         );
