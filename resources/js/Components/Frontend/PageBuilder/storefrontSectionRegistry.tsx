@@ -10,6 +10,10 @@ import ProductCollectionGridSection from '@/Components/Frontend/PageBuilder/Sect
 import CallToActionSection from '@/Components/Frontend/PageBuilder/Sections/CallToAction/CallToActionSection'
 import PromotionalBannerSection from '@/Components/Frontend/PageBuilder/Sections/PromotionalBanner/PromotionalBannerSection'
 import FeaturesBenefitsSection from '@/Components/Frontend/PageBuilder/Sections/FeaturesBenefits/FeaturesBenefitsSection'
+import BrandLogoStripSection from '@/Components/Frontend/PageBuilder/Sections/Brands/BrandLogoStripSection'
+import BrandCardsSection from '@/Components/Frontend/PageBuilder/Sections/Brands/BrandCardsSection'
+import BrandLogoMarqueeSection from '@/Components/Frontend/PageBuilder/Sections/Brands/BrandLogoMarqueeSection'
+import BrandSpotlightSection from '@/Components/Frontend/PageBuilder/Sections/Brands/BrandSpotlightSection'
 
 import type {
     StorefrontSectionProps,
@@ -66,6 +70,21 @@ function renderCallToAction({ section }: StorefrontSectionProps) {
 
 function renderFeaturesBenefits({ section }: StorefrontSectionProps) {
     return <FeaturesBenefitsSection section={section} />
+}
+
+function renderBrandLogoStrip({ section }: StorefrontSectionProps) {
+    return <BrandLogoStripSection section={section} />
+}
+
+function renderBrandCards({ section }: StorefrontSectionProps) {
+    return <BrandCardsSection section={section} />
+}
+
+function renderBrandLogoMarquee({ section }: StorefrontSectionProps) {
+    return <BrandLogoMarqueeSection section={section} />
+}
+function renderBrandSpotlight({ section }: StorefrontSectionProps) {
+    return <BrandSpotlightSection section={section} />
 }
 
 const storefrontSectionRegistry: Record<string, StorefrontSectionRegistration> = {
@@ -133,6 +152,18 @@ const storefrontSectionRegistry: Record<string, StorefrontSectionRegistration> =
             image_grid: renderFeaturesBenefits,
 
             horizontal_benefits: renderFeaturesBenefits,
+        },
+    },
+
+    brands: {
+        templates: {
+            logo_strip: renderBrandLogoStrip,
+
+            brand_cards: renderBrandCards,
+
+            logo_marquee: renderBrandLogoMarquee,
+
+            spotlight_banner: renderBrandSpotlight,
         },
     },
 }

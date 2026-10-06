@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\Catalog\ProductController;
 use App\Http\Controllers\Admin\Catalog\ProductImageController;
 use App\Http\Controllers\Admin\Catalog\ProductVariantController;
 use App\Http\Controllers\Admin\Catalog\ProductVideoController;
+use App\Http\Controllers\Admin\PageBuilderBrandSearchController;
 use App\Http\Controllers\Admin\PageBuilderController;
 use App\Http\Controllers\Admin\PageBuilderImageController;
 use App\Http\Controllers\Admin\PageBuilderProductSearchController;
@@ -94,6 +95,7 @@ Route::middleware([
 
     Route::get('pages/{page}/builder', PageBuilderController::class)->name('pages.builder');
     Route::get('pages/{page}/builder/products', PageBuilderProductSearchController::class)->name('pages.builder.products');
+    Route::get('pages/{page}/builder/brands', PageBuilderBrandSearchController::class)->name('pages.builder.brands');
     Route::post('pages/{page}/builder/images', PageBuilderImageController::class)->name('pages.builder.images.store');
 
     Route::post('pages/{page}/sections', [PageSectionController::class, 'store'])->name('pages.sections.store');

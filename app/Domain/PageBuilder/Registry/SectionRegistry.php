@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\PageBuilder\Registry;
 
 use App\Domain\PageBuilder\Enums\SectionType;
+use App\Domain\PageBuilder\Sections\BrandSection;
 use App\Domain\PageBuilder\Sections\CallToActionSection;
 use App\Domain\PageBuilder\Sections\ContentSection;
 use App\Domain\PageBuilder\Sections\Contracts\SectionDefinition;
@@ -55,6 +56,10 @@ final class SectionRegistry
 
         $this->register(
             new FeaturesBenefitsSection,
+        );
+
+        $this->register(
+            new BrandSection,
         );
 
     }

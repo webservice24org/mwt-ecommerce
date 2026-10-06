@@ -15,7 +15,7 @@ enum SectionType: string
     case CallToAction = 'call_to_action';
 
     case FeaturesBenefits = 'features_benefits';
-
+    case Brands = 'brands';
     case ProductGrid = 'product_grid';
     case CategoryProducts = 'category_products';
     case CategoryShowcase = 'category_showcase';
@@ -32,6 +32,7 @@ enum SectionType: string
             self::Content => 'Content',
             self::CallToAction => 'Call to Action',
             self::FeaturesBenefits => 'Features / Benefits',
+            self::Brands => 'Brands',
 
             self::ProductGrid => 'Product Grid',
             self::CategoryProducts => 'Category Products',

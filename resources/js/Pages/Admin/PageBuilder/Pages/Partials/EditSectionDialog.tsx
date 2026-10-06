@@ -407,6 +407,10 @@ function isConfigValid(type: string, config: SectionConfig): boolean {
         return isPromotionalBannerConfigValid(config)
     }
 
+    if (type === 'brands') {
+        return isBrandConfigValid(config)
+    }
+
     if (type !== 'featured_products' && type !== 'product_collection') {
         return true
     }
@@ -841,6 +845,163 @@ function isContentConfigValid(config: SectionConfig): boolean {
     }
 
     return alignment === 'left' || alignment === 'center' || alignment === 'right'
+}
+
+function isBrandConfigValid(config: SectionConfig): boolean {
+    const eyebrow = nullableStringValue(config.eyebrow)
+
+    const heading = stringValue(config.heading)
+
+    const description = stringValue(config.description)
+
+    if (eyebrow === undefined || heading === undefined || description === undefined) {
+        return false
+    }
+
+    if (
+        heading.trim() === '' ||
+        heading.length > 180 ||
+        (eyebrow !== null && eyebrow.length > 120) ||
+        description.length > 1000
+    ) {
+        return false
+    }
+
+    if (!isBrandSourceValid(config.source)) {
+        return false
+    }
+
+    if (!isIntegerInRange(config.limit, 1, 24)) {
+        return false
+    }
+
+    if (!isAllowedInteger(config.columns, [2, 3, 4, 5, 6])) {
+        return false
+    }
+
+    if (config.alignment !== 'left' && config.alignment !== 'center') {
+        return false
+    }
+
+    if (
+        typeof config.background_color !== 'string' ||
+        !/^#[0-9a-fA-F]{6}$/.test(config.background_color)
+    ) {
+        return false
+    }
+
+    if (config.text_theme !== 'light' && config.text_theme !== 'dark') {
+        return false
+    }
+
+    if (
+        typeof config.show_name !== 'boolean' ||
+        typeof config.show_description !== 'boolean' ||
+        typeof config.show_product_count !== 'boolean' ||
+        typeof config.pause_on_hover !== 'boolean'
+    ) {
+        return false
+    }
+
+    if (!isIntegerInRange(config.marquee_duration, 10, 60)) {
+        return false
+    }
+
+    if (
+        !isOptionalStringWithin(config.view_all_label, 100) ||
+        !isOptionalStringWithin(config.view_all_url, 2048) ||
+        !isOptionalStringWithin(config.primary_button_label, 100) ||
+        !isOptionalStringWithin(config.primary_button_url, 2048) ||
+        !isOptionalStringWithin(config.secondary_button_label, 100) ||
+        !isOptionalStringWithin(config.secondary_button_url, 2048)
+    ) {
+        return false
+    }
+
+    if (
+        !isNullablePairComplete(config.view_all_label, config.view_all_url) ||
+        !isNullablePairComplete(config.primary_button_label, config.primary_button_url) ||
+        !isNullablePairComplete(config.secondary_button_label, config.secondary_button_url)
+    ) {
+        return false
+    }
+
+    return true
+}
+
+function isBrandSourceValid(value: JsonValue | undefined): boolean {
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+        return false
+    }
+
+    const source = value as Record<string, JsonValue>
+
+    if (source.type === 'all') {
+        return Object.keys(source).length === 1
+    }
+
+    if (source.type !== 'manual') {
+        return false
+    }
+
+    if (
+        !Array.isArray(source.brand_ids) ||
+        source.brand_ids.length < 1 ||
+        source.brand_ids.length > 24
+    ) {
+        return false
+    }
+
+    const brandIds = source.brand_ids
+
+    if (
+        !brandIds.every(
+            (brandId) => typeof brandId === 'number' && Number.isInteger(brandId) && brandId > 0,
+        )
+    ) {
+        return false
+    }
+
+    return new Set(brandIds).size === brandIds.length
+}
+
+function stringValue(value: JsonValue | undefined): string | undefined {
+    return typeof value === 'string' ? value : undefined
+}
+
+function nullableStringValue(value: JsonValue | undefined): string | null | undefined {
+    if (value === null) {
+        return null
+    }
+
+    return typeof value === 'string' ? value : undefined
+}
+
+function isOptionalStringWithin(value: JsonValue | undefined, maxLength: number): boolean {
+    return value === null || (typeof value === 'string' && value.length <= maxLength)
+}
+
+function isNullablePairComplete(
+    first: JsonValue | undefined,
+    second: JsonValue | undefined,
+): boolean {
+    const firstPresent = typeof first === 'string' && first.trim() !== ''
+
+    const secondPresent = typeof second === 'string' && second.trim() !== ''
+
+    const firstEmpty = first === null || (typeof first === 'string' && first.trim() === '')
+
+    const secondEmpty = second === null || (typeof second === 'string' && second.trim() === '')
+
+    return (firstPresent && secondPresent) || (firstEmpty && secondEmpty)
+}
+
+function isIntegerInRange(value: JsonValue | undefined, min: number, max: number): boolean {
+    return typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max
+}
+
+function isAllowedInteger(value: JsonValue | undefined, allowed: number[]): boolean {
+    return typeof value === 'number' && Number.isInteger(value) && allowed.includes(value)
 }
 
 function isPromotionalBannerConfigValid(config: SectionConfig): boolean {

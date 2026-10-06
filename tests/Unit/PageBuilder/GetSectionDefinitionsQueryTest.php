@@ -21,7 +21,7 @@ final class GetSectionDefinitionsQueryTest extends TestCase
         $definitions = $query->handle();
 
         $this->assertCount(
-            8,
+            9,
             $definitions,
         );
 

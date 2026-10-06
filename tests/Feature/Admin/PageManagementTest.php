@@ -385,7 +385,7 @@ final class PageManagementTest extends TestCase
                     )
                     ->has(
                         'sectionDefinitions',
-                        8,
+                        9,
                     )
 
                     /*

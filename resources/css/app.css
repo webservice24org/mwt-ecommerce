@@ -97,3 +97,65 @@
         animation: none;
     }
 }
+
+@keyframes brand-logo-marquee {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+.brand-logo-marquee-track {
+    display: flex;
+    width: max-content;
+    animation-name: brand-logo-marquee;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    will-change: transform;
+}
+
+.brand-logo-marquee-set {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 3rem;
+    padding-right: 3rem;
+}
+
+.brand-logo-marquee-pause:hover
+    .brand-logo-marquee-track,
+.brand-logo-marquee-pause:focus-within
+    .brand-logo-marquee-track {
+    animation-play-state: paused;
+}
+
+@media (min-width: 640px) {
+    .brand-logo-marquee-set {
+        gap: 4rem;
+        padding-right: 4rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .brand-logo-marquee-track {
+        width: 100%;
+        animation: none !important;
+        transform: none !important;
+        will-change: auto;
+    }
+
+    .brand-logo-marquee-set {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 2rem;
+        padding-right: 0;
+    }
+
+    .brand-logo-marquee-duplicate {
+        display: none;
+    }
+}

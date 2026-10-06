@@ -19,7 +19,7 @@ final class FeaturesBenefitsSectionTest extends TestCase
             new SectionRegistry;
 
         $this->assertCount(
-            8,
+            9,
             $registry->all(),
         );
 

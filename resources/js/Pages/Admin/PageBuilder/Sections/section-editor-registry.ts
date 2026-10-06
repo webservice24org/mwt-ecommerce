@@ -3,6 +3,7 @@ const sectionEditorTypes = new Set<string>([
     'content',
     'features_benefits',
     'featured_products',
+    'brands',
     'hero',
     'product_categories',
     'product_collection',
