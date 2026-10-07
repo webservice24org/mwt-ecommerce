@@ -10,6 +10,7 @@ import FeaturesBenefitsEditor from './FeaturesBenefitsEditor'
 import BrandEditor from './BrandEditor'
 import TestimonialsEditor from './TestimonialsEditor'
 import FaqEditor from './FaqEditor'
+import SpacerDividerEditor from './SpacerDividerEditor'
 
 import type { SectionEditorProps } from '../types'
 
@@ -46,6 +47,9 @@ export default function SectionEditorRenderer(props: SectionEditorProps) {
             return <TestimonialsEditor {...props} />
         case 'faq':
             return <FaqEditor {...props} />
+
+        case 'spacer_divider':
+            return <SpacerDividerEditor {...props} />
 
         default:
             return <UnsupportedSectionEditor {...props} />

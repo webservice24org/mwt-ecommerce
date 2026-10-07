@@ -20,6 +20,10 @@ import TestimonialCardSliderSection from '@/Components/Frontend/PageBuilder/Sect
 import FaqAccordionSection from '@/Components/Frontend/PageBuilder/Sections/Faq/FaqAccordionSection'
 import FaqTwoColumnSection from '@/Components/Frontend/PageBuilder/Sections/Faq/FaqTwoColumnSection'
 import FaqSidePanelSection from '@/Components/Frontend/PageBuilder/Sections/Faq/FaqSidePanelSection'
+import ResponsiveSpacerSection from '@/Components/Frontend/PageBuilder/Sections/SpacerDivider/ResponsiveSpacerSection'
+import LineDividerSection from '@/Components/Frontend/PageBuilder/Sections/SpacerDivider/LineDividerSection'
+import LabelDividerSection from '@/Components/Frontend/PageBuilder/Sections/SpacerDivider/LabelDividerSection'
+import GradientDividerSection from '@/Components/Frontend/PageBuilder/Sections/SpacerDivider/GradientDividerSection'
 
 import type {
     StorefrontSectionProps,
@@ -115,6 +119,21 @@ function renderFaqSidePanel({ section }: StorefrontSectionProps) {
     return <FaqSidePanelSection section={section} />
 }
 
+function renderResponsiveSpacer({ section }: StorefrontSectionProps) {
+    return <ResponsiveSpacerSection section={section} />
+}
+
+function renderLineDivider({ section }: StorefrontSectionProps) {
+    return <LineDividerSection section={section} />
+}
+
+function renderLabelDivider({ section }: StorefrontSectionProps) {
+    return <LabelDividerSection section={section} />
+}
+function renderGradientDivider({ section }: StorefrontSectionProps) {
+    return <GradientDividerSection section={section} />
+}
+
 const storefrontSectionRegistry: Record<string, StorefrontSectionRegistration> = {
     content: {
         templates: {
@@ -208,6 +227,15 @@ const storefrontSectionRegistry: Record<string, StorefrontSectionRegistration> =
             accordion: renderFaqAccordion,
             two_column: renderFaqTwoColumn,
             side_panel: renderFaqSidePanel,
+        },
+    },
+
+    spacer_divider: {
+        templates: {
+            responsive_spacer: renderResponsiveSpacer,
+            line_divider: renderLineDivider,
+            label_divider: renderLabelDivider,
+            gradient_divider: renderGradientDivider,
         },
     },
 }

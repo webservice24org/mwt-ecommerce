@@ -8,6 +8,7 @@ const sectionEditorTypes = new Set<string>([
     'product_categories',
     'product_collection',
     'promotional_banner',
+    'spacer_divider',
 ])
 
 export function hasSectionEditor(type: string): boolean {

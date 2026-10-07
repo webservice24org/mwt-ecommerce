@@ -40,6 +40,7 @@ final readonly class PageSectionResolver
             SectionType::Testimonials => [],
 
             SectionType::Faq => [],
+            SectionType::SpacerDivider => [],
 
             SectionType::Brands => $this->resolveBrands(
                 $section,
