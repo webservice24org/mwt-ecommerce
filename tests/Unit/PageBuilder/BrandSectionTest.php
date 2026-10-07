@@ -19,7 +19,7 @@ final class BrandSectionTest extends TestCase
             new SectionRegistry;
 
         $this->assertCount(
-            9,
+            10,
             $registry->all(),
         );
 

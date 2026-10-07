@@ -192,22 +192,26 @@ final class BrandSectionRegressionTest extends TestCase
                 $config['background_color'],
             );
 
-            $this->assertContains(
-                $config['text_theme'],
-                [
-                    'light',
-                    'dark',
-                ],
-                true,
+            $this->assertTrue(
+                in_array(
+                    $config['text_theme'],
+                    [
+                        'light',
+                        'dark',
+                    ],
+                    true,
+                ),
             );
 
-            $this->assertContains(
-                $config['alignment'],
-                [
-                    'left',
-                    'center',
-                ],
-                true,
+            $this->assertTrue(
+                in_array(
+                    $config['alignment'],
+                    [
+                        'left',
+                        'center',
+                    ],
+                    true,
+                ),
             );
 
             $this->assertGreaterThanOrEqual(

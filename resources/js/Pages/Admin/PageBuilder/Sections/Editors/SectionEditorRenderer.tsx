@@ -8,6 +8,7 @@ import PromotionalBannerEditor from './PromotionalBannerEditor'
 import UnsupportedSectionEditor from './UnsupportedSectionEditor'
 import FeaturesBenefitsEditor from './FeaturesBenefitsEditor'
 import BrandEditor from './BrandEditor'
+import TestimonialsEditor from './TestimonialsEditor'
 
 import type { SectionEditorProps } from '../types'
 
@@ -39,6 +40,9 @@ export default function SectionEditorRenderer(props: SectionEditorProps) {
 
         case 'brands':
             return <BrandEditor {...props} />
+
+        case 'testimonials':
+            return <TestimonialsEditor {...props} />
 
         default:
             return <UnsupportedSectionEditor {...props} />

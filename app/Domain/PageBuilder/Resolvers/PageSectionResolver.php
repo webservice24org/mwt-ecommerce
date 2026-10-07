@@ -37,6 +37,8 @@ final readonly class PageSectionResolver
 
             SectionType::FeaturesBenefits => [],
 
+            SectionType::Testimonials => [],
+
             SectionType::Brands => $this->resolveBrands(
                 $section,
             ),

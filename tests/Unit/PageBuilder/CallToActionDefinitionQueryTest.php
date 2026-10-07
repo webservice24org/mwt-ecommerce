@@ -21,7 +21,7 @@ final class CallToActionDefinitionQueryTest extends TestCase
         )->handle();
 
         $this->assertCount(
-            9,
+            10,
             $definitions,
         );
 

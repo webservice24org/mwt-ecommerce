@@ -20,6 +20,7 @@ enum SectionType: string
     case CategoryProducts = 'category_products';
     case CategoryShowcase = 'category_showcase';
     case NewArrivals = 'new_arrivals';
+    case Testimonials = 'testimonials';
 
     public function label(): string
     {
@@ -38,6 +39,7 @@ enum SectionType: string
             self::CategoryProducts => 'Category Products',
             self::CategoryShowcase => 'Category Showcase',
             self::NewArrivals => 'New Arrivals',
+            self::Testimonials => 'Testimonials',
         };
     }
 }

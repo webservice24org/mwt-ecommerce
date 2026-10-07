@@ -14,6 +14,9 @@ import BrandLogoStripSection from '@/Components/Frontend/PageBuilder/Sections/Br
 import BrandCardsSection from '@/Components/Frontend/PageBuilder/Sections/Brands/BrandCardsSection'
 import BrandLogoMarqueeSection from '@/Components/Frontend/PageBuilder/Sections/Brands/BrandLogoMarqueeSection'
 import BrandSpotlightSection from '@/Components/Frontend/PageBuilder/Sections/Brands/BrandSpotlightSection'
+import TestimonialGridSliderSection from '@/Components/Frontend/PageBuilder/Sections/Testimonials/TestimonialGridSliderSection'
+import TestimonialSpotlightSliderSection from '@/Components/Frontend/PageBuilder/Sections/Testimonials/TestimonialSpotlightSliderSection'
+import TestimonialCardSliderSection from '@/Components/Frontend/PageBuilder/Sections/Testimonials/TestimonialCardSliderSection'
 
 import type {
     StorefrontSectionProps,
@@ -85,6 +88,18 @@ function renderBrandLogoMarquee({ section }: StorefrontSectionProps) {
 }
 function renderBrandSpotlight({ section }: StorefrontSectionProps) {
     return <BrandSpotlightSection section={section} />
+}
+
+function renderTestimonialGridSlider({ section }: StorefrontSectionProps) {
+    return <TestimonialGridSliderSection section={section} />
+}
+
+function renderTestimonialSpotlightSlider({ section }: StorefrontSectionProps) {
+    return <TestimonialSpotlightSliderSection section={section} />
+}
+
+function renderTestimonialCardSlider({ section }: StorefrontSectionProps) {
+    return <TestimonialCardSliderSection section={section} />
 }
 
 const storefrontSectionRegistry: Record<string, StorefrontSectionRegistration> = {
@@ -164,6 +179,14 @@ const storefrontSectionRegistry: Record<string, StorefrontSectionRegistration> =
             logo_marquee: renderBrandLogoMarquee,
 
             spotlight_banner: renderBrandSpotlight,
+        },
+    },
+
+    testimonials: {
+        templates: {
+            grid_slider: renderTestimonialGridSlider,
+            spotlight_slider: renderTestimonialSpotlightSlider,
+            card_slider: renderTestimonialCardSlider,
         },
     },
 }

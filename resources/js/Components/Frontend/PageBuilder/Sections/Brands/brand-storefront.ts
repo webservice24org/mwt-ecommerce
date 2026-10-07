@@ -143,7 +143,7 @@ export function safeOptionalHref(value: string | null): string | null {
     /*
      * Reject ASCII control characters.
      */
-    if (/[\u0000-\u001f\u007f]/.test(trimmed)) {
+    if (hasAsciiControlCharacter(trimmed)) {
         return null
     }
 
@@ -172,6 +172,18 @@ export function safeOptionalHref(value: string | null): string | null {
     } catch {
         return null
     }
+}
+
+function hasAsciiControlCharacter(value: string): boolean {
+    for (let index = 0; index < value.length; index += 1) {
+        const code = value.charCodeAt(index)
+
+        if (code <= 31 || code === 127) {
+            return true
+        }
+    }
+
+    return false
 }
 
 function defaultConfig(): BrandSectionConfig {

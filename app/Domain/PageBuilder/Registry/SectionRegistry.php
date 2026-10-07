@@ -15,6 +15,7 @@ use App\Domain\PageBuilder\Sections\HeroSection;
 use App\Domain\PageBuilder\Sections\ProductCategoriesSection;
 use App\Domain\PageBuilder\Sections\ProductCollectionSection;
 use App\Domain\PageBuilder\Sections\PromotionalBannerSection;
+use App\Domain\PageBuilder\Sections\TestimonialsSection;
 use InvalidArgumentException;
 
 final class SectionRegistry
@@ -60,6 +61,10 @@ final class SectionRegistry
 
         $this->register(
             new BrandSection,
+        );
+
+        $this->register(
+            new TestimonialsSection,
         );
 
     }

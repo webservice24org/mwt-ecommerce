@@ -19,7 +19,7 @@ final class CallToActionSectionTest extends TestCase
             new SectionRegistry;
 
         $this->assertCount(
-            9,
+            10,
             $registry->all(),
         );
 
