@@ -9,6 +9,7 @@ use App\Domain\PageBuilder\Sections\BrandSection;
 use App\Domain\PageBuilder\Sections\CallToActionSection;
 use App\Domain\PageBuilder\Sections\ContentSection;
 use App\Domain\PageBuilder\Sections\Contracts\SectionDefinition;
+use App\Domain\PageBuilder\Sections\FaqSection;
 use App\Domain\PageBuilder\Sections\FeaturedProductsSection;
 use App\Domain\PageBuilder\Sections\FeaturesBenefitsSection;
 use App\Domain\PageBuilder\Sections\HeroSection;
@@ -65,6 +66,10 @@ final class SectionRegistry
 
         $this->register(
             new TestimonialsSection,
+        );
+
+        $this->register(
+            new FaqSection,
         );
 
     }

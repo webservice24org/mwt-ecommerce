@@ -17,6 +17,9 @@ import BrandSpotlightSection from '@/Components/Frontend/PageBuilder/Sections/Br
 import TestimonialGridSliderSection from '@/Components/Frontend/PageBuilder/Sections/Testimonials/TestimonialGridSliderSection'
 import TestimonialSpotlightSliderSection from '@/Components/Frontend/PageBuilder/Sections/Testimonials/TestimonialSpotlightSliderSection'
 import TestimonialCardSliderSection from '@/Components/Frontend/PageBuilder/Sections/Testimonials/TestimonialCardSliderSection'
+import FaqAccordionSection from '@/Components/Frontend/PageBuilder/Sections/Faq/FaqAccordionSection'
+import FaqTwoColumnSection from '@/Components/Frontend/PageBuilder/Sections/Faq/FaqTwoColumnSection'
+import FaqSidePanelSection from '@/Components/Frontend/PageBuilder/Sections/Faq/FaqSidePanelSection'
 
 import type {
     StorefrontSectionProps,
@@ -100,6 +103,16 @@ function renderTestimonialSpotlightSlider({ section }: StorefrontSectionProps) {
 
 function renderTestimonialCardSlider({ section }: StorefrontSectionProps) {
     return <TestimonialCardSliderSection section={section} />
+}
+
+function renderFaqAccordion({ section }: StorefrontSectionProps) {
+    return <FaqAccordionSection section={section} />
+}
+function renderFaqTwoColumn({ section }: StorefrontSectionProps) {
+    return <FaqTwoColumnSection section={section} />
+}
+function renderFaqSidePanel({ section }: StorefrontSectionProps) {
+    return <FaqSidePanelSection section={section} />
 }
 
 const storefrontSectionRegistry: Record<string, StorefrontSectionRegistration> = {
@@ -187,6 +200,14 @@ const storefrontSectionRegistry: Record<string, StorefrontSectionRegistration> =
             grid_slider: renderTestimonialGridSlider,
             spotlight_slider: renderTestimonialSpotlightSlider,
             card_slider: renderTestimonialCardSlider,
+        },
+    },
+
+    faq: {
+        templates: {
+            accordion: renderFaqAccordion,
+            two_column: renderFaqTwoColumn,
+            side_panel: renderFaqSidePanel,
         },
     },
 }

@@ -1,0 +1,558 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domain\PageBuilder\Sections\Schemas;
+
+use App\Domain\PageBuilder\Sections\Contracts\SectionConfigSchema;
+use App\Domain\PageBuilder\Sections\Exceptions\InvalidSectionConfiguration;
+
+final class FaqConfigSchema implements SectionConfigSchema
+{
+    private const MAX_EYEBROW_LENGTH = 120;
+
+    private const MAX_HEADING_LENGTH = 180;
+
+    private const MAX_DESCRIPTION_LENGTH = 1000;
+
+    private const MAX_ITEMS = 16;
+
+    private const MAX_QUESTION_LENGTH = 240;
+
+    private const MAX_ANSWER_LENGTH = 3000;
+
+    /**
+     * @param  array<string, mixed>  $config
+     * @return array<string, mixed>
+     */
+    public function validate(
+        array $config,
+    ): array {
+        /** @var array<string, list<string>> $errors */
+        $errors = [];
+
+        $allowedKeys = [
+            'eyebrow',
+            'heading',
+            'description',
+            'items',
+            'alignment',
+            'background_color',
+            'text_theme',
+            'open_first',
+            'allow_multiple_open',
+        ];
+
+        foreach (
+            array_keys(
+                $config,
+            ) as $key
+        ) {
+            if (
+                ! in_array(
+                    $key,
+                    $allowedKeys,
+                    true,
+                )
+            ) {
+                $errors[$key][] =
+                    'This configuration field is not supported.';
+            }
+        }
+
+        $eyebrow =
+            $this->nullableString(
+                config: $config,
+                key: 'eyebrow',
+                maxLength: self::MAX_EYEBROW_LENGTH,
+                label: 'eyebrow',
+                errors: $errors,
+            );
+
+        $heading =
+            $this->nullableString(
+                config: $config,
+                key: 'heading',
+                maxLength: self::MAX_HEADING_LENGTH,
+                label: 'heading',
+                errors: $errors,
+            );
+
+        $description =
+            $this->optionalString(
+                config: $config,
+                key: 'description',
+                maxLength: self::MAX_DESCRIPTION_LENGTH,
+                label: 'description',
+                errors: $errors,
+            );
+
+        $items =
+            $this->items(
+                value: $config[
+                    'items'
+                ] ??
+                null,
+                errors: $errors,
+            );
+
+        $alignment =
+            $this->allowedString(
+                value: $config[
+                    'alignment'
+                ] ??
+                null,
+                key: 'alignment',
+                allowed: [
+                    'left',
+                    'center',
+                ],
+                fallback: 'left',
+                errors: $errors,
+            );
+
+        $backgroundColor =
+            $this->backgroundColor(
+                value: $config[
+                    'background_color'
+                ] ??
+                null,
+                errors: $errors,
+            );
+
+        $textTheme =
+            $this->allowedString(
+                value: $config[
+                    'text_theme'
+                ] ??
+                null,
+                key: 'text_theme',
+                allowed: [
+                    'light',
+                    'dark',
+                ],
+                fallback: 'dark',
+                errors: $errors,
+            );
+
+        $openFirst =
+            $this->boolean(
+                value: $config[
+                    'open_first'
+                ] ??
+                null,
+                key: 'open_first',
+                errors: $errors,
+            );
+
+        $allowMultipleOpen =
+            $this->boolean(
+                value: $config[
+                    'allow_multiple_open'
+                ] ??
+                null,
+                key: 'allow_multiple_open',
+                errors: $errors,
+            );
+
+        if ($errors !== []) {
+            throw new InvalidSectionConfiguration(
+                $errors,
+            );
+        }
+
+        return [
+            'eyebrow' => $eyebrow,
+
+            'heading' => $heading,
+
+            'description' => $description,
+
+            'items' => $items,
+
+            'alignment' => $alignment,
+
+            'background_color' => $backgroundColor,
+
+            'text_theme' => $textTheme,
+
+            'open_first' => $openFirst,
+
+            'allow_multiple_open' => $allowMultipleOpen,
+        ];
+    }
+
+    /**
+     * @param  array<string, list<string>>  $errors
+     * @return list<array<string, string>>
+     */
+    private function items(
+        mixed $value,
+        array &$errors,
+    ): array {
+        if (
+            ! is_array(
+                $value,
+            ) ||
+            ! array_is_list(
+                $value,
+            )
+        ) {
+            $errors['items'][] =
+                'The FAQ items field is required and must be a list.';
+
+            return [];
+        }
+
+        if ($value === []) {
+            $errors['items'][] =
+                'At least one FAQ item is required.';
+        }
+
+        if (
+            count(
+                $value,
+            ) >
+            self::MAX_ITEMS
+        ) {
+            $errors['items'][] =
+                'No more than 16 FAQ items may be added.';
+        }
+
+        $normalized = [];
+
+        foreach (
+            array_slice(
+                $value,
+                0,
+                self::MAX_ITEMS,
+            ) as $index => $item
+        ) {
+            if (
+                ! is_array(
+                    $item,
+                )
+            ) {
+                $errors[
+                    "items.{$index}"
+                ][] =
+                    'Each FAQ item must be an object.';
+
+                continue;
+            }
+
+            $normalized[] =
+                $this->item(
+                    item: $item,
+                    index: $index,
+                    errors: $errors,
+                );
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * @param  array<mixed>  $item
+     * @param  array<string, list<string>>  $errors
+     * @return array<string, string>
+     */
+    private function item(
+        array $item,
+        int $index,
+        array &$errors,
+    ): array {
+        $allowedKeys = [
+            'question',
+            'answer',
+        ];
+
+        foreach (
+            array_keys(
+                $item,
+            ) as $key
+        ) {
+            if (
+                ! is_string(
+                    $key,
+                ) ||
+                ! in_array(
+                    $key,
+                    $allowedKeys,
+                    true,
+                )
+            ) {
+                $errors[
+                    "items.{$index}.{$key}"
+                ][] =
+                    'This FAQ item field is not supported.';
+            }
+        }
+
+        $question =
+            $this->requiredItemString(
+                item: $item,
+                key: 'question',
+                errorKey: "items.{$index}.question",
+                maxLength: self::MAX_QUESTION_LENGTH,
+                label: 'FAQ question',
+                errors: $errors,
+            );
+
+        $answer =
+            $this->requiredItemString(
+                item: $item,
+                key: 'answer',
+                errorKey: "items.{$index}.answer",
+                maxLength: self::MAX_ANSWER_LENGTH,
+                label: 'FAQ answer',
+                errors: $errors,
+            );
+
+        return [
+            'question' => $question,
+
+            'answer' => $answer,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $config
+     * @param  array<string, list<string>>  $errors
+     */
+    private function nullableString(
+        array $config,
+        string $key,
+        int $maxLength,
+        string $label,
+        array &$errors,
+    ): ?string {
+        $value =
+            $config[$key] ??
+            null;
+
+        if ($value === null) {
+            return null;
+        }
+
+        if (
+            ! is_string(
+                $value,
+            )
+        ) {
+            $errors[$key][] =
+                "The {$label} field must be a string or null.";
+
+            return null;
+        }
+
+        $value =
+            trim(
+                $value,
+            );
+
+        if ($value === '') {
+            return null;
+        }
+
+        if (
+            mb_strlen(
+                $value,
+            ) >
+            $maxLength
+        ) {
+            $errors[$key][] =
+                "The {$label} may not be greater than {$maxLength} characters.";
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param  array<string, mixed>  $config
+     * @param  array<string, list<string>>  $errors
+     */
+    private function optionalString(
+        array $config,
+        string $key,
+        int $maxLength,
+        string $label,
+        array &$errors,
+    ): string {
+        $value =
+            $config[$key] ??
+            '';
+
+        if (
+            ! is_string(
+                $value,
+            )
+        ) {
+            $errors[$key][] =
+                "The {$label} field must be a string.";
+
+            return '';
+        }
+
+        $value =
+            trim(
+                $value,
+            );
+
+        if (
+            mb_strlen(
+                $value,
+            ) >
+            $maxLength
+        ) {
+            $errors[$key][] =
+                "The {$label} may not be greater than {$maxLength} characters.";
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param  array<mixed>  $item
+     * @param  array<string, list<string>>  $errors
+     */
+    private function requiredItemString(
+        array $item,
+        string $key,
+        string $errorKey,
+        int $maxLength,
+        string $label,
+        array &$errors,
+    ): string {
+        $value =
+            $item[$key] ??
+            null;
+
+        if (
+            ! is_string(
+                $value,
+            )
+        ) {
+            $errors[$errorKey][] =
+                "The {$label} field is required and must be a string.";
+
+            return '';
+        }
+
+        $value =
+            trim(
+                $value,
+            );
+
+        if ($value === '') {
+            $errors[$errorKey][] =
+                "The {$label} field is required.";
+        } elseif (
+            mb_strlen(
+                $value,
+            ) >
+            $maxLength
+        ) {
+            $errors[$errorKey][] =
+                "The {$label} may not be greater than {$maxLength} characters.";
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param  list<string>  $allowed
+     * @param  array<string, list<string>>  $errors
+     */
+    private function allowedString(
+        mixed $value,
+        string $key,
+        array $allowed,
+        string $fallback,
+        array &$errors,
+    ): string {
+        if (
+            ! is_string(
+                $value,
+            ) ||
+            ! in_array(
+                $value,
+                $allowed,
+                true,
+            )
+        ) {
+            $errors[$key][] =
+                "The selected {$key} value is not supported.";
+
+            return $fallback;
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param  array<string, list<string>>  $errors
+     */
+    private function backgroundColor(
+        mixed $value,
+        array &$errors,
+    ): string {
+        if (
+            ! is_string(
+                $value,
+            )
+        ) {
+            $errors[
+                'background_color'
+            ][] =
+                'The background color is required and must be a string.';
+
+            return '#ffffff';
+        }
+
+        $value =
+            strtolower(
+                trim(
+                    $value,
+                ),
+            );
+
+        if (
+            preg_match(
+                '/^#[0-9a-f]{6}$/',
+                $value,
+            ) !== 1
+        ) {
+            $errors[
+                'background_color'
+            ][] =
+                'The background color must be a 6-digit hexadecimal color.';
+
+            return '#ffffff';
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param  array<string, list<string>>  $errors
+     */
+    private function boolean(
+        mixed $value,
+        string $key,
+        array &$errors,
+    ): bool {
+        if (
+            ! is_bool(
+                $value,
+            )
+        ) {
+            $errors[$key][] =
+                "The {$key} field must be a boolean.";
+
+            return false;
+        }
+
+        return $value;
+    }
+}

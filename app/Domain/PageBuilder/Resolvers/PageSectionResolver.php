@@ -39,6 +39,8 @@ final readonly class PageSectionResolver
 
             SectionType::Testimonials => [],
 
+            SectionType::Faq => [],
+
             SectionType::Brands => $this->resolveBrands(
                 $section,
             ),
@@ -160,14 +162,14 @@ final readonly class PageSectionResolver
             is_int(
                 $limitValue,
             )
-                ? max(
-                    1,
-                    min(
-                        24,
-                        $limitValue,
-                    ),
-                )
-                : 12;
+            ? max(
+                1,
+                min(
+                    24,
+                    $limitValue,
+                ),
+            )
+            : 12;
 
         return match (
             $sourceType
@@ -209,18 +211,14 @@ final readonly class PageSectionResolver
                 'logo_path',
             ])
             ->withCount([
-                'products as published_products_count' => static function (
-                    Builder $query,
-                ): void {
+                'products as published_products_count' => static function (Builder $query): void {
                     $query
                         ->where(
                             'status',
                             ProductStatus::Published->value,
                         )
                         ->where(
-                            static function (
-                                Builder $query,
-                            ): void {
+                            static function (Builder $query): void {
                                 $query
                                     ->whereNull(
                                         'published_at',
@@ -351,18 +349,14 @@ final readonly class PageSectionResolver
                     'logo_path',
                 ])
                 ->withCount([
-                    'products as published_products_count' => static function (
-                        Builder $query,
-                    ): void {
+                    'products as published_products_count' => static function (Builder $query): void {
                         $query
                             ->where(
                                 'status',
                                 ProductStatus::Published->value,
                             )
                             ->where(
-                                static function (
-                                    Builder $query,
-                                ): void {
+                                static function (Builder $query): void {
                                     $query
                                         ->whereNull(
                                             'published_at',

@@ -21,7 +21,7 @@ final class FeaturesBenefitsDefinitionQueryTest extends TestCase
         )->handle();
 
         $this->assertCount(
-            10,
+            11,
             $definitions,
         );
 
@@ -104,8 +104,8 @@ final class FeaturesBenefitsDefinitionQueryTest extends TestCase
         $this->assertSame(
             $features
                 ->templateDefaultConfigs[
-                    'icon_grid'
-                ],
+                'icon_grid'
+            ],
             $features->defaultConfig,
         );
     }
