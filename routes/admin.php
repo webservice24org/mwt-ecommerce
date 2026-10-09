@@ -14,12 +14,14 @@ use App\Http\Controllers\Admin\Catalog\ProductController;
 use App\Http\Controllers\Admin\Catalog\ProductImageController;
 use App\Http\Controllers\Admin\Catalog\ProductVariantController;
 use App\Http\Controllers\Admin\Catalog\ProductVideoController;
+use App\Http\Controllers\Admin\FooterBuilderController;
 use App\Http\Controllers\Admin\PageBuilderBrandSearchController;
 use App\Http\Controllers\Admin\PageBuilderController;
 use App\Http\Controllers\Admin\PageBuilderImageController;
 use App\Http\Controllers\Admin\PageBuilderProductSearchController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\PageSectionController;
+use App\Models\FooterSetting;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -103,6 +105,20 @@ Route::middleware([
     Route::post('pages/{page}/sections/{section}/duplicate', [PageSectionController::class, 'duplicate'])->whereNumber('section')->name('pages.sections.duplicate');
     Route::put('pages/{page}/sections/{section}', [PageSectionController::class, 'update'])->whereNumber('section')->name('pages.sections.update');
     Route::delete('pages/{page}/sections/{section}', [PageSectionController::class, 'destroy'])->whereNumber('section')->name('pages.sections.destroy');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Website Settings — Footer Builder
+    |--------------------------------------------------------------------------
+    |
+    | B.2 establishes the protected route contract.
+    | The temporary actions below are replaced by
+    | FooterBuilderController in B.3.
+    |
+    */
+
+    Route::get('website-settings/footer-builder', [FooterBuilderController::class, 'edit'])->middleware('can:viewAny,'.FooterSetting::class)->name('website-settings.footer-builder.edit');
+    Route::put('website-settings/footer-builder', [FooterBuilderController::class, 'update'])->middleware('can:updateAny,'.FooterSetting::class)->name('website-settings.footer-builder.update');
 
 });
 

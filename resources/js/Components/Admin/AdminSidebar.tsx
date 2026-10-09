@@ -3,12 +3,17 @@ import {
     ChevronDown,
     CircleUserRound,
     ExternalLink,
+    FileText,
     FolderTree,
     Gauge,
     Layers3,
     ListTree,
     Package,
+    Palette,
+    PanelBottom,
+    PanelTop,
     PlusCircle,
+    Settings,
     ShieldCheck,
     Store,
     Tag,
@@ -45,6 +50,7 @@ const mainNavigation: NavigationItem[] = [
         label: 'Dashboard',
         href: route('admin.dashboard'),
         match: '/admin',
+        exact: true,
         icon: Gauge,
     },
     {
@@ -52,6 +58,12 @@ const mainNavigation: NavigationItem[] = [
         href: route('admin.admins.index'),
         match: '/admin/admins',
         icon: ShieldCheck,
+    },
+    {
+        label: 'Pages',
+        href: route('admin.pages.index'),
+        match: '/admin/pages',
+        icon: FileText,
     },
 ]
 
@@ -99,6 +111,30 @@ const productNavigation: NavigationGroup = {
     ],
 }
 
+const websiteSettingsNavigation: NavigationGroup = {
+    label: 'Website Settings',
+    icon: Settings,
+    match: '/admin/website-settings',
+    children: [
+        {
+            label: 'Footer Builder',
+            href: route('admin.website-settings.footer-builder.edit'),
+            match: '/admin/website-settings/footer-builder',
+            icon: PanelBottom,
+        },
+        {
+            label: 'Header Builder',
+            icon: PanelTop,
+            disabled: true,
+        },
+        {
+            label: 'Theme Settings',
+            icon: Palette,
+            disabled: true,
+        },
+    ],
+}
+
 export default function AdminSidebar({ open, onClose }: Props) {
     const { url } = usePage()
 
@@ -109,9 +145,15 @@ export default function AdminSidebar({ open, onClose }: Props) {
         url.startsWith('/admin/tags') ||
         url.startsWith('/admin/attributes')
 
+    const websiteSettingsActive = url.startsWith('/admin/website-settings')
+
     const [productsOpen, setProductsOpen] = useState(productSectionActive)
 
+    const [websiteSettingsOpen, setWebsiteSettingsOpen] = useState(websiteSettingsActive)
+
     const showProducts = productSectionActive || productsOpen
+
+    const showWebsiteSettings = websiteSettingsActive || websiteSettingsOpen
 
     const isActive = (item: NavigationItem): boolean => {
         if (!item.match) {
@@ -127,6 +169,7 @@ export default function AdminSidebar({ open, onClose }: Props) {
 
     const renderNavigationItem = (item: NavigationItem, nested = false) => {
         const Icon = item.icon
+
         const active = isActive(item)
 
         if (item.disabled || !item.href) {
@@ -274,7 +317,6 @@ export default function AdminSidebar({ open, onClose }: Props) {
                                 <ChevronDown
                                     className={[
                                         'h-4 w-4 text-neutral-400 transition-transform duration-200',
-
                                         showProducts ? 'rotate-180' : '',
                                     ].join(' ')}
                                 />
@@ -297,7 +339,63 @@ export default function AdminSidebar({ open, onClose }: Props) {
                         </div>
                     </div>
 
-                    {/* Future section */}
+                    {/* Website */}
+                    <div className="mt-7">
+                        <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-neutral-400">
+                            Website
+                        </p>
+
+                        <div className="space-y-1">
+                            <button
+                                type="button"
+                                onClick={() => setWebsiteSettingsOpen((current) => !current)}
+                                className={[
+                                    'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
+                                    websiteSettingsActive
+                                        ? 'bg-neutral-100 text-neutral-950'
+                                        : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950',
+                                ].join(' ')}
+                            >
+                                <websiteSettingsNavigation.icon
+                                    className={[
+                                        'h-4 w-4 shrink-0',
+                                        websiteSettingsActive
+                                            ? 'text-neutral-900'
+                                            : 'text-neutral-400',
+                                    ].join(' ')}
+                                    strokeWidth={1.9}
+                                />
+
+                                <span className="flex-1 text-left">
+                                    {websiteSettingsNavigation.label}
+                                </span>
+
+                                <ChevronDown
+                                    className={[
+                                        'h-4 w-4 text-neutral-400 transition-transform duration-200',
+                                        showWebsiteSettings ? 'rotate-180' : '',
+                                    ].join(' ')}
+                                />
+                            </button>
+
+                            <div
+                                className={[
+                                    'grid transition-all duration-200',
+                                    showWebsiteSettings ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+                                ].join(' ')}
+                            >
+                                <div className="overflow-hidden">
+                                    <div className="relative ml-5 mt-1 space-y-1 border-l border-neutral-200 pl-3">
+                                        {websiteSettingsNavigation.children.map((item) =>
+                                            renderNavigationItem(item, true),
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Store */}
                     <div className="mt-7">
                         <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-neutral-400">
                             Store
