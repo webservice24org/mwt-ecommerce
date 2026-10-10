@@ -7,6 +7,7 @@ interface UseStorefrontFiltersOptions {
 }
 
 type StorefrontFilterQueryData = Partial<{
+    q: string
     sort: StorefrontProductSort
     brand: string
     category: string
@@ -18,6 +19,12 @@ type StorefrontFilterQueryData = Partial<{
 export function useStorefrontFilters({ url, filters }: UseStorefrontFiltersOptions) {
     const visit = (next: StorefrontProductFilters) => {
         const data: StorefrontFilterQueryData = {}
+
+        const search = next.q.trim()
+
+        if (search !== '') {
+            data.q = search
+        }
 
         if (next.sort !== 'newest') {
             data.sort = next.sort
@@ -98,6 +105,7 @@ export function useStorefrontFilters({ url, filters }: UseStorefrontFiltersOptio
 
     const clearAll = () => {
         visit({
+            q: filters.q,
             sort: 'newest',
             brand: null,
             category: null,

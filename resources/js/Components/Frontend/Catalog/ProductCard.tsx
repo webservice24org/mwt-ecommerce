@@ -1,7 +1,12 @@
 import ProductImage from '@/Components/Frontend/Catalog/ProductImage'
 import ProductPrice from '@/Components/Frontend/Catalog/ProductPrice'
-import type { StorefrontProductCard as ProductCardData } from '@/types/storefront'
-import { Link } from '@inertiajs/react'
+import WishlistToggleButton from '@/Components/Frontend/Wishlist/WishlistToggleButton'
+import type { PageProps } from '@/types'
+import type {
+    StorefrontProductCard as ProductCardData,
+    StorefrontWishlist,
+} from '@/types/storefront'
+import { Link, usePage } from '@inertiajs/react'
 
 interface ProductCardProps {
     product: ProductCardData
@@ -9,35 +14,49 @@ interface ProductCardProps {
     showBadges?: boolean
 }
 
+type ProductCardPageProps = PageProps<{
+    storefrontWishlist?: StorefrontWishlist
+}>
+
 export default function ProductCard({
     product,
     showPrice = true,
     showBadges = true,
 }: ProductCardProps) {
+    const { storefrontWishlist } = usePage<ProductCardPageProps>().props
+
     const productUrl = `/products/${product.slug}`
+
+    const wishlisted = storefrontWishlist?.product_ids.includes(product.id) ?? false
 
     return (
         <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white transition-shadow duration-200 hover:shadow-sm focus-within:ring-2 focus-within:ring-neutral-950 focus-within:ring-offset-2">
-            <Link
-                href={productUrl}
-                className="relative block min-w-0 overflow-hidden focus-visible:outline-none"
-                aria-label={`View ${product.name}`}
-            >
-                <div className="aspect-square overflow-hidden bg-neutral-100">
-                    <ProductImage
-                        image={product.image}
-                        alt={product.name}
-                        className="h-full w-full transition duration-300 group-hover:scale-[1.02]"
-                        sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                    />
-                </div>
+            <div className="relative min-w-0">
+                <Link
+                    href={productUrl}
+                    className="relative block min-w-0 overflow-hidden focus-visible:outline-none"
+                    aria-label={`View ${product.name}`}
+                >
+                    <div className="aspect-square overflow-hidden bg-neutral-100">
+                        <ProductImage
+                            image={product.image}
+                            alt={product.name}
+                            className="h-full w-full transition duration-300 group-hover:scale-[1.02]"
+                            sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                        />
+                    </div>
 
-                {showBadges && product.is_featured && (
-                    <span className="absolute left-3 top-3 max-w-[calc(100%-1.5rem)] truncate rounded-full bg-neutral-950 px-2.5 py-1 text-xs font-medium text-white">
-                        Featured
-                    </span>
-                )}
-            </Link>
+                    {showBadges && product.is_featured && (
+                        <span className="absolute left-3 top-3 max-w-[calc(100%-1.5rem)] truncate rounded-full bg-neutral-950 px-2.5 py-1 text-xs font-medium text-white">
+                            Featured
+                        </span>
+                    )}
+                </Link>
+
+                <div className="absolute right-3 top-3 z-10">
+                    <WishlistToggleButton productId={product.id} initialActive={wishlisted} />
+                </div>
+            </div>
 
             <div className="flex min-w-0 flex-1 flex-col p-4">
                 {product.brand && (

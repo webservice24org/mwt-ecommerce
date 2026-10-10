@@ -6,6 +6,7 @@ use App\Http\Controllers\Frontend\CategoryController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\PageController as StorefrontPageController;
 use App\Http\Controllers\Frontend\ProductController;
+use App\Http\Controllers\Frontend\WishlistController;
 use App\Http\Controllers\NewsletterSubscriberController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -19,10 +20,37 @@ use Inertia\Inertia;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+Route::get('/products/search-suggestions', [ProductController::class, 'searchSuggestions'])->name('products.search-suggestions');
 Route::get('/products/{slug}', [ProductController::class, 'show'])->name('products.show');
 Route::get('/category/{slug}', [CategoryController::class, 'show'])->name('categories.show');
 Route::get('/pages/{slug}', StorefrontPageController::class)->name('frontend.pages.show');
-Route::post('/newsletter/subscribe',
+
+Route::get(
+    '/wishlist',
+    [WishlistController::class, 'index'],
+)->name('wishlist.index');
+
+Route::post(
+    '/wishlist/{product}/toggle',
+    [WishlistController::class, 'toggle'],
+)
+    ->whereNumber('product')
+    ->name('wishlist.toggle');
+
+Route::delete(
+    '/wishlist/{product}',
+    [WishlistController::class, 'destroy'],
+)
+    ->whereNumber('product')
+    ->name('wishlist.destroy');
+
+Route::delete(
+    '/wishlist',
+    [WishlistController::class, 'clear'],
+)->name('wishlist.clear');
+
+Route::post(
+    '/newsletter/subscribe',
     [
         NewsletterSubscriberController::class,
         'store',

@@ -206,19 +206,11 @@ export default function SharedBottomFooter({
             ].join(' ')}
         >
             <div
-                className={[
-                    'w-full min-w-0 max-w-full',
-                    contentClassName,
-                ]
+                className={['w-full min-w-0 max-w-full', contentClassName]
                     .filter(Boolean)
                     .join(' ')}
             >
-                <div
-                    className={[
-                        'w-full min-w-0 max-w-full text-xs',
-                        layoutClass,
-                    ].join(' ')}
-                >
+                <div className={['w-full min-w-0 max-w-full text-xs', layoutClass].join(' ')}>
                     <CopyrightArea
                         copyright={copyright}
                         brandName={brandName}
@@ -286,13 +278,10 @@ function CopyrightArea({
             >
                 {name}
             </span>
-
             {suffix !== '' && (
                 <>
                     {' '}
-                    <span className="max-w-full [overflow-wrap:anywhere]">
-                        {suffix}
-                    </span>
+                    <span className="max-w-full [overflow-wrap:anywhere]">{suffix}</span>
                 </>
             )}
         </p>
@@ -370,20 +359,14 @@ function SocialContainer({
 
     if (mode === 'storefront') {
         return (
-            <nav
-                aria-label="Footer social links"
-                className="min-w-0 max-w-full"
-            >
+            <nav aria-label="Footer social links" className="min-w-0 max-w-full">
                 <ul className={className}>{children}</ul>
             </nav>
         )
     }
 
     return (
-        <div
-            aria-label="Footer social links preview"
-            className={className}
-        >
+        <div aria-label="Footer social links preview" className={className}>
             {children}
         </div>
     )
@@ -494,10 +477,7 @@ function BoxedSocialItem({
                     title={label}
                     className={className}
                 >
-                    <span
-                        aria-hidden="true"
-                        className="max-w-full text-[9px] font-bold uppercase"
-                    >
+                    <span aria-hidden="true" className="max-w-full text-[9px] font-bold uppercase">
                         {mark}
                     </span>
                 </a>
@@ -507,10 +487,7 @@ function BoxedSocialItem({
 
     return (
         <span title={label} className={className}>
-            <span
-                aria-hidden="true"
-                className="max-w-full text-[9px] font-bold uppercase"
-            >
+            <span aria-hidden="true" className="max-w-full text-[9px] font-bold uppercase">
                 {mark}
             </span>
 
@@ -553,7 +530,6 @@ function DeveloperArea({
 
             <span className="min-w-0 max-w-full [overflow-wrap:anywhere]">
                 {prefix}{' '}
-
                 {canLink ? (
                     <a
                         href={url}

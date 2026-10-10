@@ -23,10 +23,27 @@ final readonly class StorefrontProductIndexQuery
     public function paginate(
         StorefrontProductFiltersData $filters,
         int $perPage = 24,
+        ?string $search = null,
     ): LengthAwarePaginator {
-        $paginator = $this
+        $normalizedSearch = trim((string) $search);
+
+        $query = $this
             ->listingQuery
-            ->build($filters)
+            ->build($filters);
+
+        if ($normalizedSearch !== '') {
+            $query->where(
+                function ($query) use ($normalizedSearch): void {
+                    $query->where(
+                        'name',
+                        'like',
+                        '%'.$normalizedSearch.'%',
+                    );
+                },
+            );
+        }
+
+        $paginator = $query
             ->paginate($perPage)
             ->withQueryString();
 

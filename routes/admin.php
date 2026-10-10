@@ -21,7 +21,9 @@ use App\Http\Controllers\Admin\PageBuilderImageController;
 use App\Http\Controllers\Admin\PageBuilderProductSearchController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\PageSectionController;
+use App\Http\Controllers\Admin\WebsiteSettings\HeaderBuilderController;
 use App\Models\FooterSetting;
+use App\Models\HeaderSetting;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -119,6 +121,9 @@ Route::middleware([
 
     Route::get('website-settings/footer-builder', [FooterBuilderController::class, 'edit'])->middleware('can:viewAny,'.FooterSetting::class)->name('website-settings.footer-builder.edit');
     Route::put('website-settings/footer-builder', [FooterBuilderController::class, 'update'])->middleware('can:updateAny,'.FooterSetting::class)->name('website-settings.footer-builder.update');
+
+    Route::get('website-settings/header-builder', [HeaderBuilderController::class, 'edit'])->middleware('can:viewAny,'.HeaderSetting::class)->name('website-settings.header-builder.edit');
+    Route::put('website-settings/header-builder', [HeaderBuilderController::class, 'update'])->middleware('can:updateAny,'.HeaderSetting::class)->name('website-settings.header-builder.update');
 
 });
 

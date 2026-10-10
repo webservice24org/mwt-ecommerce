@@ -156,9 +156,7 @@ function RegionalOptions({
                     strokeWidth={1.8}
                 />
 
-                <span className="min-w-0 max-w-full [overflow-wrap:anywhere]">
-                    {title}
-                </span>
+                <span className="min-w-0 max-w-full [overflow-wrap:anywhere]">{title}</span>
             </h4>
 
             <ul className="mt-2 flex min-w-0 max-w-full flex-wrap gap-2">

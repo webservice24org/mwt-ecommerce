@@ -97,10 +97,7 @@ export default function MarketplaceTrustFooter({ config }: Props) {
 
                             <ul className="mt-3 flex min-w-0 max-w-full flex-wrap gap-2">
                                 {popularLinks.map((link, index) => (
-                                    <li
-                                        key={index}
-                                        className="min-w-0 max-w-full"
-                                    >
+                                    <li key={index} className="min-w-0 max-w-full">
                                         <a
                                             href={link.url}
                                             className="inline-flex min-w-0 max-w-full rounded-lg border border-neutral-700 bg-neutral-800/70 px-3 py-1.5 text-[11px] font-medium text-neutral-300 transition-colors hover:border-amber-500/40 hover:text-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900"
@@ -129,10 +126,7 @@ export default function MarketplaceTrustFooter({ config }: Props) {
 
                                     <ul className="mt-4 min-w-0 max-w-full space-y-2.5">
                                         {group.links.map((link, linkIndex) => (
-                                            <li
-                                                key={linkIndex}
-                                                className="min-w-0 max-w-full"
-                                            >
+                                            <li key={linkIndex} className="min-w-0 max-w-full">
                                                 <a
                                                     href={link.url}
                                                     className="inline max-w-full [overflow-wrap:anywhere] text-xs leading-5 text-neutral-400 transition-colors hover:text-white focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900"

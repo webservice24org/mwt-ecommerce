@@ -152,6 +152,7 @@ export function isStorefrontProductSort(value: string): value is StorefrontProdu
 }
 
 export interface StorefrontProductFilters {
+    q: string
     sort: StorefrontProductSort
     brand: string | null
     category: string | null
@@ -178,4 +179,15 @@ export interface StorefrontHome {
     categories: StorefrontCategory[]
 }
 
+export interface StorefrontSearchSuggestion {
+    id: number
+    name: string
+    slug: string
+}
+
 export type PaginatedStorefrontProducts = PaginatedData<StorefrontProductCard>
+
+export interface StorefrontWishlist {
+    count: number
+    product_ids: number[]
+}

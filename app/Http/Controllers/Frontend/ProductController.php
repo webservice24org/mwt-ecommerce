@@ -7,8 +7,11 @@ namespace App\Http\Controllers\Frontend;
 use App\Domain\Catalog\Queries\Storefront\StorefrontFilterOptionsQuery;
 use App\Domain\Catalog\Queries\Storefront\StorefrontProductDetailQuery;
 use App\Domain\Catalog\Queries\Storefront\StorefrontProductIndexQuery;
+use App\Domain\Catalog\Queries\Storefront\StorefrontProductSearchSuggestionQuery;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Frontend\StorefrontProductFilterRequest;
+use App\Http\Requests\Frontend\StorefrontProductSearchSuggestionRequest;
+use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -25,10 +28,22 @@ final class ProductController extends Controller
     ): Response {
         $filters = $request->filters();
 
+        $search = trim(
+            $request
+                ->string('q')
+                ->toString(),
+        );
+
         return Inertia::render('Frontend/Products/Index', [
-            'products' => $query->paginate($filters),
+            'products' => $query->paginate(
+                filters: $filters,
+                search: $search !== ''
+                ? $search
+                : null,
+            ),
 
             'filters' => [
+                'q' => $search,
                 'sort' => $filters->sort->value,
                 'brand' => $filters->brand,
                 'category' => $filters->category,
@@ -40,6 +55,20 @@ final class ProductController extends Controller
             'filterOptions' => $filterOptions
                 ->get()
                 ->toArray(),
+        ]);
+    }
+
+    public function searchSuggestions(
+        StorefrontProductSearchSuggestionRequest $request,
+        StorefrontProductSearchSuggestionQuery $query,
+    ): JsonResponse {
+        return response()->json([
+            'data' => $query
+                ->get(
+                    $request->search(),
+                )
+                ->values()
+                ->all(),
         ]);
     }
 

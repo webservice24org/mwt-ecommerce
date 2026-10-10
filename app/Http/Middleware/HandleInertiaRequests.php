@@ -3,6 +3,8 @@
 namespace App\Http\Middleware;
 
 use App\Domain\FooterBuilder\Storefront\FooterStorefrontResolver;
+use App\Domain\Wishlist\Services\WishlistService;
+use App\Models\HeaderSetting;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -46,6 +48,16 @@ class HandleInertiaRequests extends Middleware
                     ->get('error'),
             ],
 
+            'storefrontHeader' => function (): array {
+                $header = HeaderSetting::singleton();
+
+                return [
+                    'template' => $header->template->value,
+                    'config' => $header->resolvedConfig(),
+                    'is_enabled' => $header->is_enabled,
+                ];
+            },
+
             'storefrontFooter' => static function () use ($request): ?array {
                 /*
                  * The Footer Builder belongs to the public
@@ -64,6 +76,19 @@ class HandleInertiaRequests extends Middleware
                     FooterStorefrontResolver::class,
                 )->resolve();
             },
+
+            'storefrontWishlist' => function (): array {
+                /** @var WishlistService $wishlist */
+                $wishlist = app(
+                    WishlistService::class,
+                );
+
+                return [
+                    'count' => $wishlist->count(),
+                    'product_ids' => $wishlist->ids(),
+                ];
+            },
+
         ];
     }
 }
