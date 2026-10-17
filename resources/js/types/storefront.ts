@@ -191,3 +191,32 @@ export interface StorefrontWishlist {
     count: number
     product_ids: number[]
 }
+
+export interface StorefrontCartItem {
+    key: string
+    product_id: number
+    variant_id: number | null
+    quantity: number
+    name: string
+    slug: string
+    variant_name: string | null
+    image_url: string | null
+    unit_price: number
+    line_total: number
+}
+
+export interface StorefrontCart {
+    items: StorefrontCartItem[]
+    item_count: number
+    subtotal: number
+}
+
+export interface StorefrontCategoryMenuItem {
+    id: number
+    name: string
+    slug: string
+    children: StorefrontCategoryMenuItem[]
+}
+
+export type StorefrontCategoryMenu =
+    StorefrontCategoryMenuItem[]

@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\Cart\Services\CartService;
+use App\Domain\Catalog\Queries\Storefront\StorefrontCategoryMenuQuery;
 use App\Domain\FooterBuilder\Storefront\FooterStorefrontResolver;
 use App\Domain\Wishlist\Services\WishlistService;
 use App\Models\HeaderSetting;
@@ -48,6 +50,17 @@ class HandleInertiaRequests extends Middleware
                     ->get('error'),
             ],
 
+            'storefrontCart' => function (): array {
+                /** @var CartService $cart */
+                $cart = app(
+                    CartService::class,
+                );
+
+                return $cart
+                    ->summary()
+                    ->toArray();
+            },
+
             'storefrontHeader' => function (): array {
                 $header = HeaderSetting::singleton();
 
@@ -88,6 +101,10 @@ class HandleInertiaRequests extends Middleware
                     'product_ids' => $wishlist->ids(),
                 ];
             },
+
+            'storefrontCategoryMenu' => fn (): array => app(
+                StorefrontCategoryMenuQuery::class,
+            )->get(),
 
         ];
     }
