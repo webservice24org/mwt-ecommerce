@@ -17,6 +17,16 @@ const navigation: NavigationItem[] = [
         href: route('customer.dashboard'),
         match: '/account',
     },
+    {
+        label: 'Addresses',
+        href: route('customer.addresses.index'),
+        match: '/account/addresses',
+    },
+    {
+        label: 'Orders',
+        href: route('customer.orders.index'),
+        match: '/account/orders',
+    },
 ]
 
 export default function CustomerSidebar({ open, onClose }: Props) {
@@ -60,6 +70,7 @@ export default function CustomerSidebar({ open, onClose }: Props) {
                     <button
                         type="button"
                         onClick={onClose}
+                        aria-label="Close navigation"
                         className="rounded-md p-2 text-neutral-500 hover:bg-neutral-100 lg:hidden"
                     >
                         <svg
@@ -67,6 +78,7 @@ export default function CustomerSidebar({ open, onClose }: Props) {
                             fill="none"
                             stroke="currentColor"
                             className="h-5 w-5"
+                            aria-hidden="true"
                         >
                             <path
                                 strokeLinecap="round"
@@ -85,6 +97,7 @@ export default function CustomerSidebar({ open, onClose }: Props) {
                                 key={item.href}
                                 href={item.href}
                                 onClick={onClose}
+                                aria-current={isActive(item) ? 'page' : undefined}
                                 className={[
                                     'block rounded-lg px-3 py-2.5 text-sm font-medium transition',
                                     isActive(item)
@@ -102,14 +115,6 @@ export default function CustomerSidebar({ open, onClose }: Props) {
                     </p>
 
                     <div className="space-y-1">
-                        <span className="block cursor-default rounded-lg px-3 py-2.5 text-sm text-neutral-400">
-                            Orders
-                        </span>
-
-                        <span className="block cursor-default rounded-lg px-3 py-2.5 text-sm text-neutral-400">
-                            Addresses
-                        </span>
-
                         <span className="block cursor-default rounded-lg px-3 py-2.5 text-sm text-neutral-400">
                             Profile
                         </span>

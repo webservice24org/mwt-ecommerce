@@ -1,20 +1,13 @@
 import { Heart } from 'lucide-react'
 import { useState } from 'react'
 
-import {
-    jsonRequestHeaders,
-} from '@/lib/csrf'
-import {
-    dispatchWishlistChanged,
-} from '@/lib/storefrontWishlist'
+import { jsonRequestHeaders } from '@/lib/csrf'
+import { dispatchWishlistChanged } from '@/lib/storefrontWishlist'
 
 interface Props {
     productId: number
     initialActive: boolean
-    onChanged?: (
-        active: boolean,
-        count: number,
-    ) => void
+    onChanged?: (active: boolean, count: number) => void
 }
 
 interface WishlistToggleResponse {
@@ -22,22 +15,10 @@ interface WishlistToggleResponse {
     count: number
 }
 
-export default function WishlistToggleButton({
-    productId,
-    initialActive,
-    onChanged,
-}: Props) {
-    const [
-        active,
-        setActive,
-    ] = useState(
-        initialActive,
-    )
+export default function WishlistToggleButton({ productId, initialActive, onChanged }: Props) {
+    const [active, setActive] = useState(initialActive)
 
-    const [
-        processing,
-        setProcessing,
-    ] = useState(false)
+    const [processing, setProcessing] = useState(false)
 
     const toggle = async () => {
         if (processing) {
@@ -47,39 +28,23 @@ export default function WishlistToggleButton({
         setProcessing(true)
 
         try {
-            const response =
-                await fetch(
-                    `/wishlist/${productId}/toggle`,
-                    {
-                        method: 'POST',
-                        credentials:
-                            'same-origin',
-                        headers:
-                            jsonRequestHeaders(),
-                    },
-                )
+            const response = await fetch(`/wishlist/${productId}/toggle`, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: jsonRequestHeaders(),
+            })
 
             if (!response.ok) {
-                throw new Error(
-                    'Unable to update wishlist.',
-                )
+                throw new Error('Unable to update wishlist.')
             }
 
-            const result =
-                (await response.json()) as WishlistToggleResponse
+            const result = (await response.json()) as WishlistToggleResponse
 
-            setActive(
-                result.active,
-            )
+            setActive(result.active)
 
-            dispatchWishlistChanged(
-                result.count,
-            )
+            dispatchWishlistChanged(result.count)
 
-            onChanged?.(
-                result.active,
-                result.count,
-            )
+            onChanged?.(result.active, result.count)
         } finally {
             setProcessing(false)
         }
@@ -88,17 +53,9 @@ export default function WishlistToggleButton({
     return (
         <button
             type="button"
-            disabled={
-                processing
-            }
-            aria-pressed={
-                active
-            }
-            aria-label={
-                active
-                    ? 'Remove from wishlist'
-                    : 'Add to wishlist'
-            }
+            disabled={processing}
+            aria-pressed={active}
+            aria-label={active ? 'Remove from wishlist' : 'Add to wishlist'}
             onClick={() => {
                 void toggle()
             }}
@@ -107,18 +64,11 @@ export default function WishlistToggleButton({
                 active
                     ? 'border-rose-200 text-rose-600'
                     : 'border-neutral-200 text-neutral-600 hover:text-rose-600',
-                processing
-                    ? 'cursor-wait opacity-60'
-                    : '',
+                processing ? 'cursor-wait opacity-60' : '',
             ].join(' ')}
         >
             <Heart
-                className={[
-                    'h-5 w-5',
-                    active
-                        ? 'fill-current'
-                        : '',
-                ].join(' ')}
+                className={['h-5 w-5', active ? 'fill-current' : ''].join(' ')}
                 aria-hidden="true"
             />
         </button>

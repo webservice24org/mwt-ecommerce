@@ -48,6 +48,8 @@ final class ProductFactory extends Factory
             'price' => 1000,
             'compare_at_price' => null,
             'cost_price' => null,
+            'track_inventory' => false,
+            'stock_quantity' => 0,
         ];
     }
 
@@ -85,6 +87,17 @@ final class ProductFactory extends Factory
             fn (): array => [
                 'type' => ProductType::Variable,
                 'sku' => null,
+            ],
+        );
+    }
+
+    public function withStock(
+        int $quantity = 10,
+    ): static {
+        return $this->state(
+            fn (): array => [
+                'track_inventory' => true,
+                'stock_quantity' => $quantity,
             ],
         );
     }

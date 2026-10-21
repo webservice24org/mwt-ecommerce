@@ -31,11 +31,22 @@ final class ProductVariantFactory extends Factory
             ),
             'compare_at_price' => null,
             'cost_price' => null,
+            'stock_quantity' => 0,
             'barcode' => null,
             'position' => 0,
             'is_active' => true,
             'is_default' => true,
             'weight' => null,
         ];
+    }
+
+    public function withStock(
+        int $quantity = 10,
+    ): static {
+        return $this->state(
+            fn (): array => [
+                'stock_quantity' => $quantity,
+            ],
+        );
     }
 }

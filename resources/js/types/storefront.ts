@@ -218,5 +218,4 @@ export interface StorefrontCategoryMenuItem {
     children: StorefrontCategoryMenuItem[]
 }
 
-export type StorefrontCategoryMenu =
-    StorefrontCategoryMenuItem[]
+export type StorefrontCategoryMenu = StorefrontCategoryMenuItem[]

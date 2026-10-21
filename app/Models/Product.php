@@ -34,6 +34,8 @@ use Illuminate\Support\Carbon;
  * @property int|null $price
  * @property int|null $compare_at_price
  * @property int|null $cost_price
+ * @property bool $track_inventory
+ * @property int $stock_quantity
  */
 final class Product extends Model
 {
@@ -47,6 +49,8 @@ final class Product extends Model
         'price',
         'compare_at_price',
         'cost_price',
+        'track_inventory',
+        'stock_quantity',
         'name',
         'slug',
         'short_description',
@@ -67,6 +71,8 @@ final class Product extends Model
             'price' => 'integer',
             'compare_at_price' => 'integer',
             'cost_price' => 'integer',
+            'track_inventory' => 'boolean',
+            'stock_quantity' => 'integer',
             'is_featured' => 'boolean',
             'position' => 'integer',
             'published_at' => 'datetime',
@@ -142,9 +148,7 @@ final class Product extends Model
                 ProductStatus::Published->value,
             )
             ->where(
-                static function (
-                    Builder $query,
-                ): void {
+                static function (Builder $query): void {
                     $query
                         ->whereNull('published_at')
                         ->orWhere(

@@ -1,13 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react'
 import { ChevronDown, Heart, Menu, Search, ShoppingBag, UserRound, X } from 'lucide-react'
-import {
-    type FormEvent,
-    type RefObject,
-    useEffect,
-    useId,
-    useRef,
-    useState,
-} from 'react'
+import { type FormEvent, type RefObject, useEffect, useId, useRef, useState } from 'react'
 
 import type { PageProps } from '@/types'
 import type { HeaderConfig } from '@/types/header-builder'
@@ -77,10 +70,7 @@ export default function MegaMenuHeader({ config, wishlist, cart }: Props) {
     const mobileMenuId = useId()
     const cartDrawerId = useId()
 
-    const cartTriggerRef =
-    useRef<HTMLButtonElement>(
-        null,
-    )
+    const cartTriggerRef = useRef<HTMLButtonElement>(null)
 
     useEffect(() => {
         const handleWishlistChanged = (event: Event) => {
@@ -234,9 +224,7 @@ export default function MegaMenuHeader({ config, wishlist, cart }: Props) {
                 onMegaMenuToggle={handleMegaMenuToggle}
             />
 
-            {megaMenuOpen && (
-                <MegaMenu id={megaMenuId} config={config} categories={categoryMenu} />
-            )}
+            {megaMenuOpen && <MegaMenu id={megaMenuId} config={config} categories={categoryMenu} />}
 
             {mobileMenuOpen && (
                 <MobileMenu
@@ -250,9 +238,7 @@ export default function MegaMenuHeader({ config, wishlist, cart }: Props) {
                 />
             )}
 
-            {cartOpen && (
-                <CartDrawer id={cartDrawerId} cart={cartState} onClose={closeCart} />
-            )}
+            {cartOpen && <CartDrawer id={cartDrawerId} cart={cartState} onClose={closeCart} />}
         </header>
     )
 }
@@ -781,12 +767,13 @@ function HeaderActions({
     accountOpen: boolean
     accountMenuId: string
     cartDrawerId: string
-    cartTriggerRef:RefObject<HTMLButtonElement>
+    cartTriggerRef: RefObject<HTMLButtonElement>
     onAccountToggle: () => void
     onCartToggle: () => void
 }) {
     const wishlistUrl = config.actions.wishlist.url.trim()
-    const resolvedWishlistUrl = wishlistUrl === '' || wishlistUrl === '#' ? '/wishlist' : wishlistUrl
+    const resolvedWishlistUrl =
+        wishlistUrl === '' || wishlistUrl === '#' ? '/wishlist' : wishlistUrl
 
     return (
         <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
@@ -820,7 +807,9 @@ function HeaderActions({
                     ref={cartTriggerRef}
                     type="button"
                     onClick={onCartToggle}
-                    aria-label={cartCount > 0 ? `Shopping cart, ${cartCount} items` : 'Shopping cart'}
+                    aria-label={
+                        cartCount > 0 ? `Shopping cart, ${cartCount} items` : 'Shopping cart'
+                    }
                     aria-expanded={cartOpen}
                     aria-controls={cartDrawerId}
                     aria-haspopup="dialog"
@@ -906,17 +895,14 @@ function CartDrawer({
         setMutationError(null)
 
         try {
-            const response = await fetch(
-                `/cart/items/${encodeURIComponent(item.key)}`,
-                {
-                    method: 'PATCH',
-                    credentials: 'same-origin',
-                    headers: jsonRequestHeaders(),
-                    body: JSON.stringify({
-                        quantity,
-                    }),
-                },
-            )
+            const response = await fetch(`/cart/items/${encodeURIComponent(item.key)}`, {
+                method: 'PATCH',
+                credentials: 'same-origin',
+                headers: jsonRequestHeaders(),
+                body: JSON.stringify({
+                    quantity,
+                }),
+            })
 
             if (!response.ok) {
                 throw new Error('Unable to update cart item.')
@@ -926,9 +912,7 @@ function CartDrawer({
 
             dispatchCartChanged(nextCart)
         } catch (error: unknown) {
-            setMutationError(
-                error instanceof Error ? error.message : 'Unable to update cart item.',
-            )
+            setMutationError(error instanceof Error ? error.message : 'Unable to update cart item.')
         } finally {
             setProcessingKey(null)
         }
@@ -943,14 +927,11 @@ function CartDrawer({
         setMutationError(null)
 
         try {
-            const response = await fetch(
-                `/cart/items/${encodeURIComponent(item.key)}`,
-                {
-                    method: 'DELETE',
-                    credentials: 'same-origin',
-                    headers: jsonRequestHeaders(),
-                },
-            )
+            const response = await fetch(`/cart/items/${encodeURIComponent(item.key)}`, {
+                method: 'DELETE',
+                credentials: 'same-origin',
+                headers: jsonRequestHeaders(),
+            })
 
             if (!response.ok) {
                 throw new Error('Unable to remove cart item.')
@@ -960,9 +941,7 @@ function CartDrawer({
 
             dispatchCartChanged(nextCart)
         } catch (error: unknown) {
-            setMutationError(
-                error instanceof Error ? error.message : 'Unable to remove cart item.',
-            )
+            setMutationError(error instanceof Error ? error.message : 'Unable to remove cart item.')
         } finally {
             setProcessingKey(null)
         }
@@ -989,7 +968,10 @@ function CartDrawer({
             >
                 <div className="flex shrink-0 items-center justify-between gap-4 border-b border-neutral-800 px-4 py-4 sm:px-5">
                     <div className="min-w-0">
-                        <h2 id="cart-drawer-title" className="truncate text-sm font-bold text-white">
+                        <h2
+                            id="cart-drawer-title"
+                            className="truncate text-sm font-bold text-white"
+                        >
                             Your Cart
                         </h2>
 
@@ -1167,7 +1149,9 @@ function CartDrawer({
 
                         <div className="shrink-0 border-t border-neutral-800 p-4 sm:p-5">
                             <div className="flex min-w-0 items-center justify-between gap-4 text-sm">
-                                <span className="shrink-0 font-medium text-neutral-400">Subtotal</span>
+                                <span className="shrink-0 font-medium text-neutral-400">
+                                    Subtotal
+                                </span>
 
                                 <strong className="min-w-0 break-words text-right text-base text-white">
                                     {formatMoney(cart.subtotal)}
@@ -1178,13 +1162,12 @@ function CartDrawer({
                                 Shipping, discounts, and taxes are calculated later in checkout.
                             </p>
 
-                            <button
-                                type="button"
-                                disabled
-                                className="mt-4 min-h-11 w-full rounded-lg bg-indigo-600 px-4 text-sm font-bold text-white opacity-60"
+                            <Link
+                                href={route('checkout.index')}
+                                className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-neutral-950 px-5 text-sm font-semibold text-white transition hover:bg-neutral-800"
                             >
-                                Checkout coming next
-                            </button>
+                                Proceed to checkout
+                            </Link>
                         </div>
                     </>
                 )}
@@ -1234,11 +1217,17 @@ function AccountMenu({
                             </span>
 
                             <div className="min-w-0">
-                                <p className="truncate text-sm font-semibold text-white" title={user.name}>
+                                <p
+                                    className="truncate text-sm font-semibold text-white"
+                                    title={user.name}
+                                >
                                     {user.name}
                                 </p>
 
-                                <p className="mt-0.5 truncate text-[11px] text-neutral-500" title={user.email}>
+                                <p
+                                    className="mt-0.5 truncate text-[11px] text-neutral-500"
+                                    title={user.email}
+                                >
                                     {user.email}
                                 </p>
                             </div>
@@ -1266,7 +1255,7 @@ function AccountMenu({
             {user && (
                 <div className="grid grid-cols-2 gap-2 border-b border-neutral-800 p-2">
                     <Link
-                        href="/dashboard"
+                        href="/account"
                         role="menuitem"
                         onClick={onClose}
                         className="flex min-h-10 min-w-0 items-center justify-center truncate rounded-lg bg-indigo-600 px-2 text-xs font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
@@ -1392,7 +1381,9 @@ function DesktopNavigation({
                             <Menu className="h-4 w-4" aria-hidden="true" />
                         )}
 
-                        <span className="max-w-40 truncate">{config.navigation.mega_menu_label}</span>
+                        <span className="max-w-40 truncate">
+                            {config.navigation.mega_menu_label}
+                        </span>
 
                         <ChevronDown
                             className={[
@@ -1483,7 +1474,9 @@ function MegaMenu({
                                           ))}
                                       </div>
                                   ) : (
-                                      <p className="mt-3 text-xs text-neutral-600">Browse products</p>
+                                      <p className="mt-3 text-xs text-neutral-600">
+                                          Browse products
+                                      </p>
                                   )}
                               </section>
                           ))
@@ -1608,7 +1601,9 @@ function MobileMenu({
                         <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-neutral-500">
                             Menu
                         </p>
-                        <p className="mt-1 truncate text-sm font-semibold text-white">Browse store</p>
+                        <p className="mt-1 truncate text-sm font-semibold text-white">
+                            Browse store
+                        </p>
                     </div>
 
                     <button
@@ -1668,7 +1663,9 @@ function MobileMenu({
                                             title={category.name}
                                             className="flex min-h-11 min-w-0 items-center justify-between gap-3 px-3 text-sm font-semibold text-white transition hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                                         >
-                                            <span className="min-w-0 truncate">{category.name}</span>
+                                            <span className="min-w-0 truncate">
+                                                {category.name}
+                                            </span>
                                             <ChevronDown
                                                 className="-rotate-90 h-3.5 w-3.5 shrink-0 text-neutral-600"
                                                 aria-hidden="true"
@@ -1734,10 +1731,16 @@ function MobileMenu({
                                     </span>
 
                                     <div className="min-w-0">
-                                        <p className="truncate text-sm font-semibold text-white" title={user.name}>
+                                        <p
+                                            className="truncate text-sm font-semibold text-white"
+                                            title={user.name}
+                                        >
                                             {user.name}
                                         </p>
-                                        <p className="mt-0.5 truncate text-xs text-neutral-500" title={user.email}>
+                                        <p
+                                            className="mt-0.5 truncate text-xs text-neutral-500"
+                                            title={user.email}
+                                        >
                                             {user.email}
                                         </p>
                                     </div>
@@ -1745,7 +1748,7 @@ function MobileMenu({
 
                                 <div className="grid min-w-0 grid-cols-2 gap-2">
                                     <Link
-                                        href="/dashboard"
+                                        href="/account"
                                         onClick={onClose}
                                         className="flex min-h-11 min-w-0 items-center justify-center truncate rounded-xl bg-indigo-600 px-3 text-xs font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                                     >

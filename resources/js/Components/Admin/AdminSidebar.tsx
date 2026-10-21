@@ -402,15 +402,32 @@ export default function AdminSidebar({ open, onClose }: Props) {
                         </p>
 
                         <div className="space-y-1">
-                            <div className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-neutral-400">
-                                <Layers3 className="h-4 w-4" strokeWidth={1.8} />
+                            <Link
+                                href={route('admin.orders.index')}
+                                onClick={onClose}
+                                className={[
+                                    'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150',
+                                    url.startsWith('/admin/orders')
+                                        ? 'bg-neutral-900 text-white shadow-sm'
+                                        : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950',
+                                ].join(' ')}
+                            >
+                                <Layers3
+                                    className={[
+                                        'h-4 w-4 shrink-0 transition',
+                                        url.startsWith('/admin/orders')
+                                            ? 'text-white'
+                                            : 'text-neutral-400 group-hover:text-neutral-700',
+                                    ].join(' ')}
+                                    strokeWidth={1.9}
+                                />
 
-                                <span className="flex-1">Orders</span>
+                                <span className="min-w-0 flex-1 truncate">Orders</span>
 
-                                <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
-                                    Soon
-                                </span>
-                            </div>
+                                {url.startsWith('/admin/orders') && (
+                                    <span className="absolute right-2 h-1.5 w-1.5 rounded-full bg-white" />
+                                )}
+                            </Link>
 
                             <div className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-neutral-400">
                                 <CircleUserRound className="h-4 w-4" strokeWidth={1.8} />

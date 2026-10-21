@@ -6,6 +6,7 @@ namespace App\Domain\Cart\Services;
 
 use App\Domain\Cart\Data\CartItemData;
 use App\Domain\Cart\Data\CartSummaryData;
+use App\Domain\Cart\Data\CheckoutCartValidationData;
 use App\Domain\Catalog\Services\ProductPricingResolver;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -313,6 +314,44 @@ final readonly class CartService
         return sprintf(
             'product:%d',
             $productId,
+        );
+    }
+
+    public function validateForCheckout(): CheckoutCartValidationData
+    {
+        $rawItems = $this->rawItems();
+
+        $summary = $this->summary();
+
+        $validKeys = [];
+
+        foreach ($summary->items as $item) {
+            $validKeys[$item->key] = true;
+        }
+
+        $sanitizedItems = [];
+
+        foreach ($rawItems as $key => $rawItem) {
+            if (! isset($validKeys[$key])) {
+                continue;
+            }
+
+            $sanitizedItems[$key] = $rawItem;
+        }
+
+        $wasSanitized =
+            count($sanitizedItems) !==
+            count($rawItems);
+
+        if ($wasSanitized) {
+            $this->putRawItems(
+                $sanitizedItems,
+            );
+        }
+
+        return new CheckoutCartValidationData(
+            summary: $summary,
+            wasSanitized: $wasSanitized,
         );
     }
 }

@@ -64,11 +64,7 @@ export default function VariableProductPanel({ product }: VariableProductPanelPr
 
     return (
         <div className="space-y-6">
-            <ProductVariantSelector
-                attributes={attributes}
-                onSelect={select}
-                onReset={reset}
-            />
+            <ProductVariantSelector attributes={attributes} onSelect={select} onReset={reset} />
 
             <div
                 className="rounded-xl border border-neutral-200 bg-neutral-50 p-4"

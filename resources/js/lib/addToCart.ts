@@ -1,12 +1,6 @@
-import {
-    jsonRequestHeaders,
-} from '@/lib/csrf'
-import {
-    dispatchCartChanged,
-} from '@/lib/storefrontCart'
-import type {
-    StorefrontCart,
-} from '@/types/storefront'
+import { jsonRequestHeaders } from '@/lib/csrf'
+import { dispatchCartChanged } from '@/lib/storefrontCart'
+import type { StorefrontCart } from '@/types/storefront'
 
 interface AddToCartInput {
     productId: number
@@ -19,63 +13,40 @@ export async function addToCart({
     variantId = null,
     quantity = 1,
 }: AddToCartInput): Promise<StorefrontCart> {
-    const response =
-        await fetch(
-            '/cart/items',
-            {
-                method: 'POST',
+    const response = await fetch('/cart/items', {
+        method: 'POST',
 
-                credentials:
-                    'same-origin',
+        credentials: 'same-origin',
 
-                headers:
-                    jsonRequestHeaders(),
+        headers: jsonRequestHeaders(),
 
-                body: JSON.stringify({
-                    product_id:
-                        productId,
-                    variant_id:
-                        variantId,
-                    quantity,
-                }),
-            },
-        )
+        body: JSON.stringify({
+            product_id: productId,
+            variant_id: variantId,
+            quantity,
+        }),
+    })
 
     if (!response.ok) {
-        const message =
-            await responseMessage(
-                response,
-            )
+        const message = await responseMessage(response)
 
-        throw new Error(
-            message ||
-                'Unable to add product to cart.',
-        )
+        throw new Error(message || 'Unable to add product to cart.')
     }
 
-    const cart =
-        (await response.json()) as StorefrontCart
+    const cart = (await response.json()) as StorefrontCart
 
-    dispatchCartChanged(
-        cart,
-    )
+    dispatchCartChanged(cart)
 
     return cart
 }
 
-async function responseMessage(
-    response: Response,
-): Promise<string | null> {
+async function responseMessage(response: Response): Promise<string | null> {
     try {
-        const payload =
-            (await response.json()) as {
-                message?: string
-            }
+        const payload = (await response.json()) as {
+            message?: string
+        }
 
-        return (
-            payload.message ??
-            null
-        )
+        return payload.message ?? null
     } catch {
         return null
     }

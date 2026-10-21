@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\Catalog\ProductImageController;
 use App\Http\Controllers\Admin\Catalog\ProductVariantController;
 use App\Http\Controllers\Admin\Catalog\ProductVideoController;
 use App\Http\Controllers\Admin\FooterBuilderController;
+use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PageBuilderBrandSearchController;
 use App\Http\Controllers\Admin\PageBuilderController;
 use App\Http\Controllers\Admin\PageBuilderImageController;
@@ -124,6 +125,31 @@ Route::middleware([
 
     Route::get('website-settings/header-builder', [HeaderBuilderController::class, 'edit'])->middleware('can:viewAny,'.HeaderSetting::class)->name('website-settings.header-builder.edit');
     Route::put('website-settings/header-builder', [HeaderBuilderController::class, 'update'])->middleware('can:updateAny,'.HeaderSetting::class)->name('website-settings.header-builder.update');
+
+    Route::get(
+        'orders',
+        [
+            OrderController::class,
+            'index',
+        ],
+    )
+        ->name(
+            'orders.index',
+        );
+
+    Route::get(
+        'orders/{order}',
+        [
+            OrderController::class,
+            'show',
+        ],
+    )
+        ->whereNumber(
+            'order',
+        )
+        ->name(
+            'orders.show',
+        );
 
 });
 

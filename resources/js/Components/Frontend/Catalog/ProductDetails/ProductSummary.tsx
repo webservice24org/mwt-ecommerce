@@ -33,11 +33,7 @@ export default function ProductSummary({ product }: ProductSummaryProps) {
 
             {product.type === 'simple' && (
                 <div className="min-w-0 border-y border-neutral-200 py-5">
-                    <ProductPrice
-                        mode="resolved"
-                        pricing={product.pricing}
-                        className="min-w-0"
-                    />
+                    <ProductPrice mode="resolved" pricing={product.pricing} className="min-w-0" />
                 </div>
             )}
 
@@ -57,25 +53,17 @@ function ProductMetadata({ product }: ProductSummaryProps) {
         <dl className="min-w-0 space-y-3 text-sm">
             {product.type === 'simple' && product.sku && (
                 <div className="flex min-w-0 gap-3">
-                    <dt className="w-20 shrink-0 font-medium text-neutral-500 sm:w-24">
-                        SKU
-                    </dt>
+                    <dt className="w-20 shrink-0 font-medium text-neutral-500 sm:w-24">SKU</dt>
 
-                    <dd className="min-w-0 break-all text-neutral-900">
-                        {product.sku}
-                    </dd>
+                    <dd className="min-w-0 break-all text-neutral-900">{product.sku}</dd>
                 </div>
             )}
 
             {product.brand && (
                 <div className="flex min-w-0 gap-3">
-                    <dt className="w-20 shrink-0 font-medium text-neutral-500 sm:w-24">
-                        Brand
-                    </dt>
+                    <dt className="w-20 shrink-0 font-medium text-neutral-500 sm:w-24">Brand</dt>
 
-                    <dd className="min-w-0 break-words text-neutral-900">
-                        {product.brand.name}
-                    </dd>
+                    <dd className="min-w-0 break-words text-neutral-900">{product.brand.name}</dd>
                 </div>
             )}
 

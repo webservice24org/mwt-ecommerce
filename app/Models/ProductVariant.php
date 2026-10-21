@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property bool $is_active
  * @property bool $is_default
  * @property string|null $weight
+ * @property int $stock_quantity
  */
 final class ProductVariant extends Model
 {
@@ -36,6 +37,7 @@ final class ProductVariant extends Model
         'price',
         'compare_at_price',
         'cost_price',
+        'stock_quantity',
         'barcode',
         'position',
         'is_active',
@@ -49,6 +51,7 @@ final class ProductVariant extends Model
             'price' => 'integer',
             'compare_at_price' => 'integer',
             'cost_price' => 'integer',
+            'stock_quantity' => 'integer',
             'position' => 'integer',
             'is_active' => 'boolean',
             'is_default' => 'boolean',
