@@ -272,12 +272,87 @@ final class HeaderStorefrontRegressionTest extends TestCase
             );
     }
 
-    public function test_authenticated_storefront_shares_account_user_data(): void
+    public function test_authenticated_storefront_shares_only_account_user_contract(): void
     {
         $user = User::factory()->create([
             'name' => 'Jane Customer',
             'email' => 'jane@example.com',
+            'email_verified_at' => null,
         ]);
+
+        $response = $this
+            ->actingAs(
+                $user,
+            )
+            ->get(
+                route('home'),
+            );
+
+        $response
+            ->assertOk()
+            ->assertInertia(
+                fn (Assert $page) => $page
+                    ->has(
+                        'auth.user',
+                        4,
+                    )
+                    ->where(
+                        'auth.user.id',
+                        $user->id,
+                    )
+                    ->where(
+                        'auth.user.name',
+                        'Jane Customer',
+                    )
+                    ->where(
+                        'auth.user.email',
+                        'jane@example.com',
+                    )
+                    ->where(
+                        'auth.user.email_verified_at',
+                        null,
+                    )
+                    ->missing(
+                        'auth.user.password',
+                    )
+                    ->missing(
+                        'auth.user.remember_token',
+                    )
+                    ->missing(
+                        'auth.user.created_at',
+                    )
+                    ->missing(
+                        'auth.user.updated_at',
+                    ),
+            );
+    }
+
+    public function test_guest_account_entry_routes_are_available_and_customer_area_stays_protected(): void
+    {
+        $this
+            ->get(
+                route('login'),
+            )
+            ->assertOk();
+
+        $this
+            ->get(
+                route('register'),
+            )
+            ->assertOk();
+
+        $this
+            ->get(
+                route('customer.dashboard'),
+            )
+            ->assertRedirect(
+                route('login'),
+            );
+    }
+
+    public function test_verified_authenticated_storefront_shares_verified_account_state(): void
+    {
+        $user = User::factory()->create();
 
         $response = $this
             ->actingAs(
@@ -296,13 +371,101 @@ final class HeaderStorefrontRegressionTest extends TestCase
                         $user->id,
                     )
                     ->where(
-                        'auth.user.name',
-                        'Jane Customer',
-                    )
-                    ->where(
-                        'auth.user.email',
-                        'jane@example.com',
+                        'auth.user.email_verified_at',
+                        static fn (mixed $value): bool => is_string($value)
+                            && $value !== '',
                     ),
             );
+    }
+
+    public function test_unverified_authenticated_customer_is_sent_to_email_verification_before_customer_dashboard(): void
+    {
+        $user = User::factory()
+            ->unverified()
+            ->create();
+
+        $this
+            ->actingAs(
+                $user,
+            )
+            ->get(
+                route('customer.dashboard'),
+            )
+            ->assertRedirect(
+                route('verification.notice'),
+            );
+    }
+
+    public function test_verified_authenticated_customer_can_open_customer_dashboard(): void
+    {
+        $user = User::factory()->create();
+
+        $this
+            ->actingAs(
+                $user,
+            )
+            ->get(
+                route('customer.dashboard'),
+            )
+            ->assertOk();
+    }
+
+    public function test_verified_authenticated_customer_can_open_orders_wishlist_and_profile_shortcuts(): void
+    {
+        $user = User::factory()->create();
+
+        $this
+            ->actingAs(
+                $user,
+            )
+            ->get(
+                route('customer.orders.index'),
+            )
+            ->assertOk();
+
+        $this
+            ->actingAs(
+                $user,
+            )
+            ->get(
+                route('wishlist.index'),
+            )
+            ->assertOk();
+
+        $this
+            ->actingAs(
+                $user,
+            )
+            ->get(
+                route('profile.edit'),
+            )
+            ->assertOk();
+    }
+
+    public function test_unverified_authenticated_customer_cannot_open_orders_before_email_verification(): void
+    {
+        $user = User::factory()
+            ->unverified()
+            ->create();
+
+        $this
+            ->actingAs(
+                $user,
+            )
+            ->get(
+                route('customer.orders.index'),
+            )
+            ->assertRedirect(
+                route('verification.notice'),
+            );
+    }
+
+    public function test_guest_account_password_recovery_route_is_available(): void
+    {
+        $this
+            ->get(
+                route('password.request'),
+            )
+            ->assertOk();
     }
 }

@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Auth;
 
-use App\Domain\Auth\Customer\Actions\RegisterCustomerAction;
-use App\Domain\Auth\Customer\Data\RegisterCustomerData;
+use App\Domain\Customer\Actions\RegisterCustomerAction;
+use App\Domain\Mail\Actions\ConfigureRuntimeMailAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterCustomerRequest;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -24,30 +25,42 @@ final class RegisteredUserController extends Controller
 
     public function store(
         RegisterCustomerRequest $request,
-        RegisterCustomerAction $action,
+        RegisterCustomerAction $registerCustomer,
+        ConfigureRuntimeMailAction $configureRuntimeMail,
     ): RedirectResponse {
-        $user = $action->execute(
-            new RegisterCustomerData(
-                name: $request
-                    ->string('name')
-                    ->toString(),
+        $user = $registerCustomer->execute(
+            name: $request->customerName(),
+            email: $request->customerEmail(),
+            password: $request->customerPassword(),
+        );
 
-                email: $request
-                    ->string('email')
-                    ->toString(),
+        /*
+         * Laravel's Registered event sends the built-in
+         * verification notification synchronously.
+         *
+         * Configure the database-backed mail transport in
+         * this HTTP process before dispatching that event.
+         */
+        $configureRuntimeMail->execute();
 
-                password: $request
-                    ->string('password')
-                    ->toString(),
+        event(
+            new Registered(
+                $user,
             ),
         );
 
-        Auth::guard('web')->login($user);
+        Auth::guard(
+            'web',
+        )->login(
+            $user,
+        );
 
-        $request->session()->regenerate();
+        $request
+            ->session()
+            ->regenerate();
 
         return redirect()->route(
-            'customer.dashboard',
+            'verification.notice',
         );
     }
 }

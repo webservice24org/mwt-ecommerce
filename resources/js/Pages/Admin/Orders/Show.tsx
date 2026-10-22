@@ -862,10 +862,7 @@ export default function Show({ order }: Props) {
                             <div className="border-b border-slate-200 px-4 py-3">
                                 <div className="flex items-center gap-3">
                                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
-                                        <History
-                                            className="h-4 w-4"
-                                            aria-hidden="true"
-                                        />
+                                        <History className="h-4 w-4" aria-hidden="true" />
                                     </div>
 
                                     <div className="min-w-0">
@@ -891,10 +888,7 @@ export default function Show({ order }: Props) {
                                 <div className="max-h-80 overflow-y-auto">
                                     <ol className="divide-y divide-slate-100">
                                         {order.timeline.map((entry) => (
-                                            <li
-                                                key={entry.id}
-                                                className="px-4 py-3"
-                                            >
+                                            <li key={entry.id} className="px-4 py-3">
                                                 <div className="flex items-start gap-2.5">
                                                     <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500">
                                                         <Clock3

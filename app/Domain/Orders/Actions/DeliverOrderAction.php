@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Orders\Actions;
 
+use App\Domain\Mail\Actions\SendOrderStatusNotificationAction;
 use App\Domain\Orders\Enums\FulfilmentStatus;
 use App\Domain\Orders\Enums\OrderStatus;
 use App\Models\Order;
@@ -14,12 +15,16 @@ use Illuminate\Validation\ValidationException;
 
 final readonly class DeliverOrderAction
 {
+    public function __construct(
+        private SendOrderStatusNotificationAction $sendOrderStatusNotification,
+    ) {}
+
     public function execute(
         Order $order,
         ?Model $actor = null,
         ?string $note = null,
     ): Order {
-        return DB::transaction(
+        $deliveredOrder = DB::transaction(
             function () use ($order, $actor, $note): Order {
                 $lockedOrder = Order::query()
                     ->whereKey(
@@ -82,5 +87,13 @@ final readonly class DeliverOrderAction
                 return $lockedOrder->refresh();
             },
         );
+
+        $this
+            ->sendOrderStatusNotification
+            ->delivered(
+                $deliveredOrder,
+            );
+
+        return $deliveredOrder;
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Orders\Actions;
 
+use App\Domain\Mail\Actions\SendOrderStatusNotificationAction;
 use App\Domain\Orders\Enums\OrderStatus;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
@@ -13,12 +14,16 @@ use Illuminate\Validation\ValidationException;
 
 final readonly class ConfirmOrderAction
 {
+    public function __construct(
+        private SendOrderStatusNotificationAction $sendOrderStatusNotification,
+    ) {}
+
     public function execute(
         Order $order,
         ?Model $actor = null,
         ?string $note = null,
     ): Order {
-        return DB::transaction(
+        $confirmedOrder = DB::transaction(
             function () use ($order, $actor, $note): Order {
                 $lockedOrder = Order::query()
                     ->whereKey(
@@ -71,5 +76,13 @@ final readonly class ConfirmOrderAction
                 return $lockedOrder->refresh();
             },
         );
+
+        $this
+            ->sendOrderStatusNotification
+            ->confirmed(
+                $confirmedOrder,
+            );
+
+        return $confirmedOrder;
     }
 }

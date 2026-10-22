@@ -11,10 +11,13 @@ use App\Domain\Orders\Actions\ShipOrderAction;
 use App\Domain\Orders\Actions\StartOrderProcessingAction;
 use App\Domain\Orders\Enums\FulfilmentStatus;
 use App\Domain\Orders\Enums\OrderStatus;
+use App\Mail\Orders\OrderStatusChangedMail;
+use App\Models\MailSetting;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
@@ -24,6 +27,10 @@ final class OrderTransitionActionsTest extends TestCase
 
     public function test_order_can_move_through_processing_lifecycle(): void
     {
+        Mail::fake();
+
+        $this->enableMail();
+
         $user = User::factory()
             ->create();
 
@@ -65,6 +72,28 @@ final class OrderTransitionActionsTest extends TestCase
             $order,
             $user,
             'Warehouse processing started.',
+        );
+
+        $order->loadMissing(
+            'invoice',
+        );
+
+        $this->assertNotNull(
+            $order->invoice,
+        );
+
+        Mail::assertQueued(
+            OrderStatusChangedMail::class,
+            static function (OrderStatusChangedMail $mail) use ($order): bool {
+                return $mail->headline ===
+                    'We are processing your order'
+                    &&
+                    $mail->order->invoiceUrl ===
+                    route(
+                        'customer.invoices.show',
+                        $order->invoice,
+                    );
+            },
         );
 
         $this->assertSame(
@@ -299,5 +328,22 @@ final class OrderTransitionActionsTest extends TestCase
             $order,
             $user,
         );
+    }
+
+    private function enableMail(): void
+    {
+        MailSetting::current()
+            ->update([
+                'enabled' => true,
+                'mailer' => 'smtp',
+                'host' => 'smtp.example.com',
+                'port' => 587,
+                'username' => 'mailer-user',
+                'password' => 'secret-password',
+                'encryption' => 'tls',
+                'from_address' => 'store@example.com',
+                'from_name' => 'MWT Ecommerce',
+                'admin_order_notification_email' => 'orders@example.com',
+            ]);
     }
 }

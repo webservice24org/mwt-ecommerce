@@ -7,6 +7,7 @@ use App\Domain\Catalog\Queries\Storefront\StorefrontCategoryMenuQuery;
 use App\Domain\FooterBuilder\Storefront\FooterStorefrontResolver;
 use App\Domain\Wishlist\Services\WishlistService;
 use App\Models\HeaderSetting;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -37,7 +38,20 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => function () use ($request): ?array {
+                    $user = $request->user();
+
+                    if (! $user instanceof User) {
+                        return null;
+                    }
+
+                    return [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'email_verified_at' => $user->email_verified_at,
+                    ];
+                },
             ],
 
             'flash' => [

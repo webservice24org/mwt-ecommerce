@@ -50,7 +50,7 @@ class PasswordResetTest extends TestCase
             ResetPassword::class,
             function ($notification) {
                 $response = $this->get(
-                    '/reset-password/'.$notification->token,
+                    '/reset-password/' . $notification->token,
                 );
 
                 $response->assertStatus(200);
@@ -79,8 +79,8 @@ class PasswordResetTest extends TestCase
                     [
                         'token' => $notification->token,
                         'email' => $user->email,
-                        'password' => 'password123',
-                        'password_confirmation' => 'password123',
+                        'password' => 'Password123!',
+                        'password_confirmation' => 'Password123!',
                     ],
                 );
 

@@ -219,3 +219,14 @@ export interface StorefrontCategoryMenuItem {
 }
 
 export type StorefrontCategoryMenu = StorefrontCategoryMenuItem[]
+
+export interface StorefrontAuthUser {
+    id: number
+    name: string
+    email: string
+    email_verified_at: string | null
+}
+
+export interface StorefrontAuth {
+    user: StorefrontAuthUser | null
+}

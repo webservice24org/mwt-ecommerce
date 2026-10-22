@@ -12,22 +12,31 @@ use Illuminate\Http\RedirectResponse;
 
 final class VerifyEmailController extends Controller
 {
-    public function __invoke(EmailVerificationRequest $request): RedirectResponse
-    {
+    public function __invoke(
+        EmailVerificationRequest $request,
+    ): RedirectResponse {
         $user = $request->user();
 
-        if (! $user instanceof User) {
-            abort(403);
+        abort_unless(
+            $user instanceof User,
+            401,
+        );
+
+        if (! $user->hasVerifiedEmail()) {
+            if ($user->markEmailAsVerified()) {
+                event(
+                    new Verified(
+                        $user,
+                    ),
+                );
+            }
         }
 
-        if ($user->hasVerifiedEmail()) {
-            return redirect()->intended(route('dashboard', absolute: false).'?verified=1');
-        }
-
-        if ($user->markEmailAsVerified()) {
-            event(new Verified($user));
-        }
-
-        return redirect()->intended(route('dashboard', absolute: false).'?verified=1');
+        return redirect()->route(
+            'customer.dashboard',
+            [
+                'verified' => 1,
+            ],
+        );
     }
 }

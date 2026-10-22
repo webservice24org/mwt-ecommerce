@@ -20,6 +20,7 @@ import {
     Tag,
     Tags,
     X,
+    Mail,
     type LucideIcon,
 } from 'lucide-react'
 
@@ -133,6 +134,12 @@ const websiteSettingsNavigation: NavigationGroup = {
             href: route('admin.website-settings.invoice.edit'),
             match: '/admin/website-settings/invoice',
             icon: ReceiptText,
+        },
+        {
+            label: 'Mail Settings',
+            href: route('admin.website-settings.mail.edit'),
+            match: '/admin/website-settings/mail',
+            icon: Mail,
         },
         {
             label: 'Theme Settings',

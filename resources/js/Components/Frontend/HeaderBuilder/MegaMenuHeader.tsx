@@ -16,6 +16,8 @@ import {
     type StorefrontWishlistChangedDetail,
 } from '@/lib/storefrontWishlist'
 import type {
+    StorefrontAuth,
+    StorefrontAuthUser,
     StorefrontCart,
     StorefrontCartItem,
     StorefrontCategoryMenu,
@@ -29,17 +31,8 @@ interface Props {
     cart?: StorefrontCart
 }
 
-interface StorefrontAuthUser {
-    id: number
-    name: string
-    email: string
-    email_verified_at?: string | null
-}
-
 type HeaderPageProps = PageProps<{
-    auth?: {
-        user?: StorefrontAuthUser | null
-    }
+    auth?: StorefrontAuth
     storefrontCategoryMenu?: StorefrontCategoryMenu
 }>
 
@@ -71,6 +64,7 @@ export default function MegaMenuHeader({ config, wishlist, cart }: Props) {
     const cartDrawerId = useId()
 
     const cartTriggerRef = useRef<HTMLButtonElement>(null)
+    const accountTriggerRef = useRef<HTMLButtonElement>(null)
 
     useEffect(() => {
         const handleWishlistChanged = (event: Event) => {
@@ -108,8 +102,15 @@ export default function MegaMenuHeader({ config, wishlist, cart }: Props) {
 
             setSearchOpen(false)
             setMegaMenuOpen(false)
-            setAccountOpen(false)
             setMobileMenuOpen(false)
+
+            if (accountOpen) {
+                setAccountOpen(false)
+
+                window.setTimeout(() => {
+                    accountTriggerRef.current?.focus()
+                }, 0)
+            }
 
             if (cartOpen) {
                 setCartOpen(false)
@@ -125,7 +126,7 @@ export default function MegaMenuHeader({ config, wishlist, cart }: Props) {
         return () => {
             window.removeEventListener('keydown', handleKeyDown)
         }
-    }, [cartOpen])
+    }, [accountOpen, cartOpen])
 
     useEffect(() => {
         if (!cartOpen) {
@@ -170,11 +171,25 @@ export default function MegaMenuHeader({ config, wishlist, cart }: Props) {
         setMegaMenuOpen(next)
     }
 
+    const closeAccount = (restoreFocus = true) => {
+        setAccountOpen(false)
+
+        if (restoreFocus) {
+            window.setTimeout(() => {
+                accountTriggerRef.current?.focus()
+            }, 0)
+        }
+    }
+
     const handleAccountToggle = () => {
-        const next = !accountOpen
+        if (accountOpen) {
+            closeAccount()
+
+            return
+        }
 
         closeTransientMenus()
-        setAccountOpen(next)
+        setAccountOpen(true)
     }
 
     const handleMobileMenuToggle = () => {
@@ -210,9 +225,11 @@ export default function MegaMenuHeader({ config, wishlist, cart }: Props) {
                 mobileMenuId={mobileMenuId}
                 cartDrawerId={cartDrawerId}
                 cartTriggerRef={cartTriggerRef}
+                accountTriggerRef={accountTriggerRef}
                 onSearchQueryChange={setSearchQuery}
                 onSearchToggle={handleSearchToggle}
                 onAccountToggle={handleAccountToggle}
+                onAccountClose={closeAccount}
                 onMobileMenuToggle={handleMobileMenuToggle}
                 onCartToggle={handleCartToggle}
             />
@@ -231,6 +248,7 @@ export default function MegaMenuHeader({ config, wishlist, cart }: Props) {
                     id={mobileMenuId}
                     config={config}
                     user={user}
+                    wishlistCount={wishlistCount}
                     categories={categoryMenu}
                     searchQuery={searchQuery}
                     onSearchQueryChange={setSearchQuery}
@@ -320,9 +338,11 @@ function MainHeader({
     mobileMenuId,
     cartDrawerId,
     cartTriggerRef,
+    accountTriggerRef,
     onSearchQueryChange,
     onSearchToggle,
     onAccountToggle,
+    onAccountClose,
     onMobileMenuToggle,
     onCartToggle,
 }: {
@@ -340,9 +360,11 @@ function MainHeader({
     mobileMenuId: string
     cartDrawerId: string
     cartTriggerRef: RefObject<HTMLButtonElement>
+    accountTriggerRef: RefObject<HTMLButtonElement>
     onSearchQueryChange: (value: string) => void
     onSearchToggle: () => void
     onAccountToggle: () => void
+    onAccountClose: (restoreFocus?: boolean) => void
     onMobileMenuToggle: () => void
     onCartToggle: () => void
 }) {
@@ -387,7 +409,9 @@ function MainHeader({
                     accountMenuId={accountMenuId}
                     cartDrawerId={cartDrawerId}
                     cartTriggerRef={cartTriggerRef}
+                    accountTriggerRef={accountTriggerRef}
                     onAccountToggle={onAccountToggle}
+                    onAccountClose={onAccountClose}
                     onCartToggle={onCartToggle}
                 />
             </div>
@@ -756,7 +780,9 @@ function HeaderActions({
     accountMenuId,
     cartDrawerId,
     cartTriggerRef,
+    accountTriggerRef,
     onAccountToggle,
+    onAccountClose,
     onCartToggle,
 }: {
     config: HeaderConfig
@@ -768,12 +794,39 @@ function HeaderActions({
     accountMenuId: string
     cartDrawerId: string
     cartTriggerRef: RefObject<HTMLButtonElement>
+    accountTriggerRef: RefObject<HTMLButtonElement>
     onAccountToggle: () => void
+    onAccountClose: (restoreFocus?: boolean) => void
     onCartToggle: () => void
 }) {
+    const accountContainerRef = useRef<HTMLDivElement>(null)
     const wishlistUrl = config.actions.wishlist.url.trim()
     const resolvedWishlistUrl =
         wishlistUrl === '' || wishlistUrl === '#' ? '/wishlist' : wishlistUrl
+
+    useEffect(() => {
+        if (!accountOpen) {
+            return
+        }
+
+        const handlePointerDown = (event: PointerEvent) => {
+            const target = event.target
+
+            if (!(target instanceof Node)) {
+                return
+            }
+
+            if (!accountContainerRef.current?.contains(target)) {
+                onAccountClose(false)
+            }
+        }
+
+        document.addEventListener('pointerdown', handlePointerDown)
+
+        return () => {
+            document.removeEventListener('pointerdown', handlePointerDown)
+        }
+    }, [accountOpen, onAccountClose])
 
     return (
         <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
@@ -829,14 +882,38 @@ function HeaderActions({
             )}
 
             {config.actions.account.enabled && (
-                <div className="relative hidden sm:block">
+                <div
+                    ref={accountContainerRef}
+                    className="relative hidden sm:block"
+                    onBlur={(event) => {
+                        const nextTarget = event.relatedTarget
+
+                        if (
+                            nextTarget instanceof Node &&
+                            event.currentTarget.contains(nextTarget)
+                        ) {
+                            return
+                        }
+
+                        if (accountOpen) {
+                            onAccountClose(false)
+                        }
+                    }}
+                >
                     <button
+                        ref={accountTriggerRef}
                         type="button"
-                        aria-label={user ? `Account menu for ${user.name}` : 'Account menu'}
+                        aria-label={user ? `Account options for ${user.name}` : 'Account options'}
                         aria-expanded={accountOpen}
                         aria-controls={accountMenuId}
-                        aria-haspopup="menu"
+                        aria-haspopup="dialog"
                         onClick={onAccountToggle}
+                        onKeyDown={(event) => {
+                            if (event.key === 'ArrowDown' && !accountOpen) {
+                                event.preventDefault()
+                                onAccountToggle()
+                            }
+                        }}
                         className={[
                             'inline-flex min-h-11 items-center gap-2 rounded-xl border bg-neutral-950 px-2.5 text-neutral-300 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500',
                             accountOpen
@@ -844,7 +921,16 @@ function HeaderActions({
                                 : 'border-neutral-800 hover:border-neutral-700',
                         ].join(' ')}
                     >
-                        <UserRound className="h-4 w-4" aria-hidden="true" />
+                        {user ? (
+                            <span
+                                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-[9px] font-black text-white"
+                                aria-hidden="true"
+                            >
+                                {accountInitials(user.name)}
+                            </span>
+                        ) : (
+                            <UserRound className="h-4 w-4" aria-hidden="true" />
+                        )}
 
                         <ChevronDown
                             className={[
@@ -860,7 +946,8 @@ function HeaderActions({
                             id={accountMenuId}
                             config={config}
                             user={user}
-                            onClose={onAccountToggle}
+                            wishlistCount={wishlistCount}
+                            onClose={onAccountClose}
                         />
                     )}
                 </div>
@@ -1180,20 +1267,34 @@ function AccountMenu({
     id,
     config,
     user,
+    wishlistCount,
     onClose,
 }: {
     id: string
     config: HeaderConfig
     user: StorefrontAuthUser | null
-    onClose: () => void
+    wishlistCount: number
+    onClose: (restoreFocus?: boolean) => void
 }) {
+    const dialogRef = useRef<HTMLDivElement>(null)
+    const titleId = `${id}-title`
     const links = config.actions.account.menu_links.filter((link) => link.label.trim() !== '')
+    const loginUrl = resolveGuestAccountUrl(config.actions.account.guest_login_url, '/login')
+    const registerUrl = resolveGuestAccountUrl(
+        config.actions.account.guest_register_url,
+        '/register',
+    )
+    const emailVerified = user?.email_verified_at != null
+
+    useEffect(() => {
+        dialogRef.current?.focus()
+    }, [])
 
     const signOut = () => {
-        onClose()
+        onClose(false)
 
         router.post(
-            '/logout',
+            route('logout'),
             {},
             {
                 preserveScroll: false,
@@ -1203,11 +1304,17 @@ function AccountMenu({
 
     return (
         <div
+            ref={dialogRef}
             id={id}
-            role="menu"
-            aria-label="Account options"
-            className="absolute right-0 top-full z-50 mt-2 w-[min(18rem,calc(100vw-1rem))] overflow-hidden rounded-xl border border-neutral-700 bg-neutral-900 shadow-2xl"
+            role="dialog"
+            aria-modal={false}
+            aria-labelledby={titleId}
+            tabIndex={-1}
+            className="absolute right-0 top-full z-50 mt-2 w-[min(18rem,calc(100vw-1rem))] overflow-hidden rounded-xl border border-neutral-700 bg-neutral-900 shadow-2xl outline-none"
         >
+            <h2 id={titleId} className="sr-only">
+                Account options
+            </h2>
             <div className="flex items-start justify-between gap-3 border-b border-neutral-800 p-4">
                 <div className="min-w-0">
                     {user ? (
@@ -1230,13 +1337,24 @@ function AccountMenu({
                                 >
                                     {user.email}
                                 </p>
+
+                                <span
+                                    className={[
+                                        'mt-2 inline-flex rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide',
+                                        emailVerified
+                                            ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300'
+                                            : 'border-amber-500/20 bg-amber-500/10 text-amber-300',
+                                    ].join(' ')}
+                                >
+                                    {emailVerified ? 'Verified customer' : 'Verification required'}
+                                </span>
                             </div>
                         </div>
                     ) : (
                         <>
-                            <p className="text-xs font-semibold text-white">Account</p>
-                            <p className="mt-1 text-[10px] text-neutral-500">
-                                Sign in to manage your account
+                            <p className="text-sm font-semibold text-white">Welcome</p>
+                            <p className="mt-1 max-w-48 text-[11px] leading-4 text-neutral-500">
+                                Sign in to view your customer dashboard, orders, and invoices.
                             </p>
                         </>
                     )}
@@ -1244,8 +1362,8 @@ function AccountMenu({
 
                 <button
                     type="button"
-                    onClick={onClose}
-                    aria-label="Close account menu"
+                    onClick={() => onClose(true)}
+                    aria-label="Close account popup"
                     className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-neutral-500 transition hover:bg-neutral-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                 >
                     <X className="h-3.5 w-3.5" aria-hidden="true" />
@@ -1253,53 +1371,145 @@ function AccountMenu({
             </div>
 
             {user && (
-                <div className="grid grid-cols-2 gap-2 border-b border-neutral-800 p-2">
+                <div className="border-b border-neutral-800 p-2">
                     <Link
-                        href="/account"
-                        role="menuitem"
-                        onClick={onClose}
-                        className="flex min-h-10 min-w-0 items-center justify-center truncate rounded-lg bg-indigo-600 px-2 text-xs font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                        href={
+                            emailVerified
+                                ? route('customer.dashboard')
+                                : route('verification.notice')
+                        }
+                        onClick={() => onClose(false)}
+                        className="flex min-h-10 w-full min-w-0 items-center justify-center truncate rounded-lg bg-indigo-600 px-3 text-xs font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                     >
-                        Dashboard
+                        {emailVerified ? 'Customer dashboard' : 'Verify email'}
                     </Link>
 
-                    <Link
-                        href="/profile"
-                        role="menuitem"
-                        onClick={onClose}
-                        className="flex min-h-10 min-w-0 items-center justify-center truncate rounded-lg border border-neutral-700 px-2 text-xs font-semibold text-neutral-300 transition hover:bg-neutral-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                    <div
+                        className={[
+                            'mt-2 grid gap-2',
+                            emailVerified ? 'grid-cols-3' : 'grid-cols-2',
+                        ].join(' ')}
+                        aria-label="Customer account shortcuts"
                     >
-                        Profile
-                    </Link>
+                        {emailVerified && (
+                            <Link
+                                href={route('customer.orders.index')}
+                                onClick={() => onClose(false)}
+                                className="flex min-h-16 min-w-0 flex-col items-center justify-center rounded-lg border border-neutral-700 px-2 py-2 text-center text-neutral-300 transition hover:bg-neutral-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                            >
+                                <ShoppingBag className="h-4 w-4" aria-hidden="true" />
+                                <span className="mt-1 max-w-full truncate text-[10px] font-semibold">
+                                    Orders
+                                </span>
+                            </Link>
+                        )}
+
+                        <Link
+                            href={route('wishlist.index')}
+                            onClick={() => onClose(false)}
+                            aria-label={
+                                wishlistCount > 0 ? `Wishlist, ${wishlistCount} items` : 'Wishlist'
+                            }
+                            className="relative flex min-h-16 min-w-0 flex-col items-center justify-center rounded-lg border border-neutral-700 px-2 py-2 text-center text-neutral-300 transition hover:bg-neutral-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                        >
+                            <Heart
+                                className={[
+                                    'h-4 w-4',
+                                    wishlistCount > 0 ? 'fill-current text-indigo-400' : '',
+                                ].join(' ')}
+                                aria-hidden="true"
+                            />
+
+                            {wishlistCount > 0 && (
+                                <span
+                                    className="absolute right-2 top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-600 px-1 text-[8px] font-bold text-white"
+                                    aria-hidden="true"
+                                >
+                                    {wishlistCount > 99 ? '99+' : wishlistCount}
+                                </span>
+                            )}
+
+                            <span className="mt-1 max-w-full truncate text-[10px] font-semibold">
+                                Wishlist
+                            </span>
+                        </Link>
+
+                        <Link
+                            href={route('profile.edit')}
+                            onClick={() => onClose(false)}
+                            className="flex min-h-16 min-w-0 flex-col items-center justify-center rounded-lg border border-neutral-700 px-2 py-2 text-center text-neutral-300 transition hover:bg-neutral-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                        >
+                            <UserRound className="h-4 w-4" aria-hidden="true" />
+                            <span className="mt-1 max-w-full truncate text-[10px] font-semibold">
+                                Profile
+                            </span>
+                        </Link>
+                    </div>
                 </div>
             )}
 
-            <div className="max-h-64 overflow-y-auto overscroll-contain p-2">
-                {links.map((link, index) => (
-                    <Link
-                        key={`${link.label}-${index}`}
-                        href={link.url || '#'}
-                        role="menuitem"
-                        onClick={onClose}
-                        title={link.label}
-                        className="flex min-h-10 min-w-0 items-center rounded-lg px-3 text-xs font-medium text-neutral-300 transition hover:bg-neutral-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                    >
-                        <span className="min-w-0 truncate">{link.label}</span>
-                    </Link>
-                ))}
+            {user ? (
+                emailVerified ? (
+                    <div className="max-h-64 overflow-y-auto overscroll-contain p-2">
+                        {links.map((link, index) => (
+                            <Link
+                                key={`${link.label}-${index}`}
+                                href={link.url || '#'}
+                                onClick={() => onClose(false)}
+                                title={link.label}
+                                className="flex min-h-10 min-w-0 items-center rounded-lg px-3 text-xs font-medium text-neutral-300 transition hover:bg-neutral-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                            >
+                                <span className="min-w-0 truncate">{link.label}</span>
+                            </Link>
+                        ))}
 
-                {links.length === 0 && !user && (
-                    <p className="px-3 py-2 text-xs text-neutral-500">
-                        No account links configured.
-                    </p>
-                )}
-            </div>
+                        {links.length === 0 && (
+                            <p className="px-3 py-2 text-xs text-neutral-500">
+                                No additional account links configured.
+                            </p>
+                        )}
+                    </div>
+                ) : (
+                    <div className="p-3">
+                        <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-3">
+                            <p className="text-xs font-semibold text-amber-200">
+                                Verify your email to unlock the customer area
+                            </p>
+
+                            <p className="mt-1 text-[11px] leading-5 text-amber-200/70">
+                                Orders, addresses, and other protected customer pages become
+                                available after verification.
+                            </p>
+                        </div>
+                    </div>
+                )
+            ) : (
+                <div className="p-3">
+                    <div className="rounded-lg border border-neutral-800 bg-neutral-950/70 p-3">
+                        <p className="text-xs font-semibold text-neutral-200">
+                            Your account keeps shopping organized
+                        </p>
+
+                        <p className="mt-1 text-[11px] leading-5 text-neutral-500">
+                            Sign in to access your customer area and keep order information in one
+                            place.
+                        </p>
+                    </div>
+
+                    <Link
+                        href="/forgot-password"
+                        onClick={() => onClose(false)}
+                        className="mt-2 inline-flex min-h-9 items-center rounded-lg px-2 text-[11px] font-semibold text-indigo-400 transition hover:text-indigo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                    >
+                        Forgot your password?
+                    </Link>
+                </div>
+            )}
 
             {user ? (
                 <div className="border-t border-neutral-800 p-2">
                     <button
                         type="button"
-                        role="menuitem"
                         onClick={signOut}
                         className="flex min-h-10 w-full items-center justify-center rounded-lg border border-red-500/20 bg-red-500/10 px-3 text-xs font-semibold text-red-300 transition hover:bg-red-500/20 hover:text-red-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
                     >
@@ -1309,18 +1519,16 @@ function AccountMenu({
             ) : (
                 <div className="grid grid-cols-2 gap-2 border-t border-neutral-800 p-2">
                     <Link
-                        href={config.actions.account.guest_login_url || '/login'}
-                        role="menuitem"
-                        onClick={onClose}
+                        href={loginUrl}
+                        onClick={() => onClose(false)}
                         className="flex min-h-10 min-w-0 items-center justify-center truncate rounded-lg border border-neutral-700 px-2 text-xs font-semibold text-neutral-300 transition hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                     >
                         Sign in
                     </Link>
 
                     <Link
-                        href={config.actions.account.guest_register_url || '/register'}
-                        role="menuitem"
-                        onClick={onClose}
+                        href={registerUrl}
+                        onClick={() => onClose(false)}
                         className="flex min-h-10 min-w-0 items-center justify-center truncate rounded-lg bg-white px-2 text-xs font-bold text-neutral-950 transition hover:bg-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                     >
                         Register
@@ -1329,6 +1537,12 @@ function AccountMenu({
             )}
         </div>
     )
+}
+
+function resolveGuestAccountUrl(value: string, fallback: string): string {
+    const normalized = value.trim()
+
+    return normalized === '' || normalized === '#' ? fallback : normalized
 }
 
 function accountInitials(name: string): string {
@@ -1555,6 +1769,7 @@ function MobileMenu({
     id,
     config,
     user,
+    wishlistCount,
     categories,
     searchQuery,
     onSearchQueryChange,
@@ -1563,6 +1778,7 @@ function MobileMenu({
     id: string
     config: HeaderConfig
     user: StorefrontAuthUser | null
+    wishlistCount: number
     categories: StorefrontCategoryMenu
     searchQuery: string
     onSearchQueryChange: (value: string) => void
@@ -1722,81 +1938,254 @@ function MobileMenu({
                 </nav>
 
                 {config.actions.account.enabled && (
-                    <div className="mt-4 min-w-0 border-t border-neutral-800 pt-4">
-                        {user ? (
-                            <>
-                                <div className="mb-3 flex min-w-0 items-center gap-3 rounded-xl border border-neutral-800 bg-neutral-900 p-3">
-                                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">
-                                        {accountInitials(user.name)}
-                                    </span>
-
-                                    <div className="min-w-0">
-                                        <p
-                                            className="truncate text-sm font-semibold text-white"
-                                            title={user.name}
-                                        >
-                                            {user.name}
-                                        </p>
-                                        <p
-                                            className="mt-0.5 truncate text-xs text-neutral-500"
-                                            title={user.email}
-                                        >
-                                            {user.email}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="grid min-w-0 grid-cols-2 gap-2">
-                                    <Link
-                                        href="/account"
-                                        onClick={onClose}
-                                        className="flex min-h-11 min-w-0 items-center justify-center truncate rounded-xl bg-indigo-600 px-3 text-xs font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
-                                    >
-                                        Dashboard
-                                    </Link>
-
-                                    <Link
-                                        href="/profile"
-                                        onClick={onClose}
-                                        className="flex min-h-11 min-w-0 items-center justify-center truncate rounded-xl border border-neutral-800 bg-neutral-900 px-3 text-xs font-semibold text-neutral-300 transition hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                                    >
-                                        Profile
-                                    </Link>
-                                </div>
-
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        onClose()
-                                        router.post('/logout')
-                                    }}
-                                    className="mt-2 flex min-h-11 w-full items-center justify-center rounded-xl border border-red-500/20 bg-red-500/10 px-3 text-xs font-semibold text-red-300 transition hover:bg-red-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
-                                >
-                                    Sign out
-                                </button>
-                            </>
-                        ) : (
-                            <div className="grid min-w-0 grid-cols-2 gap-2">
-                                <Link
-                                    href={config.actions.account.guest_login_url || '/login'}
-                                    onClick={onClose}
-                                    className="flex min-h-11 min-w-0 items-center justify-center truncate rounded-xl border border-neutral-800 bg-neutral-900 px-3 text-xs font-semibold text-neutral-300 transition hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                                >
-                                    Sign in
-                                </Link>
-
-                                <Link
-                                    href={config.actions.account.guest_register_url || '/register'}
-                                    onClick={onClose}
-                                    className="flex min-h-11 min-w-0 items-center justify-center truncate rounded-xl bg-white px-3 text-xs font-bold text-neutral-950 transition hover:bg-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                                >
-                                    Register
-                                </Link>
-                            </div>
-                        )}
-                    </div>
+                    <MobileAccountSection
+                        config={config}
+                        user={user}
+                        wishlistCount={wishlistCount}
+                        onClose={onClose}
+                    />
                 )}
             </div>
         </div>
+    )
+}
+
+function MobileAccountSection({
+    config,
+    user,
+    wishlistCount,
+    onClose,
+}: {
+    config: HeaderConfig
+    user: StorefrontAuthUser | null
+    wishlistCount: number
+    onClose: () => void
+}) {
+    const loginUrl = resolveGuestAccountUrl(config.actions.account.guest_login_url, '/login')
+    const registerUrl = resolveGuestAccountUrl(
+        config.actions.account.guest_register_url,
+        '/register',
+    )
+    const emailVerified = user?.email_verified_at != null
+
+    const signOut = () => {
+        onClose()
+
+        router.post(
+            route('logout'),
+            {},
+            {
+                preserveScroll: false,
+            },
+        )
+    }
+
+    return (
+        <section
+            aria-labelledby="mobile-account-heading"
+            className="mt-5 min-w-0 border-t border-neutral-800 pt-5"
+        >
+            <div className="mb-3 min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-neutral-500">
+                    Account
+                </p>
+
+                <h2
+                    id="mobile-account-heading"
+                    className="mt-1 truncate text-sm font-semibold text-white"
+                >
+                    {user ? 'Your customer account' : 'Sign in to your account'}
+                </h2>
+            </div>
+
+            {user ? (
+                <div className="min-w-0 space-y-3">
+                    <div className="flex min-w-0 items-center gap-3 rounded-2xl border border-neutral-800 bg-neutral-900 p-3.5">
+                        <span
+                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white"
+                            aria-hidden="true"
+                        >
+                            {accountInitials(user.name)}
+                        </span>
+
+                        <div className="min-w-0 flex-1">
+                            <p
+                                className="truncate text-sm font-semibold text-white"
+                                title={user.name}
+                            >
+                                {user.name}
+                            </p>
+
+                            <p
+                                className="mt-0.5 truncate text-xs text-neutral-500"
+                                title={user.email}
+                            >
+                                {user.email}
+                            </p>
+
+                            <span
+                                className={[
+                                    'mt-2 inline-flex max-w-full rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide',
+                                    emailVerified
+                                        ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300'
+                                        : 'border-amber-500/20 bg-amber-500/10 text-amber-300',
+                                ].join(' ')}
+                            >
+                                <span className="truncate">
+                                    {emailVerified ? 'Verified customer' : 'Verification required'}
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+
+                    {!emailVerified && (
+                        <div
+                            role="status"
+                            className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-3.5"
+                        >
+                            <p className="text-xs font-semibold text-amber-200">
+                                Verify your email to unlock orders and the full customer area.
+                            </p>
+
+                            <p className="mt-1 text-[11px] leading-5 text-amber-200/70">
+                                Wishlist and profile remain available while verification is pending.
+                            </p>
+                        </div>
+                    )}
+
+                    <Link
+                        href={
+                            emailVerified
+                                ? route('customer.dashboard')
+                                : route('verification.notice')
+                        }
+                        onClick={onClose}
+                        className="flex min-h-12 w-full min-w-0 items-center justify-center truncate rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                    >
+                        {emailVerified ? 'Open customer dashboard' : 'Verify email'}
+                    </Link>
+
+                    <div
+                        className={[
+                            'grid min-w-0 gap-2',
+                            emailVerified ? 'grid-cols-3' : 'grid-cols-2',
+                        ].join(' ')}
+                        aria-label="Mobile customer shortcuts"
+                    >
+                        {emailVerified && (
+                            <Link
+                                href={route('customer.orders.index')}
+                                onClick={onClose}
+                                className="flex min-h-16 min-w-0 flex-col items-center justify-center rounded-xl border border-neutral-800 bg-neutral-900 px-2 py-2 text-center text-neutral-300 transition hover:bg-neutral-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                            >
+                                <ShoppingBag className="h-4 w-4" aria-hidden="true" />
+
+                                <span className="mt-1 max-w-full truncate text-[10px] font-semibold">
+                                    Orders
+                                </span>
+                            </Link>
+                        )}
+
+                        <Link
+                            href={route('wishlist.index')}
+                            onClick={onClose}
+                            aria-label={
+                                wishlistCount > 0 ? `Wishlist, ${wishlistCount} items` : 'Wishlist'
+                            }
+                            className="relative flex min-h-16 min-w-0 flex-col items-center justify-center rounded-xl border border-neutral-800 bg-neutral-900 px-2 py-2 text-center text-neutral-300 transition hover:bg-neutral-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                        >
+                            <Heart
+                                className={[
+                                    'h-4 w-4',
+                                    wishlistCount > 0 ? 'fill-current text-indigo-400' : '',
+                                ].join(' ')}
+                                aria-hidden="true"
+                            />
+
+                            {wishlistCount > 0 && (
+                                <span
+                                    className="absolute right-2 top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-600 px-1 text-[8px] font-bold text-white"
+                                    aria-hidden="true"
+                                >
+                                    {wishlistCount > 99 ? '99+' : wishlistCount}
+                                </span>
+                            )}
+
+                            <span className="mt-1 max-w-full truncate text-[10px] font-semibold">
+                                Wishlist
+                            </span>
+                        </Link>
+
+                        <Link
+                            href={route('profile.edit')}
+                            onClick={onClose}
+                            className="flex min-h-16 min-w-0 flex-col items-center justify-center rounded-xl border border-neutral-800 bg-neutral-900 px-2 py-2 text-center text-neutral-300 transition hover:bg-neutral-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                        >
+                            <UserRound className="h-4 w-4" aria-hidden="true" />
+
+                            <span className="mt-1 max-w-full truncate text-[10px] font-semibold">
+                                Profile
+                            </span>
+                        </Link>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={signOut}
+                        className="flex min-h-12 w-full items-center justify-center rounded-xl border border-red-500/20 bg-red-500/10 px-4 text-sm font-semibold text-red-300 transition hover:bg-red-500/20 hover:text-red-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+                    >
+                        Sign out
+                    </button>
+                </div>
+            ) : (
+                <div className="min-w-0 rounded-2xl border border-neutral-800 bg-neutral-900 p-3.5">
+                    <div className="flex min-w-0 items-start gap-3">
+                        <span
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-800 text-neutral-300"
+                            aria-hidden="true"
+                        >
+                            <UserRound className="h-4 w-4" />
+                        </span>
+
+                        <div className="min-w-0">
+                            <p className="text-sm font-semibold text-white">
+                                Keep your orders in one place
+                            </p>
+
+                            <p className="mt-1 text-xs leading-5 text-neutral-500">
+                                Sign in to reach your customer dashboard, orders, invoices, and
+                                profile.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="mt-4 grid min-w-0 grid-cols-2 gap-2">
+                        <Link
+                            href={loginUrl}
+                            onClick={onClose}
+                            className="flex min-h-12 min-w-0 items-center justify-center truncate rounded-xl border border-neutral-700 bg-neutral-950 px-3 text-sm font-semibold text-neutral-200 transition hover:bg-neutral-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                        >
+                            Sign in
+                        </Link>
+
+                        <Link
+                            href={registerUrl}
+                            onClick={onClose}
+                            className="flex min-h-12 min-w-0 items-center justify-center truncate rounded-xl bg-white px-3 text-sm font-bold text-neutral-950 transition hover:bg-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                        >
+                            Create account
+                        </Link>
+                    </div>
+
+                    <Link
+                        href={route('password.request')}
+                        onClick={onClose}
+                        className="mt-3 inline-flex min-h-11 items-center rounded-lg px-1 text-xs font-semibold text-indigo-400 transition hover:text-indigo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                    >
+                        Forgot your password?
+                    </Link>
+                </div>
+            )}
+        </section>
     )
 }

@@ -10,10 +10,14 @@ use App\Domain\Orders\Enums\FulfilmentStatus;
 use App\Domain\Orders\Enums\OrderStatus;
 use App\Domain\Orders\Enums\PaymentMethod;
 use App\Domain\Orders\Enums\PaymentStatus;
+use App\Mail\Orders\NewOrderAdminMail;
+use App\Mail\Orders\OrderPlacedCustomerMail;
 use App\Models\Address;
+use App\Models\MailSetting;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 final class CreateOrderActionTest extends TestCase
@@ -22,6 +26,10 @@ final class CreateOrderActionTest extends TestCase
 
     public function test_valid_checkout_creates_order_and_item_snapshots(): void
     {
+        Mail::fake();
+
+        $this->enableMail();
+
         $user = User::factory()
             ->create();
 
@@ -170,6 +178,34 @@ final class CreateOrderActionTest extends TestCase
         $this->assertSame(
             2,
             $item->quantity,
+        );
+
+        Mail::assertQueued(
+            OrderPlacedCustomerMail::class,
+            static fn (
+                OrderPlacedCustomerMail $mail,
+            ): bool => $mail->hasTo(
+                $user->email,
+            ),
+        );
+
+        Mail::assertQueued(
+            NewOrderAdminMail::class,
+            static fn (
+                NewOrderAdminMail $mail,
+            ): bool => $mail->hasTo(
+                'orders@example.com',
+            ),
+        );
+
+        Mail::assertQueued(
+            OrderPlacedCustomerMail::class,
+            1,
+        );
+
+        Mail::assertQueued(
+            NewOrderAdminMail::class,
+            1,
         );
     }
 
@@ -470,6 +506,10 @@ final class CreateOrderActionTest extends TestCase
 
     public function test_same_idempotency_key_returns_existing_order(): void
     {
+        Mail::fake();
+
+        $this->enableMail();
+
         $user = User::factory()
             ->create();
 
@@ -555,6 +595,16 @@ final class CreateOrderActionTest extends TestCase
 
         $this->assertDatabaseCount(
             'order_items',
+            1,
+        );
+
+        Mail::assertQueued(
+            OrderPlacedCustomerMail::class,
+            1,
+        );
+
+        Mail::assertQueued(
+            NewOrderAdminMail::class,
             1,
         );
     }
@@ -747,5 +797,90 @@ final class CreateOrderActionTest extends TestCase
             'orders',
             2,
         );
+    }
+
+    public function test_checkout_succeeds_without_queueing_mail_when_mail_delivery_is_disabled(): void
+    {
+        Mail::fake();
+
+        MailSetting::current()
+            ->update([
+                'enabled' => false,
+            ]);
+
+        $user = User::factory()
+            ->create();
+
+        $address = Address::factory()
+            ->for($user)
+            ->default()
+            ->create();
+
+        $product = Product::factory()
+            ->create([
+                'name' => 'No Mail Checkout Product',
+                'sku' => 'NO-MAIL-001',
+                'price' => 10000,
+                'status' => 'published',
+            ]);
+
+        $this
+            ->actingAs(
+                $user,
+            )
+            ->withSession([
+                'storefront.cart' => [
+                    'product:'.$product->id => [
+                        'product_id' => $product->id,
+                        'variant_id' => null,
+                        'quantity' => 1,
+                    ],
+                ],
+
+                'storefront.checkout.address_id' => $address->id,
+
+                'storefront.checkout.payment_method' => PaymentMethod::CashOnDelivery
+                    ->value,
+            ]);
+
+        $idempotencyKey = app(
+            CheckoutSessionService::class,
+        )->orderSubmissionToken();
+
+        $order = app(
+            CreateOrderAction::class,
+        )->execute(
+            $user,
+            $idempotencyKey,
+        );
+
+        $this->assertDatabaseHas(
+            'orders',
+            [
+                'id' => $order->id,
+                'user_id' => $user->id,
+                'idempotency_key' => $idempotencyKey,
+            ],
+        );
+
+        Mail::assertNothingQueued();
+    }
+
+    private function enableMail(
+        ?string $adminEmail = 'orders@example.com',
+    ): void {
+        MailSetting::current()
+            ->update([
+                'enabled' => true,
+                'mailer' => 'smtp',
+                'host' => 'smtp.example.com',
+                'port' => 587,
+                'username' => 'mailer-user',
+                'password' => 'secret-password',
+                'encryption' => 'tls',
+                'from_address' => 'store@example.com',
+                'from_name' => 'MWT Ecommerce',
+                'admin_order_notification_email' => $adminEmail,
+            ]);
     }
 }

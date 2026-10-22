@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\Catalog\ProductVideoController;
 use App\Http\Controllers\Admin\FooterBuilderController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\InvoiceSettingController;
+use App\Http\Controllers\Admin\MailSettingController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PageBuilderBrandSearchController;
 use App\Http\Controllers\Admin\PageBuilderController;
@@ -128,6 +129,20 @@ Route::middleware([
     Route::get('website-settings/header-builder', [HeaderBuilderController::class, 'edit'])->middleware('can:viewAny,'.HeaderSetting::class)->name('website-settings.header-builder.edit');
     Route::put('website-settings/header-builder', [HeaderBuilderController::class, 'update'])->middleware('can:updateAny,'.HeaderSetting::class)->name('website-settings.header-builder.update');
 
+    Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->whereNumber('invoice')->name('invoices.show');
+    Route::get('website-settings/invoice', [InvoiceSettingController::class, 'edit'])->name('website-settings.invoice.edit');
+    Route::post('website-settings/invoice', [InvoiceSettingController::class, 'update'])->name('website-settings.invoice.update');
+
+    Route::get('website-settings/mail', [MailSettingController::class, 'edit'])->name('website-settings.mail.edit');
+    Route::post('website-settings/mail', [MailSettingController::class, 'update'])->name('website-settings.mail.update');
+
+    Route::post('website-settings/mail/test', [MailSettingController::class, 'test'])->name('website-settings.mail.test');
+    /*
+    |--------------------------------------------------------------------------
+    | Oerder processing
+    |--------------------------------------------------------------------------
+    */
+
     Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('orders/{order}', [OrderController::class, 'show'])->whereNumber('order')->name('orders.show');
     Route::post('orders/{order}/confirm', [OrderController::class, 'confirm'])->whereNumber('order')->name('orders.confirm');
@@ -137,9 +152,6 @@ Route::middleware([
     Route::post('orders/{order}/complete', [OrderController::class, 'complete'])->whereNumber('order')->name('orders.complete');
     Route::post('orders/{order}/cancel', [OrderController::class, 'cancel'])->whereNumber('order')->name('orders.cancel');
 
-    Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->whereNumber('invoice')->name('invoices.show');
-    Route::get('website-settings/invoice', [InvoiceSettingController::class, 'edit'])->name('website-settings.invoice.edit');
-    Route::post('website-settings/invoice', [InvoiceSettingController::class, 'update'])->name('website-settings.invoice.update');
 });
 
 Route::middleware([

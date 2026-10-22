@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Orders\Actions;
 
+use App\Domain\Mail\Actions\SendOrderStatusNotificationAction;
 use App\Domain\Orders\Enums\FulfilmentStatus;
 use App\Domain\Orders\Enums\OrderStatus;
 use App\Models\Order;
@@ -17,6 +18,7 @@ final readonly class CancelOrderAction
 {
     public function __construct(
         private RestoreCancelledOrderStockAction $restoreStock,
+        private SendOrderStatusNotificationAction $sendOrderStatusNotification,
     ) {}
 
     /**
@@ -67,7 +69,7 @@ final readonly class CancelOrderAction
         ?string $reason,
         bool $customerInitiated,
     ): Order {
-        return DB::transaction(
+        $cancelledOrder = DB::transaction(
             function () use ($order, $actor, $reason, $customerInitiated): Order {
                 $lockedOrder = Order::query()
                     ->whereKey(
@@ -157,5 +159,14 @@ final readonly class CancelOrderAction
                     ->refresh();
             },
         );
+
+        $this
+            ->sendOrderStatusNotification
+            ->cancelled(
+                order: $cancelledOrder,
+                reason: $reason,
+            );
+
+        return $cancelledOrder;
     }
 }

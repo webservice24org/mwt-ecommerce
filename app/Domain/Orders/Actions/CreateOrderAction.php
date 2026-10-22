@@ -7,6 +7,7 @@ namespace App\Domain\Orders\Actions;
 use App\Domain\Cart\Services\CartService;
 use App\Domain\Checkout\Actions\ValidateCheckoutAction;
 use App\Domain\Checkout\Services\CheckoutSessionService;
+use App\Domain\Mail\Actions\SendOrderPlacedNotificationsAction;
 use App\Domain\Orders\Enums\FulfilmentStatus;
 use App\Domain\Orders\Enums\OrderStatus;
 use App\Domain\Orders\Enums\PaymentStatus;
@@ -26,6 +27,7 @@ final readonly class CreateOrderAction
         private OrderNumberGenerator $orderNumberGenerator,
         private CartService $cart,
         private CheckoutSessionService $checkoutSession,
+        private SendOrderPlacedNotificationsAction $sendOrderPlacedNotifications,
     ) {}
 
     public function execute(
@@ -294,6 +296,28 @@ final readonly class CreateOrderAction
         $this
             ->checkoutSession
             ->rotateOrderSubmissionToken();
+
+        /*
+         * ==================================================
+         * POST-COMMIT ORDER NOTIFICATIONS
+         * ==================================================
+         *
+         * The order transaction has already committed before
+         * this point. Only the request that actually created
+         * the order reaches this path:
+         *
+         * - normal idempotent retries return earlier
+         * - concurrent duplicate submissions return earlier
+         *
+         * Therefore the initial customer/admin notifications
+         * are queued exactly once for the successful creation
+         * path and never for a rolled-back order.
+         */
+        $this
+            ->sendOrderPlacedNotifications
+            ->execute(
+                $order,
+            );
 
         return $order;
     }

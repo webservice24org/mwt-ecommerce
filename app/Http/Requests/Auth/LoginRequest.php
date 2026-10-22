@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests\Auth;
 
-use App\Domain\Customer\Enums\CustomerStatus;
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -11,32 +13,33 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
-class LoginRequest extends FormRequest
+final class LoginRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string'],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:254',
+            ],
+            'password' => [
+                'required',
+                'string',
+            ],
         ];
     }
 
     /**
-     * Attempt to authenticate the request's credentials.
-     *
      * @throws ValidationException
      */
     public function authenticate(): void
@@ -44,33 +47,43 @@ class LoginRequest extends FormRequest
         $this->ensureIsNotRateLimited();
 
         if (
-            ! Auth::attempt(
+            ! Auth::guard(
+                'web',
+            )->attempt(
                 [
                     'email' => $this->string(
                         'email',
                     )->toString(),
-
                     'password' => $this->string(
                         'password',
                     )->toString(),
-
-                    'status' => CustomerStatus::Active
-                        ->value,
                 ],
                 $this->boolean(
                     'remember',
                 ),
             )
         ) {
-            RateLimiter::hit(
-                $this->throttleKey(),
-            );
+            $this->failAuthentication();
+        }
 
-            throw ValidationException::withMessages([
-                'email' => trans(
-                    'auth.failed',
-                ),
-            ]);
+        $user = Auth::guard(
+            'web',
+        )->user();
+
+        /*
+         * Keep account-status failures indistinguishable from
+         * invalid credentials. A suspended/inactive customer
+         * must never obtain an authenticated storefront session.
+         */
+        if (
+            ! $user instanceof User
+            || ! $user->isActive()
+        ) {
+            Auth::guard(
+                'web',
+            )->logout();
+
+            $this->failAuthentication();
         }
 
         RateLimiter::clear(
@@ -79,33 +92,87 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * Ensure the login request is not rate limited.
-     *
      * @throws ValidationException
      */
     public function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        if (
+            ! RateLimiter::tooManyAttempts(
+                $this->throttleKey(),
+                5,
+            )
+        ) {
             return;
         }
 
-        event(new Lockout($this));
+        event(
+            new Lockout(
+                $this,
+            ),
+        );
 
-        $seconds = RateLimiter::availableIn($this->throttleKey());
+        $seconds = RateLimiter::availableIn(
+            $this->throttleKey(),
+        );
 
         throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
-                'seconds' => $seconds,
-                'minutes' => ceil($seconds / 60),
-            ]),
+            'email' => trans(
+                'auth.throttle',
+                [
+                    'seconds' => $seconds,
+                    'minutes' => ceil(
+                        $seconds / 60,
+                    ),
+                ],
+            ),
+        ]);
+    }
+
+    public function throttleKey(): string
+    {
+        return Str::transliterate(
+            Str::lower(
+                $this->string(
+                    'email',
+                )->toString(),
+            )
+            .'|'
+            .$this->ip(),
+        );
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $email = $this->input(
+            'email',
+        );
+
+        $this->merge([
+            'email' => is_string(
+                $email,
+            )
+                ? mb_strtolower(
+                    trim(
+                        $email,
+                    ),
+                )
+                : $email,
         ]);
     }
 
     /**
-     * Get the rate limiting throttle key for the request.
+     * @throws ValidationException
      */
-    public function throttleKey(): string
+    private function failAuthentication(): never
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        RateLimiter::hit(
+            $this->throttleKey(),
+        );
+
+        throw ValidationException::withMessages([
+            'email' => trans(
+                'auth.failed',
+            ),
+        ]);
     }
 }

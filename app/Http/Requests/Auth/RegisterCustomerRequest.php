@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
 final class RegisterCustomerRequest extends FormRequest
@@ -15,7 +17,7 @@ final class RegisterCustomerRequest extends FormRequest
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, list<mixed>>
      */
     public function rules(): array
     {
@@ -29,32 +31,69 @@ final class RegisterCustomerRequest extends FormRequest
             'email' => [
                 'required',
                 'string',
-                'email',
-                'max:255',
-                'unique:users,email',
+                'lowercase',
+                'email:rfc',
+                'max:254',
+                Rule::unique(
+                    User::class,
+                    'email',
+                ),
             ],
 
             'password' => [
                 'required',
+                'string',
                 'confirmed',
-
-                Password::min(8)
-                    ->letters()
-                    ->numbers(),
+                'max:255',
+                Password::min(10)
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols(),
             ],
         ];
     }
 
+    public function customerName(): string
+    {
+        return (string) $this->validated(
+            'name',
+        );
+    }
+
+    public function customerEmail(): string
+    {
+        return (string) $this->validated(
+            'email',
+        );
+    }
+
+    public function customerPassword(): string
+    {
+        return (string) $this->validated(
+            'password',
+        );
+    }
+
     protected function prepareForValidation(): void
     {
-        $this->merge([
-            'name' => trim(
-                (string) $this->input('name'),
-            ),
+        $name = $this->input(
+            'name',
+        );
 
-            'email' => strtolower(
-                trim((string) $this->input('email')),
-            ),
+        $email = $this->input(
+            'email',
+        );
+
+        $this->merge([
+            'name' => is_string($name)
+                ? trim($name)
+                : $name,
+
+            'email' => is_string($email)
+                ? mb_strtolower(
+                    trim($email),
+                )
+                : $email,
         ]);
     }
 }

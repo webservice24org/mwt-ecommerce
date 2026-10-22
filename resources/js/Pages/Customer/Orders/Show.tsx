@@ -144,23 +144,11 @@ export default function Show() {
 
     return (
         <CustomerLayout
-            title={`Order ${order.order_number}`}
-            description="Review the details of your order."
+            title="Track your order"
+            description="Follow processing, payment, and delivery updates in one place."
         >
             <div className="space-y-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <p className="text-sm font-semibold text-neutral-500">My order</p>
-
-                        <h1 className="mt-1 text-2xl font-bold tracking-tight text-neutral-950 sm:text-3xl">
-                            Track your order
-                        </h1>
-
-                        <p className="mt-1 text-sm text-neutral-500">
-                            Follow processing, payment, and delivery updates in one place.
-                        </p>
-                    </div>
-
                     <Link
                         href={route('customer.orders.index')}
                         className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white px-4 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950"
@@ -211,7 +199,10 @@ export default function Show() {
                             </div>
 
                             <div className="min-w-0">
-                                <h2 id="order-tracking-heading" className="font-bold text-neutral-950">
+                                <h2
+                                    id="order-tracking-heading"
+                                    className="font-bold text-neutral-950"
+                                >
                                     Order tracking
                                 </h2>
                                 <p className="mt-1 text-sm leading-6 text-neutral-500">
@@ -252,7 +243,9 @@ export default function Show() {
                             <div className="flex items-center gap-3 border-b border-neutral-100 bg-neutral-50 px-4 py-3">
                                 <History className="h-4 w-4 text-neutral-500" aria-hidden="true" />
                                 <div>
-                                    <h3 className="text-sm font-bold text-neutral-900">Status history</h3>
+                                    <h3 className="text-sm font-bold text-neutral-900">
+                                        Status history
+                                    </h3>
                                     <p className="text-xs text-neutral-500">
                                         Every recorded order, payment, and fulfilment update.
                                     </p>
@@ -270,22 +263,41 @@ export default function Show() {
                                             <li key={entry.id} className="px-4 py-3.5">
                                                 <div className="flex gap-3">
                                                     <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-500">
-                                                        <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
+                                                        <Clock3
+                                                            className="h-3.5 w-3.5"
+                                                            aria-hidden="true"
+                                                        />
                                                     </div>
                                                     <div className="min-w-0 flex-1">
                                                         <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm">
                                                             <span className="font-semibold text-neutral-950">
                                                                 {entry.type_label}
                                                             </span>
-                                                            <span className="text-neutral-300" aria-hidden="true">·</span>
+                                                            <span
+                                                                className="text-neutral-300"
+                                                                aria-hidden="true"
+                                                            >
+                                                                ·
+                                                            </span>
                                                             {entry.from ? (
                                                                 <>
-                                                                    <span className="text-neutral-500">{entry.from.label}</span>
-                                                                    <span className="text-neutral-400" aria-hidden="true">→</span>
-                                                                    <span className="font-semibold text-neutral-800">{entry.to.label}</span>
+                                                                    <span className="text-neutral-500">
+                                                                        {entry.from.label}
+                                                                    </span>
+                                                                    <span
+                                                                        className="text-neutral-400"
+                                                                        aria-hidden="true"
+                                                                    >
+                                                                        →
+                                                                    </span>
+                                                                    <span className="font-semibold text-neutral-800">
+                                                                        {entry.to.label}
+                                                                    </span>
                                                                 </>
                                                             ) : (
-                                                                <span className="font-semibold text-neutral-800">{entry.to.label}</span>
+                                                                <span className="font-semibold text-neutral-800">
+                                                                    {entry.to.label}
+                                                                </span>
                                                             )}
                                                         </div>
                                                         <time
@@ -867,16 +879,13 @@ function OrderProgress({ order }: { order: CustomerOrderDetails }) {
         {
             key: 'shipped',
             label: 'Shipped',
-            complete: ['shipped', 'delivered', 'returned'].includes(
-                order.fulfilment_status.value,
-            ),
+            complete: ['shipped', 'delivered', 'returned'].includes(order.fulfilment_status.value),
         },
         {
             key: 'delivered',
             label: 'Delivered',
             complete:
-                order.fulfilment_status.value === 'delivered' ||
-                order.status.value === 'completed',
+                order.fulfilment_status.value === 'delivered' || order.status.value === 'completed',
         },
     ]
 
