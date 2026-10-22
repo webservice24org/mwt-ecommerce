@@ -13,14 +13,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
  * @property int $user_id
  * @property int|null $delivery_address_id
+ * @property string|null $idempotency_key
  * @property string $order_number
- * @property string $idempotency_key
  * @property OrderStatus $status
  * @property PaymentMethod $payment_method
  * @property PaymentStatus $payment_status
@@ -31,28 +32,21 @@ use Illuminate\Support\Carbon;
  * @property int $delivery_total
  * @property int $tax_total
  * @property int $grand_total
- * @property string $delivery_recipient_name
- * @property string $delivery_phone
- * @property string $delivery_address_line_1
- * @property string|null $delivery_address_line_2
- * @property string $delivery_city
- * @property string|null $delivery_state_or_region
- * @property string|null $delivery_postal_code
- * @property string $delivery_country_code
  * @property Carbon|null $placed_at
- * @property int|null $items_count
  */
 final class Order extends Model
 {
     /** @use HasFactory<OrderFactory> */
     use HasFactory;
 
-    /** @var list<string> */
+    /**
+     * @var list<string>
+     */
     protected $fillable = [
         'user_id',
+        'idempotency_key',
         'delivery_address_id',
         'order_number',
-        'idempotency_key',
         'status',
         'payment_method',
         'payment_status',
@@ -71,7 +65,6 @@ final class Order extends Model
         'delivery_state_or_region',
         'delivery_postal_code',
         'delivery_country_code',
-        'idempotency_key',
         'placed_at',
     ];
 
@@ -107,6 +100,23 @@ final class Order extends Model
     }
 
     /**
+     * @return HasMany<OrderStatusHistory, $this>
+     */
+    public function statusHistories(): HasMany
+    {
+        return $this
+            ->hasMany(
+                OrderStatusHistory::class,
+            )
+            ->orderBy(
+                'changed_at',
+            )
+            ->orderBy(
+                'id',
+            );
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array
@@ -132,5 +142,15 @@ final class Order extends Model
 
             'placed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * @return HasOne<Invoice, $this>
+     */
+    public function invoice(): HasOne
+    {
+        return $this->hasOne(
+            Invoice::class,
+        );
     }
 }

@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $variant_description
  * @property int $unit_price
  * @property int $quantity
+ * @property bool|null $stock_was_decremented
  * @property int $line_total
  */
 final class OrderItem extends Model
@@ -36,6 +37,7 @@ final class OrderItem extends Model
         'variant_description',
         'unit_price',
         'quantity',
+        'stock_was_decremented',
         'line_total',
     ];
 
@@ -80,6 +82,7 @@ final class OrderItem extends Model
 
             'quantity' => 'integer',
 
+            'stock_was_decremented' => 'boolean',
             'line_total' => 'integer',
         ];
     }

@@ -1,6 +1,6 @@
 import AdminLayout from '@/Layouts/Admin/AdminLayout'
 import { formatMoney } from '@/lib/money'
-import { Head, Link } from '@inertiajs/react'
+import { Head, Link, useForm } from '@inertiajs/react'
 import {
     ArrowLeft,
     CircleDollarSign,
@@ -11,8 +11,17 @@ import {
     ShoppingBag,
     Truck,
     UserRound,
+    CheckCircle2,
+    Clock3,
+    FileText,
+    History,
+    LoaderCircle,
+    Send,
+    AlertTriangle,
+    Ban,
+    X,
 } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 
 interface StatusValue {
     value: string
@@ -45,6 +54,28 @@ interface OrderItem {
     line_total: number
 }
 
+interface TimelineStatus {
+    value: string
+    label: string
+}
+
+interface TimelineEntry {
+    id: number
+    type: 'order' | 'payment' | 'fulfilment'
+    type_label: string
+    from: TimelineStatus | null
+    to: TimelineStatus
+    note: string | null
+    changed_at: string
+}
+
+interface AvailableAction {
+    key: string
+    label: string
+    description: string
+    url: string
+}
+
 interface AdminOrderDetails {
     id: number
     order_number: string
@@ -71,6 +102,22 @@ interface AdminOrderDetails {
     delivery_address: DeliveryAddress
 
     items: OrderItem[]
+    timeline: TimelineEntry[]
+    available_actions: AvailableAction[]
+    cancellation: {
+        allowed: boolean
+        url: string
+    }
+
+    invoice: {
+        number: string
+        url: string
+    } | null
+}
+
+interface CancellationFormErrors {
+    reason?: string
+    cancellation?: string
 }
 
 interface Props {
@@ -78,6 +125,39 @@ interface Props {
 }
 
 export default function Show({ order }: Props) {
+    const { data, setData, post, processing, errors, clearErrors } = useForm({
+        note: '',
+    })
+
+    const processAction = (action: AvailableAction) => {
+        clearErrors()
+
+        post(action.url, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setData('note', '')
+            },
+        })
+    }
+
+    const cancellationForm = useForm({
+        reason: '',
+    })
+
+    const cancellationErrors = cancellationForm.errors as CancellationFormErrors
+
+    const [cancelOpen, setCancelOpen] = useState(false)
+
+    const submitCancellation = () => {
+        cancellationForm.post(order.cancellation.url, {
+            preserveScroll: true,
+
+            onSuccess: () => {
+                cancellationForm.reset()
+                setCancelOpen(false)
+            },
+        })
+    }
     return (
         <AdminLayout title="Order Details">
             <Head title={`Order ${order.order_number}`} />
@@ -391,10 +471,589 @@ export default function Show({ order }: Props) {
                                 </div>
                             </div>
                         </section>
+
+                        <section
+                            aria-labelledby="order-processing-heading"
+                            className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+                        >
+                            <div className="border-b border-slate-200 px-5 py-4 sm:px-6">
+                                <div className="flex items-start gap-3">
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
+                                        <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+                                    </div>
+
+                                    <div>
+                                        <h2
+                                            id="order-processing-heading"
+                                            className="font-semibold text-slate-900"
+                                        >
+                                            Order processing
+                                        </h2>
+
+                                        <p className="mt-1 text-sm text-slate-500">
+                                            Only valid next-state actions are available.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-5 sm:p-6">
+                                {order.available_actions.length === 0 ? (
+                                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                        <div className="flex items-start gap-3">
+                                            <CheckCircle2
+                                                className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600"
+                                                aria-hidden="true"
+                                            />
+
+                                            <div>
+                                                <p className="font-semibold text-slate-900">
+                                                    No processing action available
+                                                </p>
+
+                                                <p className="mt-1 text-sm leading-6 text-slate-500">
+                                                    This order has no valid next processing
+                                                    transition from its current state.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-5">
+                                        {order.available_actions.map((action) => (
+                                            <div
+                                                key={action.key}
+                                                className="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:p-5"
+                                            >
+                                                <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                                                    <div className="min-w-0">
+                                                        <p className="font-semibold text-slate-900">
+                                                            {action.label}
+                                                        </p>
+
+                                                        <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
+                                                            {action.description}
+                                                        </p>
+                                                    </div>
+
+                                                    <button
+                                                        type="button"
+                                                        disabled={processing}
+                                                        onClick={() => processAction(action)}
+                                                        className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    >
+                                                        {processing ? (
+                                                            <LoaderCircle
+                                                                className="h-4 w-4 animate-spin"
+                                                                aria-hidden="true"
+                                                            />
+                                                        ) : (
+                                                            <Send
+                                                                className="h-4 w-4"
+                                                                aria-hidden="true"
+                                                            />
+                                                        )}
+
+                                                        {action.label}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+
+                                        <div>
+                                            <label
+                                                htmlFor="order-transition-note"
+                                                className="text-sm font-semibold text-slate-800"
+                                            >
+                                                Internal processing note
+                                            </label>
+
+                                            <textarea
+                                                id="order-transition-note"
+                                                value={data.note}
+                                                onChange={(event) =>
+                                                    setData('note', event.target.value)
+                                                }
+                                                rows={3}
+                                                maxLength={1000}
+                                                placeholder="Optional note about this status change..."
+                                                className="mt-2 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                                            />
+
+                                            {errors.note && (
+                                                <p className="mt-2 text-sm font-medium text-red-600">
+                                                    {errors.note}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </section>
+
+                        <section
+                            aria-labelledby="order-cancellation-heading"
+                            className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+                        >
+                            <div className="flex flex-col gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 via-white to-red-50/60 px-5 py-5 sm:flex-row sm:items-start sm:justify-between sm:px-6">
+                                <div className="flex min-w-0 items-start gap-3">
+                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-red-100 bg-red-50 text-red-600 shadow-sm">
+                                        <Ban className="h-5 w-5" aria-hidden="true" />
+                                    </div>
+
+                                    <div className="min-w-0">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <h2
+                                                id="order-cancellation-heading"
+                                                className="font-semibold text-slate-950"
+                                            >
+                                                Order cancellation
+                                            </h2>
+
+                                            <span
+                                                className={[
+                                                    'inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold',
+                                                    order.cancellation.allowed
+                                                        ? 'border-amber-200 bg-amber-50 text-amber-700'
+                                                        : 'border-slate-200 bg-slate-100 text-slate-600',
+                                                ].join(' ')}
+                                            >
+                                                {order.cancellation.allowed
+                                                    ? 'Available'
+                                                    : 'Locked'}
+                                            </span>
+                                        </div>
+
+                                        <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
+                                            Cancel only when the order should not continue. Eligible
+                                            inventory is restored transactionally and the reason is
+                                            recorded in status history.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {order.cancellation.allowed && !cancelOpen && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            cancellationForm.clearErrors()
+                                            setCancelOpen(true)
+                                        }}
+                                        className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-700 shadow-sm transition hover:border-red-300 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+                                    >
+                                        <Ban className="h-4 w-4" aria-hidden="true" />
+                                        Cancel order
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="p-5 sm:p-6">
+                                {order.cancellation.allowed ? (
+                                    cancelOpen ? (
+                                        <div className="overflow-hidden rounded-2xl border border-red-200 bg-red-50/40">
+                                            <div className="flex items-start gap-3 border-b border-red-100 bg-red-50 px-4 py-4 sm:px-5">
+                                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-red-600 shadow-sm ring-1 ring-red-100">
+                                                    <AlertTriangle
+                                                        className="h-4 w-4"
+                                                        aria-hidden="true"
+                                                    />
+                                                </div>
+
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="font-semibold text-red-950">
+                                                        Confirm cancellation
+                                                    </p>
+
+                                                    <p className="mt-1 text-sm leading-6 text-red-700">
+                                                        This ends the normal processing path. Enter
+                                                        a clear reason so the cancellation remains
+                                                        auditable.
+                                                    </p>
+                                                </div>
+
+                                                <button
+                                                    type="button"
+                                                    aria-label="Close cancellation form"
+                                                    disabled={cancellationForm.processing}
+                                                    onClick={() => {
+                                                        cancellationForm.clearErrors()
+                                                        setCancelOpen(false)
+                                                    }}
+                                                    className="rounded-lg p-2 text-red-500 transition hover:bg-white hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                                >
+                                                    <X className="h-4 w-4" aria-hidden="true" />
+                                                </button>
+                                            </div>
+
+                                            <div className="space-y-4 p-4 sm:p-5">
+                                                {cancellationErrors.cancellation && (
+                                                    <div
+                                                        role="alert"
+                                                        className="flex items-start gap-3 rounded-xl border border-red-200 bg-white px-4 py-3 text-sm text-red-700 shadow-sm"
+                                                    >
+                                                        <AlertTriangle
+                                                            className="mt-0.5 h-4 w-4 shrink-0"
+                                                            aria-hidden="true"
+                                                        />
+                                                        <p className="leading-6">
+                                                            {cancellationErrors.cancellation}
+                                                        </p>
+                                                    </div>
+                                                )}
+
+                                                <div>
+                                                    <div className="flex items-end justify-between gap-3">
+                                                        <label
+                                                            htmlFor="admin-cancellation-reason"
+                                                            className="text-sm font-semibold text-slate-800"
+                                                        >
+                                                            Cancellation reason
+                                                            <span
+                                                                className="ml-1 text-red-600"
+                                                                aria-hidden="true"
+                                                            >
+                                                                *
+                                                            </span>
+                                                        </label>
+
+                                                        <span className="text-xs tabular-nums text-slate-400">
+                                                            {cancellationForm.data.reason.length}
+                                                            /1000
+                                                        </span>
+                                                    </div>
+
+                                                    <textarea
+                                                        id="admin-cancellation-reason"
+                                                        rows={4}
+                                                        required
+                                                        maxLength={1000}
+                                                        aria-invalid={
+                                                            cancellationErrors.reason
+                                                                ? true
+                                                                : undefined
+                                                        }
+                                                        aria-describedby={
+                                                            cancellationErrors.reason
+                                                                ? 'admin-cancellation-reason-error'
+                                                                : 'admin-cancellation-reason-help'
+                                                        }
+                                                        value={cancellationForm.data.reason}
+                                                        onChange={(event) =>
+                                                            cancellationForm.setData(
+                                                                'reason',
+                                                                event.target.value,
+                                                            )
+                                                        }
+                                                        placeholder="Example: Duplicate order confirmed with the customer."
+                                                        className={[
+                                                            'mt-2 block min-h-28 w-full resize-y rounded-xl border bg-white px-3.5 py-3 text-sm leading-6 text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400',
+                                                            cancellationErrors.reason
+                                                                ? 'border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100'
+                                                                : 'border-slate-300 focus:border-slate-400 focus:ring-4 focus:ring-slate-100',
+                                                        ].join(' ')}
+                                                    />
+
+                                                    {cancellationErrors.reason ? (
+                                                        <p
+                                                            id="admin-cancellation-reason-error"
+                                                            role="alert"
+                                                            className="mt-2 text-sm font-medium text-red-600"
+                                                        >
+                                                            {cancellationErrors.reason}
+                                                        </p>
+                                                    ) : (
+                                                        <p
+                                                            id="admin-cancellation-reason-help"
+                                                            className="mt-2 text-xs leading-5 text-slate-500"
+                                                        >
+                                                            Required. Minimum 3 characters. This
+                                                            note will appear in the order status
+                                                            history.
+                                                        </p>
+                                                    )}
+                                                </div>
+
+                                                <div className="flex flex-col-reverse gap-3 border-t border-red-100 pt-4 sm:flex-row sm:items-center sm:justify-end">
+                                                    <button
+                                                        type="button"
+                                                        disabled={cancellationForm.processing}
+                                                        onClick={() => {
+                                                            cancellationForm.clearErrors()
+                                                            setCancelOpen(false)
+                                                        }}
+                                                        className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    >
+                                                        Keep order
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        disabled={
+                                                            cancellationForm.processing ||
+                                                            cancellationForm.data.reason.trim()
+                                                                .length < 3
+                                                        }
+                                                        onClick={submitCancellation}
+                                                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    >
+                                                        {cancellationForm.processing ? (
+                                                            <LoaderCircle
+                                                                className="h-4 w-4 animate-spin"
+                                                                aria-hidden="true"
+                                                            />
+                                                        ) : (
+                                                            <Ban
+                                                                className="h-4 w-4"
+                                                                aria-hidden="true"
+                                                            />
+                                                        )}
+
+                                                        {cancellationForm.processing
+                                                            ? 'Cancelling…'
+                                                            : 'Confirm cancellation'}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="grid gap-3 sm:grid-cols-3">
+                                            <CancellationInfo
+                                                title="Reason required"
+                                                description="Every admin cancellation is recorded with an audit reason."
+                                            />
+
+                                            <CancellationInfo
+                                                title="Inventory safe"
+                                                description="Only stock known to have been decremented is restored."
+                                            />
+
+                                            <CancellationInfo
+                                                title="State protected"
+                                                description="The server re-checks whether cancellation is still allowed."
+                                            />
+                                        </div>
+                                    )
+                                ) : (
+                                    <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
+                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-slate-500 shadow-sm">
+                                            <Ban className="h-4 w-4" aria-hidden="true" />
+                                        </div>
+
+                                        <div>
+                                            <p className="font-semibold text-slate-900">
+                                                Cancellation unavailable
+                                            </p>
+
+                                            <p className="mt-1 text-sm leading-6 text-slate-500">
+                                                This order has already moved beyond the cancellable
+                                                state. No cancellation request is exposed for its
+                                                current status.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </section>
+
+                        <section
+                            aria-labelledby="order-history-heading"
+                            className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+                        >
+                            <div className="border-b border-slate-200 px-4 py-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
+                                        <History
+                                            className="h-4 w-4"
+                                            aria-hidden="true"
+                                        />
+                                    </div>
+
+                                    <div className="min-w-0">
+                                        <h2
+                                            id="order-history-heading"
+                                            className="font-semibold text-slate-900"
+                                        >
+                                            Status history
+                                        </h2>
+
+                                        <p className="mt-0.5 text-xs leading-5 text-slate-500">
+                                            Order, payment, and fulfilment timeline.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {order.timeline.length === 0 ? (
+                                <div className="px-4 py-6 text-sm text-slate-500">
+                                    No status history is available for this order.
+                                </div>
+                            ) : (
+                                <div className="max-h-80 overflow-y-auto">
+                                    <ol className="divide-y divide-slate-100">
+                                        {order.timeline.map((entry) => (
+                                            <li
+                                                key={entry.id}
+                                                className="px-4 py-3"
+                                            >
+                                                <div className="flex items-start gap-2.5">
+                                                    <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+                                                        <Clock3
+                                                            className="h-3.5 w-3.5"
+                                                            aria-hidden="true"
+                                                        />
+                                                    </div>
+
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-sm">
+                                                            <span className="font-semibold text-slate-900">
+                                                                {entry.type_label}
+                                                            </span>
+
+                                                            <span
+                                                                className="text-slate-300"
+                                                                aria-hidden="true"
+                                                            >
+                                                                ·
+                                                            </span>
+
+                                                            {entry.from ? (
+                                                                <>
+                                                                    <span className="truncate text-slate-500">
+                                                                        {entry.from.label}
+                                                                    </span>
+
+                                                                    <span
+                                                                        className="shrink-0 text-slate-400"
+                                                                        aria-hidden="true"
+                                                                    >
+                                                                        →
+                                                                    </span>
+
+                                                                    <span className="font-semibold text-slate-800">
+                                                                        {entry.to.label}
+                                                                    </span>
+                                                                </>
+                                                            ) : (
+                                                                <span className="font-semibold text-slate-800">
+                                                                    {entry.to.label}
+                                                                </span>
+                                                            )}
+                                                        </div>
+
+                                                        <time
+                                                            dateTime={entry.changed_at}
+                                                            className="mt-1 block text-[11px] font-medium text-slate-400"
+                                                        >
+                                                            {formatDate(entry.changed_at)}
+                                                        </time>
+
+                                                        {entry.note && (
+                                                            <p className="mt-1.5 line-clamp-2 whitespace-pre-wrap break-words text-xs leading-5 text-slate-500">
+                                                                {entry.note}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        ))}
+                                    </ol>
+                                </div>
+                            )}
+                        </section>
+
+                        <section
+                            aria-labelledby="order-documents-heading"
+                            className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+                        >
+                            <div className="border-b border-slate-200 px-5 py-4">
+                                <div className="flex items-center gap-3">
+                                    <FileText
+                                        className="h-5 w-5 text-slate-500"
+                                        aria-hidden="true"
+                                    />
+
+                                    <div>
+                                        <h2
+                                            id="order-documents-heading"
+                                            className="font-semibold text-slate-900"
+                                        >
+                                            Order documents
+                                        </h2>
+
+                                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                                            Generated documents for this order.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-5">
+                                {order.invoice ? (
+                                    <Link
+                                        href={order.invoice.url}
+                                        className="group flex min-h-12 items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 transition hover:border-slate-300 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2"
+                                    >
+                                        <div className="flex min-w-0 items-center gap-3">
+                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-slate-700 shadow-sm ring-1 ring-slate-200">
+                                                <ReceiptText
+                                                    className="h-5 w-5"
+                                                    aria-hidden="true"
+                                                />
+                                            </div>
+
+                                            <div className="min-w-0">
+                                                <p className="font-semibold text-slate-900">
+                                                    Invoice
+                                                </p>
+
+                                                <p className="mt-0.5 truncate text-xs text-slate-500">
+                                                    {order.invoice.number}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <span className="shrink-0 text-sm font-semibold text-slate-700 transition group-hover:text-slate-950">
+                                            View
+                                        </span>
+                                    </Link>
+                                ) : (
+                                    <div className="flex items-start gap-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4">
+                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm ring-1 ring-slate-200">
+                                            <ReceiptText className="h-5 w-5" aria-hidden="true" />
+                                        </div>
+
+                                        <div>
+                                            <p className="font-semibold text-slate-900">
+                                                Invoice not available yet
+                                            </p>
+
+                                            <p className="mt-1 text-xs leading-5 text-slate-500">
+                                                The invoice is generated automatically when order
+                                                processing begins.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <p className="mt-3 text-xs leading-5 text-slate-400">
+                                    Delivery slips, notes, and other order documents can be added
+                                    here later.
+                                </p>
+                            </div>
+                        </section>
                     </div>
                 </div>
             </div>
         </AdminLayout>
+    )
+}
+
+function CancellationInfo({ title, description }: { title: string; description: string }) {
+    return (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-sm font-semibold text-slate-900">{title}</p>
+            <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
+        </div>
     )
 }
 

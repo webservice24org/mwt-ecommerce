@@ -24,4 +24,52 @@ enum PaymentStatus: string
             self::Refunded => 'Refunded',
         };
     }
+
+    /**
+     * @return list<self>
+     */
+    public function allowedTransitions(): array
+    {
+        return match ($this) {
+            self::Unpaid => [
+                self::Pending,
+                self::Paid,
+            ],
+
+            self::Pending => [
+                self::Paid,
+                self::Failed,
+            ],
+
+            self::Failed => [
+                self::Pending,
+            ],
+
+            self::Paid => [
+                self::PartiallyRefunded,
+                self::Refunded,
+            ],
+
+            self::PartiallyRefunded => [
+                self::Refunded,
+            ],
+
+            self::Refunded => [],
+        };
+    }
+
+    public function canTransitionTo(
+        self $status,
+    ): bool {
+        return in_array(
+            $status,
+            $this->allowedTransitions(),
+            true,
+        );
+    }
+
+    public function isTerminal(): bool
+    {
+        return $this === self::Refunded;
+    }
 }

@@ -13,6 +13,7 @@ import {
     PanelBottom,
     PanelTop,
     PlusCircle,
+    ReceiptText,
     Settings,
     ShieldCheck,
     Store,
@@ -126,6 +127,12 @@ const websiteSettingsNavigation: NavigationGroup = {
             label: 'Header Builder',
             icon: PanelTop,
             disabled: true,
+        },
+        {
+            label: 'Invoice Settings',
+            href: route('admin.website-settings.invoice.edit'),
+            match: '/admin/website-settings/invoice',
+            icon: ReceiptText,
         },
         {
             label: 'Theme Settings',

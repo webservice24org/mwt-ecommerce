@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Customer\CustomerAddressController;
 use App\Http\Controllers\Customer\CustomerDashboardController;
 use App\Http\Controllers\Customer\CustomerOrderController;
+use App\Http\Controllers\Customer\InvoiceController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware([
@@ -81,6 +82,20 @@ Route::middleware([
         )
         ->name(
             'orders.show',
+        );
+
+    Route::post('orders/{order}/cancel', [CustomerOrderController::class, 'cancel'])->whereNumber('order')->name('orders.cancel');
+
+    Route::get(
+        '/invoices/{invoice}',
+        [
+            InvoiceController::class,
+            'show',
+        ],
+    )
+        ->whereNumber('invoice')
+        ->name(
+            'invoices.show',
         );
 
 });

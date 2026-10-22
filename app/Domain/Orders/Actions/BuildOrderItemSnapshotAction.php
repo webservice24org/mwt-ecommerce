@@ -71,6 +71,8 @@ final class BuildOrderItemSnapshotAction
 
             quantity: $item->quantity,
 
+            stockWasDecremented: $product->track_inventory,
+
             lineTotal: $lineTotal,
         );
     }

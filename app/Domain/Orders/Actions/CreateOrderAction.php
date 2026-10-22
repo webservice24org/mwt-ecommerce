@@ -12,6 +12,7 @@ use App\Domain\Orders\Enums\OrderStatus;
 use App\Domain\Orders\Enums\PaymentStatus;
 use App\Domain\Orders\Services\OrderNumberGenerator;
 use App\Models\Order;
+use App\Models\OrderStatusHistory;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -35,11 +36,6 @@ final readonly class CreateOrderAction
          * Existing callers may omit the key.
          *
          * The submission identity remains server-owned.
-         * CheckoutSessionService creates and stores the
-         * token in the checkout session.
-         *
-         * Tests that specifically exercise idempotency may
-         * still pass an explicit key.
          */
         $idempotencyKey ??= $this
             ->checkoutSession
@@ -50,13 +46,11 @@ final readonly class CreateOrderAction
          * IDEMPOTENCY FAST PATH
          * ==================================================
          *
-         * This lookup MUST happen before checkout
-         * validation.
+         * This must happen before checkout validation.
          *
-         * A successful first submission clears the cart.
-         * Therefore a repeated request using the same key
-         * must return the existing order rather than
-         * validating the now-empty cart.
+         * A successful first submission clears the cart, so
+         * a repeated request with the same logical submission
+         * key must return the already-created order.
          */
         $existingOrder = $this
             ->findExistingOrder(
@@ -72,16 +66,6 @@ final readonly class CreateOrderAction
          * ==================================================
          * AUTHORITATIVE CHECKOUT VALIDATION
          * ==================================================
-         *
-         * Revalidate immediately before order creation.
-         *
-         * The browser is never authoritative for:
-         *
-         * - prices
-         * - totals
-         * - payment method
-         * - delivery address
-         * - item details
          */
         $checkout = $this
             ->validateCheckout
@@ -90,10 +74,7 @@ final readonly class CreateOrderAction
             );
 
         /*
-         * Build immutable order-item snapshots before
-         * persistence.
-         *
-         * No database writes happen here.
+         * Build immutable item snapshots before persistence.
          */
         $itemSnapshots = $this
             ->buildItemSnapshots
@@ -104,22 +85,22 @@ final readonly class CreateOrderAction
         try {
             /*
              * ==================================================
-             * ATOMIC ORDER + STOCK TRANSACTION
+             * ATOMIC ORDER + STOCK + INITIAL HISTORY
              * ==================================================
              *
-             * Stock validation/decrement, order creation and
-             * order-item persistence are one transaction.
+             * All of the following belong to one transaction:
              *
-             * If any operation fails, every write in this
-             * transaction is rolled back.
+             * - stock validation/decrement
+             * - order persistence
+             * - order-item snapshots
+             * - initial order status history
+             * - initial payment status history
+             * - initial fulfilment status history
+             *
+             * A failure anywhere rolls everything back.
              */
             $order = DB::transaction(
                 function () use ($user, $checkout, $itemSnapshots, $idempotencyKey): Order {
-                    /*
-                     * Lock the relevant stock rows, revalidate
-                     * current availability and decrement the
-                     * inventory atomically.
-                     */
                     $this->stock->execute(
                         $checkout->cart,
                     );
@@ -134,16 +115,6 @@ final readonly class CreateOrderAction
                         ->create([
                             'user_id' => $user->id,
 
-                            /*
-                             * Server-owned submission identity.
-                             *
-                             * The database unique constraint on
-                             *
-                             * user_id + idempotency_key
-                             *
-                             * provides the final duplicate-
-                             * submission race protection.
-                             */
                             'idempotency_key' => $idempotencyKey,
 
                             'delivery_address_id' => $address->id,
@@ -217,9 +188,78 @@ final readonly class CreateOrderAction
                             );
                     }
 
-                    return $order->load(
+                    /*
+                     * ==================================================
+                     * INITIAL STATUS HISTORY
+                     * ==================================================
+                     *
+                     * These are creation events, therefore there is
+                     * no previous status.
+                     */
+                    $changedAt =
+                        now();
+
+                    $order
+                        ->statusHistories()
+                        ->create([
+                            'type' => OrderStatusHistory::TYPE_ORDER,
+
+                            'from_status' => null,
+
+                            'to_status' => OrderStatus::Pending
+                                ->value,
+
+                            'actor_type' => $user->getMorphClass(),
+
+                            'actor_id' => $user->getKey(),
+
+                            'note' => 'Order placed.',
+
+                            'changed_at' => $changedAt,
+                        ]);
+
+                    $order
+                        ->statusHistories()
+                        ->create([
+                            'type' => OrderStatusHistory::TYPE_PAYMENT,
+
+                            'from_status' => null,
+
+                            'to_status' => PaymentStatus::Unpaid
+                                ->value,
+
+                            'actor_type' => $user->getMorphClass(),
+
+                            'actor_id' => $user->getKey(),
+
+                            'note' => 'Payment awaiting collection.',
+
+                            'changed_at' => $changedAt,
+                        ]);
+
+                    $order
+                        ->statusHistories()
+                        ->create([
+                            'type' => OrderStatusHistory::TYPE_FULFILMENT,
+
+                            'from_status' => null,
+
+                            'to_status' => FulfilmentStatus::Unfulfilled
+                                ->value,
+
+                            'actor_type' => $user->getMorphClass(),
+
+                            'actor_id' => $user->getKey(),
+
+                            'note' => 'Order awaiting fulfilment.',
+
+                            'changed_at' => $changedAt,
+                        ]);
+
+                    return $order->load([
                         'items',
-                    );
+                        'statusHistories',
+                    ]);
                 },
             );
         } catch (QueryException $exception) {
@@ -228,16 +268,9 @@ final readonly class CreateOrderAction
              * CONCURRENT DUPLICATE SUBMISSION
              * ==================================================
              *
-             * Two requests may both pass the fast-path lookup
-             * before either request commits.
-             *
-             * The unique database constraint is therefore the
-             * final concurrency authority.
-             *
-             * If this request lost that race, the transaction
-             * above has been rolled back, including its stock
-             * changes. Return the order created by the winning
-             * request.
+             * If another request won the unique idempotency-key
+             * race, this transaction—including any initial
+             * history rows—has rolled back.
              */
             $existingOrder = $this
                 ->findExistingOrder(
@@ -249,31 +282,15 @@ final readonly class CreateOrderAction
                 return $existingOrder;
             }
 
-            /*
-             * This was some other database error.
-             */
             throw $exception;
         }
 
         /*
-         * ==================================================
-         * POST-COMMIT CLEANUP
-         * ==================================================
-         *
          * Only the request that actually created the order
          * reaches this point.
-         *
-         * Never clear the cart before the transaction has
-         * successfully committed.
          */
         $this->cart->clear();
 
-        /*
-         * Prepare a fresh token for a future checkout.
-         *
-         * Requests already in flight with the previous token
-         * remain protected by the persisted idempotency key.
-         */
         $this
             ->checkoutSession
             ->rotateOrderSubmissionToken();
@@ -286,9 +303,10 @@ final readonly class CreateOrderAction
         string $idempotencyKey,
     ): ?Order {
         return Order::query()
-            ->with(
+            ->with([
                 'items',
-            )
+                'statusHistories',
+            ])
             ->where(
                 'user_id',
                 $user->id,

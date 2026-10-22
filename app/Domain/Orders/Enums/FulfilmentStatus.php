@@ -22,4 +22,45 @@ enum FulfilmentStatus: string
             self::Returned => 'Returned',
         };
     }
+
+    /**
+     * @return list<self>
+     */
+    public function allowedTransitions(): array
+    {
+        return match ($this) {
+            self::Unfulfilled => [
+                self::Processing,
+            ],
+
+            self::Processing => [
+                self::Shipped,
+            ],
+
+            self::Shipped => [
+                self::Delivered,
+            ],
+
+            self::Delivered => [
+                self::Returned,
+            ],
+
+            self::Returned => [],
+        };
+    }
+
+    public function canTransitionTo(
+        self $status,
+    ): bool {
+        return in_array(
+            $status,
+            $this->allowedTransitions(),
+            true,
+        );
+    }
+
+    public function isTerminal(): bool
+    {
+        return $this === self::Returned;
+    }
 }

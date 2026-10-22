@@ -14,6 +14,7 @@ final readonly class OrderItemSnapshotData
         public ?string $variantDescription,
         public int $unitPrice,
         public int $quantity,
+        public bool $stockWasDecremented,
         public int $lineTotal,
     ) {}
 
@@ -26,6 +27,7 @@ final readonly class OrderItemSnapshotData
      *     variant_description: string|null,
      *     unit_price: int,
      *     quantity: int,
+     *     stock_was_decremented: bool,
      *     line_total: int
      * }
      */
@@ -33,12 +35,21 @@ final readonly class OrderItemSnapshotData
     {
         return [
             'product_id' => $this->productId,
+
             'variant_id' => $this->variantId,
+
             'product_name' => $this->productName,
+
             'sku' => $this->sku,
+
             'variant_description' => $this->variantDescription,
+
             'unit_price' => $this->unitPrice,
+
             'quantity' => $this->quantity,
+
+            'stock_was_decremented' => $this->stockWasDecremented,
+
             'line_total' => $this->lineTotal,
         ];
     }

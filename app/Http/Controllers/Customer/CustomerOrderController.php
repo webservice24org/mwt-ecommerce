@@ -4,12 +4,18 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Customer;
 
+use App\Domain\Orders\Actions\CancelOrderAction;
+use App\Domain\Orders\Enums\FulfilmentStatus;
+use App\Domain\Orders\Enums\OrderStatus;
 use App\Domain\Orders\Queries\FindCustomerOrderQuery;
+use App\Domain\Orders\Queries\GetOrderStatusTimelineQuery;
 use App\Domain\Orders\Queries\ListCustomerOrdersQuery;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Customer\Orders\CancelOrderRequest;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -76,6 +82,7 @@ final class CustomerOrderController extends Controller
         Request $request,
         int $order,
         FindCustomerOrderQuery $query,
+        GetOrderStatusTimelineQuery $timelineQuery,
     ): Response {
         $user = $request->user();
 
@@ -87,6 +94,15 @@ final class CustomerOrderController extends Controller
         $customerOrder = $query->execute(
             user: $user,
             orderId: $order,
+        );
+
+        /*
+         * The order has already been resolved through the
+         * customer-scoped query above, so loading its invoice
+         * here preserves the existing ownership / IDOR boundary.
+         */
+        $customerOrder->loadMissing(
+            'invoice',
         );
 
         return Inertia::render(
@@ -228,8 +244,78 @@ final class CustomerOrderController extends Controller
                         )
                         ->values()
                         ->all(),
+
+                    'timeline' => $timelineQuery
+                        ->get(
+                            $customerOrder,
+                        ),
+
+                    'cancellation' => [
+                        'allowed' => $customerOrder->status ===
+                            OrderStatus::Pending
+                            && $customerOrder->fulfilment_status ===
+                            FulfilmentStatus::Unfulfilled,
+
+                        'url' => route(
+                            'customer.orders.cancel',
+                            $customerOrder,
+                        ),
+                    ],
+
+                    'invoice' => $customerOrder->invoice !== null
+                        ? [
+                            'number' => $customerOrder
+                                ->invoice
+                                ->invoice_number,
+
+                            'url' => route(
+                                'customer.invoices.show',
+                                $customerOrder->invoice,
+                            ),
+                        ]
+                        : null,
                 ],
             ],
+        );
+    }
+
+    public function cancel(
+        CancelOrderRequest $request,
+        int $order,
+        FindCustomerOrderQuery $query,
+        CancelOrderAction $action,
+    ): RedirectResponse {
+        $user = $request->user();
+
+        abort_unless(
+            $user instanceof User,
+            401,
+        );
+
+        /*
+         * Critical IDOR boundary.
+         *
+         * FindCustomerOrderQuery searches through this
+         * customer's orders, therefore another customer's
+         * order resolves as 404.
+         */
+        $customerOrder = $query->execute(
+            user: $user,
+            orderId: $order,
+        );
+
+        $action->executeForCustomer(
+            order: $customerOrder,
+            customer: $user,
+            reason: $request->reason(),
+        );
+
+        return to_route(
+            'customer.orders.show',
+            $customerOrder,
+        )->with(
+            'success',
+            'Your order has been cancelled successfully.',
         );
     }
 }

@@ -15,6 +15,8 @@ use App\Http\Controllers\Admin\Catalog\ProductImageController;
 use App\Http\Controllers\Admin\Catalog\ProductVariantController;
 use App\Http\Controllers\Admin\Catalog\ProductVideoController;
 use App\Http\Controllers\Admin\FooterBuilderController;
+use App\Http\Controllers\Admin\InvoiceController;
+use App\Http\Controllers\Admin\InvoiceSettingController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PageBuilderBrandSearchController;
 use App\Http\Controllers\Admin\PageBuilderController;
@@ -126,31 +128,18 @@ Route::middleware([
     Route::get('website-settings/header-builder', [HeaderBuilderController::class, 'edit'])->middleware('can:viewAny,'.HeaderSetting::class)->name('website-settings.header-builder.edit');
     Route::put('website-settings/header-builder', [HeaderBuilderController::class, 'update'])->middleware('can:updateAny,'.HeaderSetting::class)->name('website-settings.header-builder.update');
 
-    Route::get(
-        'orders',
-        [
-            OrderController::class,
-            'index',
-        ],
-    )
-        ->name(
-            'orders.index',
-        );
+    Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
+    Route::get('orders/{order}', [OrderController::class, 'show'])->whereNumber('order')->name('orders.show');
+    Route::post('orders/{order}/confirm', [OrderController::class, 'confirm'])->whereNumber('order')->name('orders.confirm');
+    Route::post('orders/{order}/start-processing', [OrderController::class, 'startProcessing'])->whereNumber('order')->name('orders.start-processing');
+    Route::post('orders/{order}/ship', [OrderController::class, 'ship'])->whereNumber('order')->name('orders.ship');
+    Route::post('orders/{order}/deliver', [OrderController::class, 'deliver'])->whereNumber('order')->name('orders.deliver');
+    Route::post('orders/{order}/complete', [OrderController::class, 'complete'])->whereNumber('order')->name('orders.complete');
+    Route::post('orders/{order}/cancel', [OrderController::class, 'cancel'])->whereNumber('order')->name('orders.cancel');
 
-    Route::get(
-        'orders/{order}',
-        [
-            OrderController::class,
-            'show',
-        ],
-    )
-        ->whereNumber(
-            'order',
-        )
-        ->name(
-            'orders.show',
-        );
-
+    Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->whereNumber('invoice')->name('invoices.show');
+    Route::get('website-settings/invoice', [InvoiceSettingController::class, 'edit'])->name('website-settings.invoice.edit');
+    Route::post('website-settings/invoice', [InvoiceSettingController::class, 'update'])->name('website-settings.invoice.update');
 });
 
 Route::middleware([
