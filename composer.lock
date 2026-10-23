@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1694a7eac0882aa3b2f59f39910aa7c5",
+    "content-hash": "011ed512483459e6e81d32f2bfed26bf",
     "packages": [
         {
             "name": "brick/math",
@@ -2164,6 +2164,60 @@
                 }
             ],
             "time": "2026-03-08T20:05:35+00:00"
+        },
+        {
+            "name": "microweb/laravel-tiptap-editor",
+            "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/webservice24org/laravel-tiptap-editor.git",
+                "reference": "85c15e242d6fb68365b3dec7f49cc4151fbe361e"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/webservice24org/laravel-tiptap-editor/zipball/85c15e242d6fb68365b3dec7f49cc4151fbe361e",
+                "reference": "85c15e242d6fb68365b3dec7f49cc4151fbe361e",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/console": "^12.0",
+                "illuminate/filesystem": "^12.0",
+                "illuminate/http": "^12.0",
+                "illuminate/routing": "^12.0",
+                "illuminate/support": "^12.0",
+                "php": "^8.2"
+            },
+            "default-branch": true,
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "MicroWeb\\TiptapEditor\\TiptapEditorServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "MicroWeb\\TiptapEditor\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "A reusable Tiptap rich text editor package for Laravel and React applications.",
+            "keywords": [
+                "editor",
+                "laravel",
+                "react",
+                "rich-text-editor",
+                "tiptap",
+                "typescript"
+            ],
+            "support": {
+                "source": "https://github.com/webservice24org/laravel-tiptap-editor/tree/main",
+                "issues": "https://github.com/webservice24org/laravel-tiptap-editor/issues"
+            },
+            "time": "2026-09-10T18:02:43+00:00"
         },
         {
             "name": "monolog/monolog",
@@ -8856,7 +8910,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "microweb/laravel-tiptap-editor": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

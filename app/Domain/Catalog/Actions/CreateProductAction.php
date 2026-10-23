@@ -6,6 +6,7 @@ namespace App\Domain\Catalog\Actions;
 
 use App\Domain\Catalog\Data\CreateProductData;
 use App\Domain\Catalog\Services\ProductCommercialIntegrityService;
+use App\Domain\Catalog\Services\ProductDescriptionContentService;
 use App\Models\Product;
 use App\Support\Cache\StorefrontCatalogCache;
 use App\Support\Slugs\UniqueSlugGenerator;
@@ -16,11 +17,13 @@ final readonly class CreateProductAction
     public function __construct(
         private UniqueSlugGenerator $slugGenerator,
         private ProductCommercialIntegrityService $commercialIntegrity,
+        private ProductDescriptionContentService $descriptionContent,
         private StorefrontCatalogCache $storefrontCache,
     ) {}
 
-    public function execute(CreateProductData $data): Product
-    {
+    public function execute(
+        CreateProductData $data,
+    ): Product {
         $this->commercialIntegrity
             ->assertProductDataIsValid(
                 type: $data->type,
@@ -29,43 +32,86 @@ final readonly class CreateProductAction
                 compareAtPrice: $data->compareAtPrice,
             );
 
-        $product = DB::transaction(function () use ($data): Product {
-            $slug = $this->slugGenerator->generate(
-                table: 'products',
-                column: 'slug',
-                value: $data->slug ?? $data->name,
-            );
+        $product = DB::transaction(
+            function () use ($data): Product {
+                $slug = $this->slugGenerator
+                    ->generate(
+                        table: 'products',
+                        column: 'slug',
+                        value: $data->slug
+                        ?? $data->name,
+                    );
 
-            $product = Product::query()->create([
-                'brand_id' => $data->brandId,
-                'type' => $data->type,
-                'sku' => $data->sku,
-                'price' => $data->price,
-                'compare_at_price' => $data->compareAtPrice,
-                'cost_price' => $data->costPrice,
-                'name' => $data->name,
-                'slug' => $slug,
-                'short_description' => $data->shortDescription,
-                'description' => $data->description,
-                'status' => $data->status,
-                'is_featured' => $data->isFeatured,
-                'position' => $data->position,
-                'published_at' => $data->publishedAt,
-                'meta_title' => $data->metaTitle,
-                'meta_description' => $data->metaDescription,
-            ]);
+                /*
+                 * The product must exist before editor
+                 * media can be finalized because its ID
+                 * forms part of the permanent directory.
+                 *
+                 * Never persist the untrusted submitted
+                 * description before server sanitization.
+                 */
+                $product = Product::query()
+                    ->create([
+                        'brand_id' => $data->brandId,
 
-            $product->categories()->sync(
-                $data->categoryIds,
-            );
+                        'type' => $data->type,
 
-            return $product->load([
-                'brand',
-                'categories',
-            ]);
-        });
+                        'sku' => $data->sku,
 
-        $this->storefrontCache->invalidate();
+                        'price' => $data->price,
+
+                        'compare_at_price' => $data->compareAtPrice,
+
+                        'cost_price' => $data->costPrice,
+
+                        'name' => $data->name,
+
+                        'slug' => $slug,
+
+                        'short_description' => $data->shortDescription,
+
+                        'description' => null,
+
+                        'status' => $data->status,
+
+                        'is_featured' => $data->isFeatured,
+
+                        'position' => $data->position,
+
+                        'published_at' => $data->publishedAt,
+
+                        'meta_title' => $data->metaTitle,
+
+                        'meta_description' => $data->metaDescription,
+                    ]);
+
+                $description = $this
+                    ->descriptionContent
+                    ->prepare(
+                        html: $data->description,
+                        productId: $product->id,
+                    );
+
+                $product->update([
+                    'description' => $description,
+                ]);
+
+                $product->categories()
+                    ->sync(
+                        $data->categoryIds,
+                    );
+
+                return $product
+                    ->refresh()
+                    ->load([
+                        'brand',
+                        'categories',
+                    ]);
+            },
+        );
+
+        $this->storefrontCache
+            ->invalidate();
 
         return $product;
     }

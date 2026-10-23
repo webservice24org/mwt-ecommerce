@@ -1,3 +1,4 @@
+import MoneyInput from '@/Components/Admin/Catalog/MoneyInput'
 import SeoFields from '@/Components/Admin/SeoFields'
 import type {
     ProductBrandOption,
@@ -6,9 +7,10 @@ import type {
     ProductStatusOption,
     ProductType,
 } from '@/types/catalog'
+import { TiptapEditor } from '@microweb/laravel-tiptap-editor'
+import '@microweb/laravel-tiptap-editor/editor.css'
 import type { InertiaFormProps } from '@inertiajs/react'
 import type { FormEvent } from 'react'
-import MoneyInput from '@/Components/Admin/Catalog/MoneyInput'
 
 export type ProductFormData = {
     brand_id: number | null
@@ -62,8 +64,8 @@ export default function ProductForm({
 
     return (
         <form onSubmit={onSubmit} className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-            <div className="space-y-6">
-                <section className="rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
+            <div className="min-w-0 space-y-6">
+                <section className="min-w-0 rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
                     <div className="mb-6">
                         <h2 className="text-base font-semibold text-neutral-900">
                             Product information
@@ -74,7 +76,7 @@ export default function ProductForm({
                         </p>
                     </div>
 
-                    <div className="space-y-5">
+                    <div className="min-w-0 space-y-5">
                         <div>
                             <label htmlFor="name" className="text-sm font-medium text-neutral-900">
                                 Product name
@@ -144,23 +146,22 @@ export default function ProductForm({
                             )}
                         </div>
 
-                        <div>
-                            <label
-                                htmlFor="description"
-                                className="text-sm font-medium text-neutral-900"
-                            >
-                                Description
-                            </label>
+                        <div className="min-w-0">
+                            <p className="text-sm font-medium text-neutral-900">Description</p>
 
-                            <textarea
-                                id="description"
-                                rows={10}
-                                value={form.data.description}
-                                onChange={(event) =>
-                                    form.setData('description', event.target.value)
-                                }
-                                className="mt-1 block w-full rounded-lg border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500"
-                            />
+                            <div className="mt-1 min-w-0">
+                                <TiptapEditor
+                                    value={form.data.description}
+                                    onChange={(html) => form.setData('description', html)}
+                                    minHeight={420}
+                                    imageUploadUrl={route('admin.products.description-media.store')}
+                                />
+                            </div>
+
+                            <p className="mt-2 text-xs leading-5 text-neutral-500">
+                                Add formatted product content including headings, lists, links,
+                                images, videos and tables.
+                            </p>
 
                             {form.errors.description && (
                                 <p className="mt-1 text-sm text-red-600">

@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\Catalog\AttributeValueController;
 use App\Http\Controllers\Admin\Catalog\BrandController;
 use App\Http\Controllers\Admin\Catalog\CategoryController;
 use App\Http\Controllers\Admin\Catalog\ProductController;
+use App\Http\Controllers\Admin\Catalog\ProductDescriptionMediaController;
 use App\Http\Controllers\Admin\Catalog\ProductImageController;
 use App\Http\Controllers\Admin\Catalog\ProductVariantController;
 use App\Http\Controllers\Admin\Catalog\ProductVideoController;
@@ -99,6 +100,8 @@ Route::middleware([
     Route::delete('products/{product}/images/{image}', [ProductImageController::class, 'destroy'])->whereNumber('image')->name('products.images.destroy');
     Route::post('products/{product}/video', [ProductVideoController::class, 'store'])->name('products.video.store');
     Route::delete('products/{product}/video', [ProductVideoController::class, 'destroy'])->name('products.video.destroy');
+
+    Route::post('products/description-media', ProductDescriptionMediaController::class)->name('products.description-media.store');
 
     Route::resource('pages', PageController::class)->except(['show']);
 
