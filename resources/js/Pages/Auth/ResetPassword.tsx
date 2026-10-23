@@ -1,19 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react'
-import {
-    Check,
-    Eye,
-    EyeOff,
-    LockKeyhole,
-    Mail,
-    ShieldCheck,
-    X,
-} from 'lucide-react'
-import {
-    type FormEvent,
-    type ReactNode,
-    useMemo,
-    useState,
-} from 'react'
+import { Check, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck, X } from 'lucide-react'
+import { type FormEvent, type ReactNode, useMemo, useState } from 'react'
 
 interface ResetPasswordForm {
     token: string
@@ -27,73 +14,54 @@ interface PasswordRequirement {
     met: boolean
 }
 
-export default function ResetPassword({
-    token,
-    email,
-}: {
-    token: string
-    email: string
-}) {
+export default function ResetPassword({ token, email }: { token: string; email: string }) {
     const [showPassword, setShowPassword] = useState(false)
 
-    const [
-        showPasswordConfirmation,
-        setShowPasswordConfirmation,
-    ] = useState(false)
+    const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false)
 
-    const { data, setData, post, processing, errors, reset } =
-        useForm<ResetPasswordForm>({
-            token,
-            email,
-            password: '',
-            password_confirmation: '',
-        })
+    const { data, setData, post, processing, errors, reset } = useForm<ResetPasswordForm>({
+        token,
+        email,
+        password: '',
+        password_confirmation: '',
+    })
 
-    const passwordRequirements =
-        useMemo<PasswordRequirement[]>(
-            () => [
-                {
-                    label: 'At least 10 characters',
-                    met: data.password.length >= 10,
-                },
-                {
-                    label: 'An uppercase letter',
-                    met: /[A-Z]/.test(data.password),
-                },
-                {
-                    label: 'A lowercase letter',
-                    met: /[a-z]/.test(data.password),
-                },
-                {
-                    label: 'A number',
-                    met: /\d/.test(data.password),
-                },
-                {
-                    label: 'A symbol',
-                    met: /[^A-Za-z0-9]/.test(
-                        data.password,
-                    ),
-                },
-            ],
-            [data.password],
-        )
+    const passwordRequirements = useMemo<PasswordRequirement[]>(
+        () => [
+            {
+                label: 'At least 10 characters',
+                met: data.password.length >= 10,
+            },
+            {
+                label: 'An uppercase letter',
+                met: /[A-Z]/.test(data.password),
+            },
+            {
+                label: 'A lowercase letter',
+                met: /[a-z]/.test(data.password),
+            },
+            {
+                label: 'A number',
+                met: /\d/.test(data.password),
+            },
+            {
+                label: 'A symbol',
+                met: /[^A-Za-z0-9]/.test(data.password),
+            },
+        ],
+        [data.password],
+    )
 
-    const passwordConfirmationStarted =
-        data.password_confirmation.length > 0
+    const passwordConfirmationStarted = data.password_confirmation.length > 0
 
     const passwordsMatch =
-        passwordConfirmationStarted &&
-        data.password === data.password_confirmation
+        passwordConfirmationStarted && data.password === data.password_confirmation
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault()
 
         post(route('password.store'), {
-            onFinish: () =>
-                reset(
-                    'password',
-                    'password_confirmation',
-                ),
+            onFinish: () => reset('password', 'password_confirmation'),
         })
     }
 
@@ -126,9 +94,8 @@ export default function ResetPassword({
                             </h1>
 
                             <p className="mt-4 max-w-sm text-sm leading-7 text-neutral-400">
-                                Create a strong new password for your customer
-                                account and keep your orders, invoices, and
-                                account information protected.
+                                Create a strong new password for your customer account and keep your
+                                orders, invoices, and account information protected.
                             </p>
                         </div>
 
@@ -138,8 +105,7 @@ export default function ResetPassword({
                             </p>
 
                             <p className="mt-2 text-xs leading-6 text-indigo-200/70">
-                                Use a password that you do not reuse on other
-                                websites or services.
+                                Use a password that you do not reuse on other websites or services.
                             </p>
                         </div>
                     </aside>
@@ -160,7 +126,6 @@ export default function ResetPassword({
                                     >
                                         <ShieldCheck className="h-4 w-4" />
                                     </span>
-
                                     MWT Ecommerce
                                 </Link>
                             </div>
@@ -178,20 +143,12 @@ export default function ResetPassword({
                                 </h2>
 
                                 <p className="mt-3 text-sm leading-6 text-neutral-400">
-                                    Enter a new password for your customer
-                                    account.
+                                    Enter a new password for your customer account.
                                 </p>
                             </div>
 
-                            <form
-                                onSubmit={submit}
-                                className="mt-8 space-y-5"
-                            >
-                                <ResetField
-                                    id="email"
-                                    label="Email address"
-                                    error={errors.email}
-                                >
+                            <form onSubmit={submit} className="mt-8 space-y-5">
+                                <ResetField id="email" label="Email address" error={errors.email}>
                                     <div className="relative">
                                         <Mail
                                             className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500"
@@ -204,10 +161,7 @@ export default function ResetPassword({
                                             type="email"
                                             value={data.email}
                                             onChange={(event) =>
-                                                setData(
-                                                    'email',
-                                                    event.target.value,
-                                                )
+                                                setData('email', event.target.value)
                                             }
                                             autoComplete="email"
                                             inputMode="email"
@@ -215,20 +169,11 @@ export default function ResetPassword({
                                             maxLength={254}
                                             autoCapitalize="none"
                                             spellCheck={false}
-                                            aria-invalid={
-                                                errors.email
-                                                    ? true
-                                                    : undefined
-                                            }
+                                            aria-invalid={errors.email ? true : undefined}
                                             aria-describedby={
-                                                errors.email
-                                                    ? 'email-error'
-                                                    : undefined
+                                                errors.email ? 'email-error' : undefined
                                             }
-                                            className={inputClass(
-                                                Boolean(errors.email),
-                                                true,
-                                            )}
+                                            className={inputClass(Boolean(errors.email), true)}
                                             placeholder="you@example.com"
                                         />
                                     </div>
@@ -248,40 +193,25 @@ export default function ResetPassword({
                                         <input
                                             id="password"
                                             name="password"
-                                            type={
-                                                showPassword
-                                                    ? 'text'
-                                                    : 'password'
-                                            }
+                                            type={showPassword ? 'text' : 'password'}
                                             value={data.password}
                                             onChange={(event) =>
-                                                setData(
-                                                    'password',
-                                                    event.target.value,
-                                                )
+                                                setData('password', event.target.value)
                                             }
                                             autoComplete="new-password"
                                             autoFocus
                                             required
                                             minLength={10}
                                             maxLength={255}
-                                            aria-invalid={
-                                                errors.password
-                                                    ? true
-                                                    : undefined
-                                            }
+                                            aria-invalid={errors.password ? true : undefined}
                                             aria-describedby={[
                                                 'password-requirements',
-                                                errors.password
-                                                    ? 'password-error'
-                                                    : '',
+                                                errors.password ? 'password-error' : '',
                                             ]
                                                 .filter(Boolean)
                                                 .join(' ')}
                                             className={`${inputClass(
-                                                Boolean(
-                                                    errors.password,
-                                                ),
+                                                Boolean(errors.password),
                                                 true,
                                             )} pr-12`}
                                             placeholder="Create a strong new password"
@@ -289,12 +219,7 @@ export default function ResetPassword({
 
                                         <PasswordVisibilityButton
                                             visible={showPassword}
-                                            onToggle={() =>
-                                                setShowPassword(
-                                                    (current) =>
-                                                        !current,
-                                                )
-                                            }
+                                            onToggle={() => setShowPassword((current) => !current)}
                                             label="new password"
                                         />
                                     </div>
@@ -308,53 +233,41 @@ export default function ResetPassword({
                                         </p>
 
                                         <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-                                            {passwordRequirements.map(
-                                                (requirement) => (
-                                                    <li
-                                                        key={
-                                                            requirement.label
-                                                        }
+                                            {passwordRequirements.map((requirement) => (
+                                                <li
+                                                    key={requirement.label}
+                                                    className={[
+                                                        'flex min-w-0 items-center gap-2 text-xs',
+                                                        requirement.met
+                                                            ? 'text-emerald-300'
+                                                            : 'text-neutral-500',
+                                                    ].join(' ')}
+                                                >
+                                                    <span
                                                         className={[
-                                                            'flex min-w-0 items-center gap-2 text-xs',
+                                                            'flex h-4 w-4 shrink-0 items-center justify-center rounded-full border',
                                                             requirement.met
-                                                                ? 'text-emerald-300'
-                                                                : 'text-neutral-500',
-                                                        ].join(
-                                                            ' ',
-                                                        )}
+                                                                ? 'border-emerald-500/40 bg-emerald-500/10'
+                                                                : 'border-neutral-700',
+                                                        ].join(' ')}
+                                                        aria-hidden="true"
                                                     >
-                                                        <span
-                                                            className={[
-                                                                'flex h-4 w-4 shrink-0 items-center justify-center rounded-full border',
-                                                                requirement.met
-                                                                    ? 'border-emerald-500/40 bg-emerald-500/10'
-                                                                    : 'border-neutral-700',
-                                                            ].join(
-                                                                ' ',
-                                                            )}
-                                                            aria-hidden="true"
-                                                        >
-                                                            {requirement.met ? (
-                                                                <Check className="h-2.5 w-2.5" />
-                                                            ) : (
-                                                                <X className="h-2.5 w-2.5" />
-                                                            )}
-                                                        </span>
+                                                        {requirement.met ? (
+                                                            <Check className="h-2.5 w-2.5" />
+                                                        ) : (
+                                                            <X className="h-2.5 w-2.5" />
+                                                        )}
+                                                    </span>
 
-                                                        <span>
-                                                            {
-                                                                requirement.label
-                                                            }
-                                                        </span>
+                                                    <span>{requirement.label}</span>
 
-                                                        <span className="sr-only">
-                                                            {requirement.met
-                                                                ? 'Requirement met'
-                                                                : 'Requirement not met'}
-                                                        </span>
-                                                    </li>
-                                                ),
-                                            )}
+                                                    <span className="sr-only">
+                                                        {requirement.met
+                                                            ? 'Requirement met'
+                                                            : 'Requirement not met'}
+                                                    </span>
+                                                </li>
+                                            ))}
                                         </ul>
                                     </div>
                                 </ResetField>
@@ -362,9 +275,7 @@ export default function ResetPassword({
                                 <ResetField
                                     id="password_confirmation"
                                     label="Confirm new password"
-                                    error={
-                                        errors.password_confirmation
-                                    }
+                                    error={errors.password_confirmation}
                                 >
                                     <div className="relative">
                                         <LockKeyhole
@@ -375,59 +286,40 @@ export default function ResetPassword({
                                         <input
                                             id="password_confirmation"
                                             name="password_confirmation"
-                                            type={
-                                                showPasswordConfirmation
-                                                    ? 'text'
-                                                    : 'password'
-                                            }
-                                            value={
-                                                data.password_confirmation
-                                            }
+                                            type={showPasswordConfirmation ? 'text' : 'password'}
+                                            value={data.password_confirmation}
                                             onChange={(event) =>
-                                                setData(
-                                                    'password_confirmation',
-                                                    event.target.value,
-                                                )
+                                                setData('password_confirmation', event.target.value)
                                             }
                                             autoComplete="new-password"
                                             required
                                             maxLength={255}
                                             aria-invalid={
-                                                errors.password_confirmation
-                                                    ? true
-                                                    : undefined
+                                                errors.password_confirmation ? true : undefined
                                             }
-                                            aria-describedby={[
-                                                passwordConfirmationStarted
-                                                    ? 'password-confirmation-status'
-                                                    : '',
-                                                errors.password_confirmation
-                                                    ? 'password_confirmation-error'
-                                                    : '',
-                                            ]
-                                                .filter(Boolean)
-                                                .join(' ') ||
-                                                undefined}
+                                            aria-describedby={
+                                                [
+                                                    passwordConfirmationStarted
+                                                        ? 'password-confirmation-status'
+                                                        : '',
+                                                    errors.password_confirmation
+                                                        ? 'password_confirmation-error'
+                                                        : '',
+                                                ]
+                                                    .filter(Boolean)
+                                                    .join(' ') || undefined
+                                            }
                                             className={`${inputClass(
-                                                Boolean(
-                                                    errors.password_confirmation,
-                                                ),
+                                                Boolean(errors.password_confirmation),
                                                 true,
                                             )} pr-12`}
                                             placeholder="Repeat your new password"
                                         />
 
                                         <PasswordVisibilityButton
-                                            visible={
-                                                showPasswordConfirmation
-                                            }
+                                            visible={showPasswordConfirmation}
                                             onToggle={() =>
-                                                setShowPasswordConfirmation(
-                                                    (
-                                                        current,
-                                                    ) =>
-                                                        !current,
-                                                )
+                                                setShowPasswordConfirmation((current) => !current)
                                             }
                                             label="password confirmation"
                                         />
@@ -457,9 +349,7 @@ export default function ResetPassword({
                                     disabled={processing}
                                     className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-indigo-600 px-4 text-sm font-bold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                                 >
-                                    {processing
-                                        ? 'Resetting password...'
-                                        : 'Reset password'}
+                                    {processing ? 'Resetting password...' : 'Reset password'}
                                 </button>
 
                                 <p className="text-center text-sm text-neutral-500">
@@ -493,10 +383,7 @@ function ResetField({
 }) {
     return (
         <div className="min-w-0">
-            <label
-                htmlFor={id}
-                className="mb-2 block text-sm font-semibold text-neutral-200"
-            >
+            <label htmlFor={id} className="mb-2 block text-sm font-semibold text-neutral-200">
                 {label}
             </label>
 
@@ -533,24 +420,15 @@ function PasswordVisibilityButton({
             className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-neutral-400 transition hover:bg-neutral-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
         >
             {visible ? (
-                <EyeOff
-                    className="h-4 w-4"
-                    aria-hidden="true"
-                />
+                <EyeOff className="h-4 w-4" aria-hidden="true" />
             ) : (
-                <Eye
-                    className="h-4 w-4"
-                    aria-hidden="true"
-                />
+                <Eye className="h-4 w-4" aria-hidden="true" />
             )}
         </button>
     )
 }
 
-function inputClass(
-    invalid: boolean,
-    withLeadingIcon = false,
-): string {
+function inputClass(invalid: boolean, withLeadingIcon = false): string {
     return [
         'min-h-12 w-full rounded-xl border bg-neutral-950 px-3 text-sm text-white outline-none transition placeholder:text-neutral-600 focus:ring-2 focus:ring-indigo-500',
         withLeadingIcon ? 'pl-10' : '',

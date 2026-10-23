@@ -52,6 +52,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
+            'anonymized_at' => 'datetime',
             'password' => 'hashed',
             'status' => CustomerStatus::class,
         ];
@@ -69,6 +70,21 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(
             Order::class,
+        );
+    }
+
+    public function isAnonymized(): bool
+    {
+        return $this->anonymized_at !== null;
+    }
+
+    /**
+     * @return HasMany<CustomerStatusHistory, $this>
+     */
+    public function statusHistories(): HasMany
+    {
+        return $this->hasMany(
+            CustomerStatusHistory::class,
         );
     }
 }

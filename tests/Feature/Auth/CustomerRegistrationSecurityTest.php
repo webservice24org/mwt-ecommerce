@@ -20,13 +20,13 @@ final class CustomerRegistrationSecurityTest extends TestCase
             [
                 'name' => 'Customer User',
                 'email' => 'customer@example.com',
-                'password' => 'password123',
-                'password_confirmation' => 'password123',
+                'password' => 'Password123!',
+                'password_confirmation' => 'Password123!',
             ],
         );
 
         $response->assertRedirect(
-            route('customer.dashboard'),
+            route('verification.notice'),
         );
 
         $user = User::query()
@@ -51,8 +51,8 @@ final class CustomerRegistrationSecurityTest extends TestCase
             [
                 'name' => 'Customer User',
                 'email' => 'customer@example.com',
-                'password' => 'password123',
-                'password_confirmation' => 'password123',
+                'password' => 'Password123!',
+                'password_confirmation' => 'Password123!',
                 'status' => CustomerStatus::Suspended->value,
             ],
         );

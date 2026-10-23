@@ -1,11 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react'
-import {
-    Eye,
-    EyeOff,
-    LockKeyhole,
-    Mail,
-    ShieldCheck,
-} from 'lucide-react'
+import { Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from 'lucide-react'
 import { type FormEvent, useState } from 'react'
 
 interface LoginForm {
@@ -23,12 +17,11 @@ export default function Login({
 }) {
     const [showPassword, setShowPassword] = useState(false)
 
-    const { data, setData, post, processing, errors, reset } =
-        useForm<LoginForm>({
-            email: '',
-            password: '',
-            remember: false,
-        })
+    const { data, setData, post, processing, errors, reset } = useForm<LoginForm>({
+        email: '',
+        password: '',
+        remember: false,
+    })
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault()
@@ -67,9 +60,8 @@ export default function Login({
                             </h1>
 
                             <p className="mt-4 max-w-sm text-sm leading-7 text-neutral-400">
-                                Sign in securely to manage your orders,
-                                wishlist, invoices, addresses, and customer
-                                account details.
+                                Sign in securely to manage your orders, wishlist, invoices,
+                                addresses, and customer account details.
                             </p>
                         </div>
 
@@ -79,9 +71,8 @@ export default function Login({
                             </p>
 
                             <p className="mt-2 text-xs leading-6 text-indigo-200/70">
-                                Secure authentication and account verification
-                                help protect your orders and personal
-                                information.
+                                Secure authentication and account verification help protect your
+                                orders and personal information.
                             </p>
                         </div>
                     </aside>
@@ -102,7 +93,6 @@ export default function Login({
                                     >
                                         <ShieldCheck className="h-4 w-4" />
                                     </span>
-
                                     MWT Ecommerce
                                 </Link>
                             </div>
@@ -139,10 +129,7 @@ export default function Login({
                                 </div>
                             )}
 
-                            <form
-                                onSubmit={submit}
-                                className="mt-8 space-y-5"
-                            >
+                            <form onSubmit={submit} className="mt-8 space-y-5">
                                 <div className="min-w-0">
                                     <label
                                         htmlFor="email"
@@ -163,10 +150,7 @@ export default function Login({
                                             type="email"
                                             value={data.email}
                                             onChange={(event) =>
-                                                setData(
-                                                    'email',
-                                                    event.target.value,
-                                                )
+                                                setData('email', event.target.value)
                                             }
                                             autoComplete="email"
                                             inputMode="email"
@@ -175,20 +159,11 @@ export default function Login({
                                             maxLength={254}
                                             autoCapitalize="none"
                                             spellCheck={false}
-                                            aria-invalid={
-                                                errors.email
-                                                    ? true
-                                                    : undefined
-                                            }
+                                            aria-invalid={errors.email ? true : undefined}
                                             aria-describedby={
-                                                errors.email
-                                                    ? 'email-error'
-                                                    : undefined
+                                                errors.email ? 'email-error' : undefined
                                             }
-                                            className={inputClass(
-                                                Boolean(errors.email),
-                                                true,
-                                            )}
+                                            className={inputClass(Boolean(errors.email), true)}
                                             placeholder="you@example.com"
                                         />
                                     </div>
@@ -215,9 +190,7 @@ export default function Login({
 
                                         {canResetPassword && (
                                             <Link
-                                                href={route(
-                                                    'password.request',
-                                                )}
+                                                href={route('password.request')}
                                                 className="shrink-0 text-xs font-semibold text-indigo-400 transition hover:text-indigo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                                             >
                                                 Forgot password?
@@ -234,29 +207,16 @@ export default function Login({
                                         <input
                                             id="password"
                                             name="password"
-                                            type={
-                                                showPassword
-                                                    ? 'text'
-                                                    : 'password'
-                                            }
+                                            type={showPassword ? 'text' : 'password'}
                                             value={data.password}
                                             onChange={(event) =>
-                                                setData(
-                                                    'password',
-                                                    event.target.value,
-                                                )
+                                                setData('password', event.target.value)
                                             }
                                             autoComplete="current-password"
                                             required
-                                            aria-invalid={
-                                                errors.password
-                                                    ? true
-                                                    : undefined
-                                            }
+                                            aria-invalid={errors.password ? true : undefined}
                                             aria-describedby={
-                                                errors.password
-                                                    ? 'password-error'
-                                                    : undefined
+                                                errors.password ? 'password-error' : undefined
                                             }
                                             className={`${inputClass(
                                                 Boolean(errors.password),
@@ -267,29 +227,17 @@ export default function Login({
 
                                         <button
                                             type="button"
-                                            onClick={() =>
-                                                setShowPassword(
-                                                    (current) => !current,
-                                                )
-                                            }
+                                            onClick={() => setShowPassword((current) => !current)}
                                             aria-pressed={showPassword}
                                             aria-label={
-                                                showPassword
-                                                    ? 'Hide password'
-                                                    : 'Show password'
+                                                showPassword ? 'Hide password' : 'Show password'
                                             }
                                             className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-neutral-400 transition hover:bg-neutral-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                                         >
                                             {showPassword ? (
-                                                <EyeOff
-                                                    className="h-4 w-4"
-                                                    aria-hidden="true"
-                                                />
+                                                <EyeOff className="h-4 w-4" aria-hidden="true" />
                                             ) : (
-                                                <Eye
-                                                    className="h-4 w-4"
-                                                    aria-hidden="true"
-                                                />
+                                                <Eye className="h-4 w-4" aria-hidden="true" />
                                             )}
                                         </button>
                                     </div>
@@ -312,17 +260,12 @@ export default function Login({
                                         type="checkbox"
                                         checked={data.remember}
                                         onChange={(event) =>
-                                            setData(
-                                                'remember',
-                                                event.target.checked,
-                                            )
+                                            setData('remember', event.target.checked)
                                         }
                                         className="h-4 w-4 rounded border-neutral-700 bg-neutral-950 text-indigo-600 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0"
                                     />
 
-                                    <span className="text-sm text-neutral-400">
-                                        Remember me
-                                    </span>
+                                    <span className="text-sm text-neutral-400">Remember me</span>
                                 </label>
 
                                 <button
@@ -330,9 +273,7 @@ export default function Login({
                                     disabled={processing}
                                     className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-indigo-600 px-4 text-sm font-bold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                                 >
-                                    {processing
-                                        ? 'Signing in...'
-                                        : 'Sign in'}
+                                    {processing ? 'Signing in...' : 'Sign in'}
                                 </button>
 
                                 <div className="border-t border-neutral-800 pt-5 text-center">
@@ -356,10 +297,7 @@ export default function Login({
     )
 }
 
-function inputClass(
-    invalid: boolean,
-    withLeadingIcon = false,
-): string {
+function inputClass(invalid: boolean, withLeadingIcon = false): string {
     return [
         'min-h-12 w-full rounded-xl border bg-neutral-950 px-3 text-sm text-white outline-none transition placeholder:text-neutral-600 focus:ring-2 focus:ring-indigo-500',
         withLeadingIcon ? 'pl-10' : '',

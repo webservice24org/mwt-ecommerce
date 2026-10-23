@@ -1,10 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react'
-import {
-    Eye,
-    EyeOff,
-    LockKeyhole,
-    ShieldCheck,
-} from 'lucide-react'
+import { Eye, EyeOff, LockKeyhole, ShieldCheck } from 'lucide-react'
 import { type FormEvent, useState } from 'react'
 
 interface ConfirmPasswordForm {
@@ -14,10 +9,9 @@ interface ConfirmPasswordForm {
 export default function ConfirmPassword() {
     const [showPassword, setShowPassword] = useState(false)
 
-    const { data, setData, post, processing, errors, reset } =
-        useForm<ConfirmPasswordForm>({
-            password: '',
-        })
+    const { data, setData, post, processing, errors, reset } = useForm<ConfirmPasswordForm>({
+        password: '',
+    })
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault()
@@ -56,9 +50,8 @@ export default function ConfirmPassword() {
                             </h1>
 
                             <p className="mt-4 max-w-sm text-sm leading-7 text-neutral-400">
-                                This action affects a protected area of your
-                                account. Confirm your password before
-                                continuing.
+                                This action affects a protected area of your account. Confirm your
+                                password before continuing.
                             </p>
                         </div>
 
@@ -68,9 +61,8 @@ export default function ConfirmPassword() {
                             </p>
 
                             <p className="mt-2 text-xs leading-6 text-indigo-200/70">
-                                Password confirmation helps prevent sensitive
-                                account actions from being performed without
-                                your authorization.
+                                Password confirmation helps prevent sensitive account actions from
+                                being performed without your authorization.
                             </p>
                         </div>
                     </aside>
@@ -91,7 +83,6 @@ export default function ConfirmPassword() {
                                     >
                                         <ShieldCheck className="h-4 w-4" />
                                     </span>
-
                                     MWT Ecommerce
                                 </Link>
                             </div>
@@ -109,9 +100,8 @@ export default function ConfirmPassword() {
                                 </h2>
 
                                 <p className="mt-3 max-w-lg text-sm leading-6 text-neutral-400">
-                                    For your security, enter your current
-                                    password to continue to this protected
-                                    action.
+                                    For your security, enter your current password to continue to
+                                    this protected action.
                                 </p>
                             </div>
 
@@ -130,18 +120,14 @@ export default function ConfirmPassword() {
                                         </p>
 
                                         <p className="mt-1 text-xs leading-5 text-neutral-500">
-                                            Your password is used only to
-                                            confirm your identity for this
-                                            protected request.
+                                            Your password is used only to confirm your identity for
+                                            this protected request.
                                         </p>
                                     </div>
                                 </div>
                             </div>
 
-                            <form
-                                onSubmit={submit}
-                                className="mt-6 space-y-5"
-                            >
+                            <form onSubmit={submit} className="mt-6 space-y-5">
                                 <div className="min-w-0">
                                     <label
                                         htmlFor="password"
@@ -159,30 +145,17 @@ export default function ConfirmPassword() {
                                         <input
                                             id="password"
                                             name="password"
-                                            type={
-                                                showPassword
-                                                    ? 'text'
-                                                    : 'password'
-                                            }
+                                            type={showPassword ? 'text' : 'password'}
                                             value={data.password}
                                             onChange={(event) =>
-                                                setData(
-                                                    'password',
-                                                    event.target.value,
-                                                )
+                                                setData('password', event.target.value)
                                             }
                                             autoComplete="current-password"
                                             autoFocus
                                             required
-                                            aria-invalid={
-                                                errors.password
-                                                    ? true
-                                                    : undefined
-                                            }
+                                            aria-invalid={errors.password ? true : undefined}
                                             aria-describedby={
-                                                errors.password
-                                                    ? 'password-error'
-                                                    : undefined
+                                                errors.password ? 'password-error' : undefined
                                             }
                                             className={`${inputClass(
                                                 Boolean(errors.password),
@@ -193,29 +166,17 @@ export default function ConfirmPassword() {
 
                                         <button
                                             type="button"
-                                            onClick={() =>
-                                                setShowPassword(
-                                                    (current) => !current,
-                                                )
-                                            }
+                                            onClick={() => setShowPassword((current) => !current)}
                                             aria-pressed={showPassword}
                                             aria-label={
-                                                showPassword
-                                                    ? 'Hide password'
-                                                    : 'Show password'
+                                                showPassword ? 'Hide password' : 'Show password'
                                             }
                                             className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-neutral-400 transition hover:bg-neutral-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                                         >
                                             {showPassword ? (
-                                                <EyeOff
-                                                    className="h-4 w-4"
-                                                    aria-hidden="true"
-                                                />
+                                                <EyeOff className="h-4 w-4" aria-hidden="true" />
                                             ) : (
-                                                <Eye
-                                                    className="h-4 w-4"
-                                                    aria-hidden="true"
-                                                />
+                                                <Eye className="h-4 w-4" aria-hidden="true" />
                                             )}
                                         </button>
                                     </div>
@@ -236,9 +197,7 @@ export default function ConfirmPassword() {
                                     disabled={processing}
                                     className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-indigo-600 px-4 text-sm font-bold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                                 >
-                                    {processing
-                                        ? 'Confirming...'
-                                        : 'Confirm password'}
+                                    {processing ? 'Confirming...' : 'Confirm password'}
                                 </button>
                             </form>
                         </div>
@@ -249,10 +208,7 @@ export default function ConfirmPassword() {
     )
 }
 
-function inputClass(
-    invalid: boolean,
-    withLeadingIcon = false,
-): string {
+function inputClass(invalid: boolean, withLeadingIcon = false): string {
     return [
         'min-h-12 w-full rounded-xl border bg-neutral-950 px-3 text-sm text-white outline-none transition placeholder:text-neutral-600 focus:ring-2 focus:ring-indigo-500',
         withLeadingIcon ? 'pl-10' : '',

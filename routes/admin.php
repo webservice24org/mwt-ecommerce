@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\Catalog\ProductController;
 use App\Http\Controllers\Admin\Catalog\ProductImageController;
 use App\Http\Controllers\Admin\Catalog\ProductVariantController;
 use App\Http\Controllers\Admin\Catalog\ProductVideoController;
+use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\FooterBuilderController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\InvoiceSettingController;
@@ -151,6 +152,20 @@ Route::middleware([
     Route::post('orders/{order}/deliver', [OrderController::class, 'deliver'])->whereNumber('order')->name('orders.deliver');
     Route::post('orders/{order}/complete', [OrderController::class, 'complete'])->whereNumber('order')->name('orders.complete');
     Route::post('orders/{order}/cancel', [OrderController::class, 'cancel'])->whereNumber('order')->name('orders.cancel');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Customer Management
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('customers', [CustomerController::class, 'index'])->name('customers.index');
+    Route::get('customers/{customer}', [CustomerController::class, 'show'])->whereNumber('customer')->name('customers.show');
+    Route::get('customers/{customer}/edit', [CustomerController::class, 'edit'])->whereNumber('customer')->name('customers.edit');
+    Route::put('customers/{customer}', [CustomerController::class, 'update'])->whereNumber('customer')->name('customers.update');
+    Route::patch('customers/{customer}/block', [CustomerController::class, 'block'])->whereNumber('customer')->name('customers.block');
+    Route::patch('customers/{customer}/unblock', [CustomerController::class, 'unblock'])->whereNumber('customer')->name('customers.unblock');
+    Route::delete('customers/{customer}', [CustomerController::class, 'destroy'])->whereNumber('customer')->name('customers.destroy');
 
 });
 

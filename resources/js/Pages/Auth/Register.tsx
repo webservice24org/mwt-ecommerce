@@ -1,14 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react'
-import {
-    Check,
-    Eye,
-    EyeOff,
-    LockKeyhole,
-    Mail,
-    ShieldCheck,
-    UserRound,
-    X,
-} from 'lucide-react'
+import { Check, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck, UserRound, X } from 'lucide-react'
 import { type FormEvent, type ReactNode, useMemo, useState } from 'react'
 
 interface RegistrationForm {
@@ -119,7 +110,6 @@ export default function Register() {
                                     >
                                         <ShieldCheck className="h-4 w-4" />
                                     </span>
-
                                     MWT Ecommerce
                                 </Link>
                             </div>
@@ -160,20 +150,28 @@ export default function Register() {
                                             name="name"
                                             type="text"
                                             value={data.name}
-                                            onChange={(event) => setData('name', event.target.value)}
+                                            onChange={(event) =>
+                                                setData('name', event.target.value)
+                                            }
                                             autoComplete="name"
                                             autoFocus
                                             required
                                             maxLength={120}
                                             aria-invalid={errors.name ? true : undefined}
-                                            aria-describedby={errors.name ? 'name-error' : undefined}
+                                            aria-describedby={
+                                                errors.name ? 'name-error' : undefined
+                                            }
                                             className={inputClass(Boolean(errors.name), true)}
                                             placeholder="Your full name"
                                         />
                                     </div>
                                 </RegistrationField>
 
-                                <RegistrationField id="email" label="Email address" error={errors.email}>
+                                <RegistrationField
+                                    id="email"
+                                    label="Email address"
+                                    error={errors.email}
+                                >
                                     <div className="relative">
                                         <Mail
                                             className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500"
@@ -185,7 +183,9 @@ export default function Register() {
                                             name="email"
                                             type="email"
                                             value={data.email}
-                                            onChange={(event) => setData('email', event.target.value)}
+                                            onChange={(event) =>
+                                                setData('email', event.target.value)
+                                            }
                                             autoComplete="email"
                                             inputMode="email"
                                             required
@@ -193,14 +193,20 @@ export default function Register() {
                                             autoCapitalize="none"
                                             spellCheck={false}
                                             aria-invalid={errors.email ? true : undefined}
-                                            aria-describedby={errors.email ? 'email-error' : undefined}
+                                            aria-describedby={
+                                                errors.email ? 'email-error' : undefined
+                                            }
                                             className={inputClass(Boolean(errors.email), true)}
                                             placeholder="you@example.com"
                                         />
                                     </div>
                                 </RegistrationField>
 
-                                <RegistrationField id="password" label="Password" error={errors.password}>
+                                <RegistrationField
+                                    id="password"
+                                    label="Password"
+                                    error={errors.password}
+                                >
                                     <div className="relative">
                                         <LockKeyhole
                                             className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500"
@@ -212,7 +218,9 @@ export default function Register() {
                                             name="password"
                                             type={showPassword ? 'text' : 'password'}
                                             value={data.password}
-                                            onChange={(event) => setData('password', event.target.value)}
+                                            onChange={(event) =>
+                                                setData('password', event.target.value)
+                                            }
                                             autoComplete="new-password"
                                             required
                                             minLength={10}
@@ -308,16 +316,18 @@ export default function Register() {
                                             aria-invalid={
                                                 errors.password_confirmation ? true : undefined
                                             }
-                                            aria-describedby={[
-                                                passwordConfirmationStarted
-                                                    ? 'password-confirmation-status'
-                                                    : '',
-                                                errors.password_confirmation
-                                                    ? 'password_confirmation-error'
-                                                    : '',
-                                            ]
-                                                .filter(Boolean)
-                                                .join(' ') || undefined}
+                                            aria-describedby={
+                                                [
+                                                    passwordConfirmationStarted
+                                                        ? 'password-confirmation-status'
+                                                        : '',
+                                                    errors.password_confirmation
+                                                        ? 'password_confirmation-error'
+                                                        : '',
+                                                ]
+                                                    .filter(Boolean)
+                                                    .join(' ') || undefined
+                                            }
                                             className={`${inputClass(
                                                 Boolean(errors.password_confirmation),
                                                 true,

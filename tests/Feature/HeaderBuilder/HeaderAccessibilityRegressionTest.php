@@ -38,7 +38,7 @@ final class HeaderAccessibilityRegressionTest extends TestCase
         );
 
         $this->assertStringContainsString(
-            'aria-haspopup="menu"',
+            'aria-haspopup="dialog"',
             $source,
         );
 
@@ -293,7 +293,7 @@ final class HeaderAccessibilityRegressionTest extends TestCase
         );
 
         $this->assertStringContainsString(
-            'aria-haspopup="menu"',
+            'aria-haspopup="dialog"',
             $source,
         );
 

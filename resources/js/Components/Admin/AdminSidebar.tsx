@@ -443,15 +443,12 @@ export default function AdminSidebar({ open, onClose }: Props) {
                                 )}
                             </Link>
 
-                            <div className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-neutral-400">
-                                <CircleUserRound className="h-4 w-4" strokeWidth={1.8} />
-
-                                <span className="flex-1">Customers</span>
-
-                                <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
-                                    Soon
-                                </span>
-                            </div>
+                            {renderNavigationItem({
+                                label: 'Customers',
+                                href: route('admin.customers.index'),
+                                match: '/admin/customers',
+                                icon: CircleUserRound,
+                            })}
                         </div>
                     </div>
                 </nav>

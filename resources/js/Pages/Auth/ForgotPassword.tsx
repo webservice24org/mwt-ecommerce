@@ -1,25 +1,15 @@
 import { Head, Link, useForm } from '@inertiajs/react'
-import {
-    ArrowLeft,
-    Mail,
-    Send,
-    ShieldCheck,
-} from 'lucide-react'
+import { ArrowLeft, Mail, Send, ShieldCheck } from 'lucide-react'
 import { type FormEvent } from 'react'
 
 interface ForgotPasswordForm {
     email: string
 }
 
-export default function ForgotPassword({
-    status,
-}: {
-    status?: string
-}) {
-    const { data, setData, post, processing, errors } =
-        useForm<ForgotPasswordForm>({
-            email: '',
-        })
+export default function ForgotPassword({ status }: { status?: string }) {
+    const { data, setData, post, processing, errors } = useForm<ForgotPasswordForm>({
+        email: '',
+    })
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault()
@@ -56,9 +46,8 @@ export default function ForgotPassword({
                             </h1>
 
                             <p className="mt-4 max-w-sm text-sm leading-7 text-neutral-400">
-                                Enter the email attached to your customer
-                                account and we&apos;ll send you a secure link
-                                to choose a new password.
+                                Enter the email attached to your customer account and we&apos;ll
+                                send you a secure link to choose a new password.
                             </p>
                         </div>
 
@@ -68,9 +57,8 @@ export default function ForgotPassword({
                             </p>
 
                             <p className="mt-2 text-xs leading-6 text-indigo-200/70">
-                                For account privacy, password recovery does not
-                                need to reveal whether a particular email is
-                                registered.
+                                For account privacy, password recovery does not need to reveal
+                                whether a particular email is registered.
                             </p>
                         </div>
                     </aside>
@@ -91,7 +79,6 @@ export default function ForgotPassword({
                                     >
                                         <ShieldCheck className="h-4 w-4" />
                                     </span>
-
                                     MWT Ecommerce
                                 </Link>
                             </div>
@@ -109,9 +96,8 @@ export default function ForgotPassword({
                                 </h2>
 
                                 <p className="mt-3 max-w-lg text-sm leading-6 text-neutral-400">
-                                    No problem. Enter your email address and
-                                    we&apos;ll send password-reset instructions
-                                    if the account can receive them.
+                                    No problem. Enter your email address and we&apos;ll send
+                                    password-reset instructions if the account can receive them.
                                 </p>
                             </div>
 
@@ -124,10 +110,7 @@ export default function ForgotPassword({
                                 </div>
                             )}
 
-                            <form
-                                onSubmit={submit}
-                                className="mt-8 space-y-5"
-                            >
+                            <form onSubmit={submit} className="mt-8 space-y-5">
                                 <div className="min-w-0">
                                     <label
                                         htmlFor="email"
@@ -148,10 +131,7 @@ export default function ForgotPassword({
                                             type="email"
                                             value={data.email}
                                             onChange={(event) =>
-                                                setData(
-                                                    'email',
-                                                    event.target.value,
-                                                )
+                                                setData('email', event.target.value)
                                             }
                                             autoComplete="email"
                                             inputMode="email"
@@ -160,20 +140,11 @@ export default function ForgotPassword({
                                             maxLength={254}
                                             autoCapitalize="none"
                                             spellCheck={false}
-                                            aria-invalid={
-                                                errors.email
-                                                    ? true
-                                                    : undefined
-                                            }
+                                            aria-invalid={errors.email ? true : undefined}
                                             aria-describedby={
-                                                errors.email
-                                                    ? 'email-error'
-                                                    : undefined
+                                                errors.email ? 'email-error' : undefined
                                             }
-                                            className={inputClass(
-                                                Boolean(errors.email),
-                                                true,
-                                            )}
+                                            className={inputClass(Boolean(errors.email), true)}
                                             placeholder="you@example.com"
                                         />
                                     </div>
@@ -194,10 +165,7 @@ export default function ForgotPassword({
                                     disabled={processing}
                                     className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-bold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                                 >
-                                    <Send
-                                        className="h-4 w-4"
-                                        aria-hidden="true"
-                                    />
+                                    <Send className="h-4 w-4" aria-hidden="true" />
 
                                     {processing
                                         ? 'Sending reset link...'
@@ -209,11 +177,7 @@ export default function ForgotPassword({
                                         href={route('login')}
                                         className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-neutral-700 bg-neutral-950 px-4 text-sm font-bold text-neutral-200 transition hover:border-neutral-600 hover:bg-neutral-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                                     >
-                                        <ArrowLeft
-                                            className="h-4 w-4"
-                                            aria-hidden="true"
-                                        />
-
+                                        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
                                         Back to sign in
                                     </Link>
 
@@ -236,10 +200,7 @@ export default function ForgotPassword({
     )
 }
 
-function inputClass(
-    invalid: boolean,
-    withLeadingIcon = false,
-): string {
+function inputClass(invalid: boolean, withLeadingIcon = false): string {
     return [
         'min-h-12 w-full rounded-xl border bg-neutral-950 px-3 text-sm text-white outline-none transition placeholder:text-neutral-600 focus:ring-2 focus:ring-indigo-500',
         withLeadingIcon ? 'pl-10' : '',
