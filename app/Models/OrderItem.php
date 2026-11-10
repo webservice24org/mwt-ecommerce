@@ -8,6 +8,7 @@ use Database\Factories\OrderItemFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
@@ -85,5 +86,15 @@ final class OrderItem extends Model
             'stock_was_decremented' => 'boolean',
             'line_total' => 'integer',
         ];
+    }
+
+    /**
+     * @return HasMany<ShipmentItem, $this>
+     */
+    public function shipmentItems(): HasMany
+    {
+        return $this->hasMany(
+            ShipmentItem::class,
+        );
     }
 }

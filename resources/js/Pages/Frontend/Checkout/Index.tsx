@@ -1,13 +1,22 @@
-import { Head, Link, router, useForm } from '@inertiajs/react'
+import {
+    Head,
+    Link,
+    router,
+    useForm,
+} from '@inertiajs/react'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 
 import AddressForm from '@/Components/Customer/AddressForm'
 import FrontendLayout from '@/Layouts/Frontend/FrontendLayout'
 import { formatMoney } from '@/lib/money'
-import type { CustomerAddress, CustomerAddressFormData } from '@/types/customer-address'
+import type {
+    CustomerAddress,
+    CustomerAddressFormData,
+} from '@/types/customer-address'
 
-type CheckoutPaymentMethod = 'cash_on_delivery'
+type CheckoutPaymentMethod =
+    'cash_on_delivery'
 
 interface CheckoutPayment {
     method: CheckoutPaymentMethod
@@ -42,87 +51,287 @@ interface CheckoutTotals {
     grand_total: number
 }
 
+interface CheckoutShippingZone {
+    zone_id: number
+    zone_name: string
+    zone_code: string
+
+    shipping_rate_id: number
+
+    rate_name: string
+    rate_code: string
+
+    method_name: string
+
+    amount: number
+    free: boolean
+}
+
+interface CheckoutFormData {
+    shipping_rate_id: number | null
+}
+
+interface CheckoutFormErrors {
+    shipping_rate_id?: string
+    cart?: string
+    address_id?: string
+}
+
 interface Props {
-    cart: CheckoutCart
-    totals: CheckoutTotals
-    addresses: CustomerAddress[]
-    selectedAddressId: number | null
-    addressDefaults: {
+    cart?: CheckoutCart
+    totals?: CheckoutTotals
+
+    addresses?: CustomerAddress[]
+
+    selectedAddressId?: number | null
+
+    addressDefaults?: {
         country_code: string
     }
-    payment: CheckoutPayment
+
+    payment?: CheckoutPayment
+
+    shippingZones?: CheckoutShippingZone[]
+}
+
+const EMPTY_CART: CheckoutCart = {
+    items: [],
+    item_count: 0,
+    subtotal: 0,
+}
+
+const EMPTY_TOTALS: CheckoutTotals = {
+    subtotal: 0,
+    discount_total: 0,
+    delivery_total: 0,
+    tax_total: 0,
+    grand_total: 0,
+}
+
+const DEFAULT_PAYMENT: CheckoutPayment = {
+    method: 'cash_on_delivery',
+    label: 'Cash on Delivery',
+    description:
+        'Pay when your order is delivered.',
+}
+
+const DEFAULT_ADDRESS_DEFAULTS = {
+    country_code: 'BD',
 }
 
 export default function Index({
-    cart,
-    totals,
-    addresses,
-    selectedAddressId,
-    addressDefaults,
-    payment,
+    cart = EMPTY_CART,
+    totals = EMPTY_TOTALS,
+    addresses = [],
+    selectedAddressId = null,
+    addressDefaults =
+        DEFAULT_ADDRESS_DEFAULTS,
+    payment = DEFAULT_PAYMENT,
+    shippingZones = [],
 }: Props) {
-    const [showAddressForm, setShowAddressForm] = useState(addresses.length === 0)
+    const [
+        showAddressForm,
+        setShowAddressForm,
+    ] = useState(
+        addresses.length === 0,
+    )
 
-    const addressForm = useForm<CustomerAddressFormData>({
-        label: '',
-        recipient_name: '',
-        phone: '',
-        address_line_1: '',
-        address_line_2: '',
-        city: '',
-        state_or_region: '',
-        postal_code: '',
-        country_code: addressDefaults.country_code,
-        is_default: addresses.length === 0,
-    })
+    const addressForm =
+        useForm<CustomerAddressFormData>({
+            label: '',
+            recipient_name: '',
+            phone: '',
+            address_line_1: '',
+            address_line_2: '',
+            city: '',
+            state_or_region: '',
+            postal_code: '',
+            country_code:
+                addressDefaults.country_code,
+            is_default:
+                addresses.length === 0,
+        })
 
     /*
-     * There are deliberately no checkout totals,
-     * payment values or address IDs in this form.
+     * Only shipping_rate_id is submitted.
      *
-     * Laravel resolves all final checkout state
-     * from trusted server-side sources.
+     * The selected zone is represented by the
+     * rate attached to that zone.
+     *
+     * Laravel remains authoritative for the
+     * actual rate amount and final order total.
      */
-    const checkoutForm = useForm<Record<string, never>>({})
+    const checkoutForm =
+        useForm<CheckoutFormData>({
+            shipping_rate_id: null,
+        })
 
-    const selectAddress = (addressId: number) => {
-        if (addressId === selectedAddressId) {
+    const checkoutErrors =
+        checkoutForm.errors as CheckoutFormErrors
+
+    const selectedShippingZone =
+        shippingZones.find(
+            (zone) =>
+                zone.shipping_rate_id ===
+                checkoutForm.data
+                    .shipping_rate_id,
+        ) ?? null
+
+    const selectedShippingRateId =
+        selectedShippingZone
+            ?.shipping_rate_id ??
+        null
+
+    const displayedDeliveryTotal =
+        selectedShippingZone?.amount ??
+        totals.delivery_total
+
+    const displayedGrandTotal =
+        totals.grand_total -
+        totals.delivery_total +
+        displayedDeliveryTotal
+
+    const selectAddress = (
+        addressId: number,
+    ) => {
+        if (
+            addressId ===
+            selectedAddressId
+        ) {
             return
         }
 
+        /*
+         * Require the customer to confirm a
+         * shipping zone again when changing
+         * the delivery address.
+         */
+        checkoutForm.setData(
+            'shipping_rate_id',
+            null,
+        )
+
+        checkoutForm.clearErrors(
+            'shipping_rate_id',
+        )
+
         router.post(
-            route('checkout.address.select'),
+            route(
+                'checkout.address.select',
+            ),
             {
-                address_id: addressId,
+                address_id:
+                    addressId,
             },
             {
-                preserveScroll: true,
+                preserveScroll:
+                    true,
             },
         )
     }
 
-    const createAddress = (event: FormEvent<HTMLFormElement>) => {
+    const createAddress = (
+        event: FormEvent<HTMLFormElement>,
+    ) => {
         event.preventDefault()
 
-        addressForm.post(route('checkout.addresses.store'), {
-            preserveScroll: true,
+        addressForm.post(
+            route(
+                'checkout.addresses.store',
+            ),
+            {
+                preserveScroll:
+                    true,
 
-            onSuccess: () => {
-                addressForm.reset()
+                onSuccess: () => {
+                    addressForm.reset()
 
-                setShowAddressForm(false)
+                    checkoutForm.setData(
+                        'shipping_rate_id',
+                        null,
+                    )
+
+                    checkoutForm.clearErrors()
+
+                    setShowAddressForm(
+                        false,
+                    )
+                },
             },
-        })
+        )
     }
 
-    const placeOrder = () => {
-        if (selectedAddressId === null) {
+    const selectShippingZone = (
+        value: string,
+    ) => {
+        checkoutForm.clearErrors(
+            'shipping_rate_id',
+        )
+
+        if (value === '') {
+            checkoutForm.setData(
+                'shipping_rate_id',
+                null,
+            )
+
             return
         }
 
-        checkoutForm.post(route('checkout.order.store'), {
-            preserveScroll: false,
-        })
+        const shippingRateId =
+            Number(value)
+
+        if (
+            !Number.isInteger(
+                shippingRateId,
+            ) ||
+            shippingRateId <= 0
+        ) {
+            checkoutForm.setData(
+                'shipping_rate_id',
+                null,
+            )
+
+            return
+        }
+
+        checkoutForm.setData(
+            'shipping_rate_id',
+            shippingRateId,
+        )
+    }
+
+    const placeOrder = () => {
+        if (
+            selectedAddressId ===
+                null ||
+            selectedShippingRateId ===
+                null
+        ) {
+            return
+        }
+
+        /*
+         * transform() returns void in this
+         * project's Inertia version.
+         */
+        checkoutForm.transform(
+            (data) => ({
+                ...data,
+
+                shipping_rate_id:
+                    selectedShippingRateId,
+            }),
+        )
+
+        checkoutForm.post(
+            route(
+                'checkout.order.store',
+            ),
+            {
+                preserveScroll:
+                    false,
+            },
+        )
     }
 
     return (
@@ -141,170 +350,396 @@ export default function Index({
                         </h1>
 
                         <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-600">
-                            Confirm your delivery address, payment method, and order before
+                            Confirm your
+                            delivery address,
+                            shipping zone,
+                            payment method,
+                            and order before
                             continuing.
                         </p>
                     </div>
 
                     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
                         <div className="min-w-0 space-y-6">
+                            {/* Delivery address */}
                             <section className="rounded-2xl border border-neutral-200 bg-white shadow-sm">
                                 <div className="flex flex-col gap-3 border-b border-neutral-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                                     <div>
                                         <h2 className="text-lg font-bold text-neutral-950">
-                                            Delivery address
+                                            Delivery
+                                            address
                                         </h2>
 
                                         <p className="mt-1 text-sm text-neutral-500">
-                                            Choose where this order should be delivered.
+                                            Choose
+                                            where this
+                                            order
+                                            should be
+                                            delivered.
                                         </p>
                                     </div>
 
-                                    {addresses.length > 0 && (
+                                    {addresses.length >
+                                        0 && (
                                         <button
                                             type="button"
                                             onClick={() =>
-                                                setShowAddressForm((current) => !current)
+                                                setShowAddressForm(
+                                                    (
+                                                        current,
+                                                    ) =>
+                                                        !current,
+                                                )
                                             }
                                             className="inline-flex min-h-10 items-center justify-center rounded-lg border border-neutral-300 bg-white px-4 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50"
                                         >
-                                            {showAddressForm ? 'Cancel' : 'Add new address'}
+                                            {showAddressForm
+                                                ? 'Cancel'
+                                                : 'Add new address'}
                                         </button>
                                     )}
                                 </div>
 
-                                {addresses.length > 0 ? (
+                                {addresses.length >
+                                0 ? (
                                     <div className="grid gap-3 p-5 sm:grid-cols-2 sm:p-6">
-                                        {addresses.map((address) => {
-                                            const selected = address.id === selectedAddressId
+                                        {addresses.map(
+                                            (
+                                                address,
+                                            ) => {
+                                                const selected =
+                                                    address.id ===
+                                                    selectedAddressId
 
-                                            return (
-                                                <button
-                                                    key={address.id}
-                                                    type="button"
-                                                    onClick={() => selectAddress(address.id)}
-                                                    className={`relative min-w-0 rounded-xl border p-4 text-left transition ${
-                                                        selected
-                                                            ? 'border-neutral-950 bg-neutral-50 ring-1 ring-neutral-950'
-                                                            : 'border-neutral-200 bg-white hover:border-neutral-400'
-                                                    }`}
-                                                >
-                                                    <div className="flex items-start justify-between gap-3">
-                                                        <div className="min-w-0">
-                                                            <div className="flex flex-wrap items-center gap-2">
-                                                                <p className="font-semibold text-neutral-950">
-                                                                    {address.label ??
-                                                                        'Delivery address'}
+                                                return (
+                                                    <button
+                                                        key={
+                                                            address.id
+                                                        }
+                                                        type="button"
+                                                        onClick={() =>
+                                                            selectAddress(
+                                                                address.id,
+                                                            )
+                                                        }
+                                                        className={[
+                                                            'relative min-w-0 rounded-xl border p-4 text-left transition',
+                                                            selected
+                                                                ? 'border-neutral-950 bg-neutral-50 ring-1 ring-neutral-950'
+                                                                : 'border-neutral-200 bg-white hover:border-neutral-400',
+                                                        ].join(
+                                                            ' ',
+                                                        )}
+                                                    >
+                                                        <div className="flex items-start justify-between gap-3">
+                                                            <div className="min-w-0">
+                                                                <div className="flex flex-wrap items-center gap-2">
+                                                                    <p className="font-semibold text-neutral-950">
+                                                                        {address.label ??
+                                                                            'Delivery address'}
+                                                                    </p>
+
+                                                                    {address.is_default && (
+                                                                        <span className="rounded-full bg-neutral-100 px-2 py-1 text-xs font-semibold text-neutral-600">
+                                                                            Default
+                                                                        </span>
+                                                                    )}
+
+                                                                    {selected && (
+                                                                        <span className="rounded-full bg-neutral-950 px-2 py-1 text-xs font-semibold text-white">
+                                                                            Selected
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+
+                                                                <p className="mt-3 text-sm font-medium text-neutral-900">
+                                                                    {
+                                                                        address.recipient_name
+                                                                    }
                                                                 </p>
 
-                                                                {address.is_default && (
-                                                                    <span className="rounded-full bg-neutral-100 px-2 py-1 text-xs font-semibold text-neutral-600">
-                                                                        Default
+                                                                <address className="mt-1 not-italic text-sm leading-6 text-neutral-600">
+                                                                    <span className="block">
+                                                                        {
+                                                                            address.address_line_1
+                                                                        }
                                                                     </span>
-                                                                )}
 
-                                                                {selected && (
-                                                                    <span className="rounded-full bg-neutral-950 px-2 py-1 text-xs font-semibold text-white">
-                                                                        Selected
+                                                                    {address.address_line_2 && (
+                                                                        <span className="block">
+                                                                            {
+                                                                                address.address_line_2
+                                                                            }
+                                                                        </span>
+                                                                    )}
+
+                                                                    <span className="block">
+                                                                        {
+                                                                            address.city
+                                                                        }
+
+                                                                        {address.state_or_region
+                                                                            ? `, ${address.state_or_region}`
+                                                                            : ''}
                                                                     </span>
-                                                                )}
+
+                                                                    {address.postal_code && (
+                                                                        <span className="block">
+                                                                            {
+                                                                                address.postal_code
+                                                                            }
+                                                                        </span>
+                                                                    )}
+
+                                                                    <span className="block">
+                                                                        {
+                                                                            address.phone
+                                                                        }
+                                                                    </span>
+                                                                </address>
                                                             </div>
 
-                                                            <p className="mt-3 text-sm font-medium text-neutral-900">
-                                                                {address.recipient_name}
-                                                            </p>
-
-                                                            <address className="mt-1 not-italic text-sm leading-6 text-neutral-600">
-                                                                <span className="block">
-                                                                    {address.address_line_1}
-                                                                </span>
-
-                                                                {address.address_line_2 && (
-                                                                    <span className="block">
-                                                                        {address.address_line_2}
-                                                                    </span>
+                                                            <span
+                                                                aria-hidden="true"
+                                                                className={[
+                                                                    'mt-1 flex size-5 shrink-0 items-center justify-center rounded-full border',
+                                                                    selected
+                                                                        ? 'border-neutral-950 bg-neutral-950'
+                                                                        : 'border-neutral-300',
+                                                                ].join(
+                                                                    ' ',
                                                                 )}
-
-                                                                <span className="block">
-                                                                    {address.city}
-
-                                                                    {address.state_or_region
-                                                                        ? `, ${address.state_or_region}`
-                                                                        : ''}
-                                                                </span>
-
-                                                                {address.postal_code && (
-                                                                    <span className="block">
-                                                                        {address.postal_code}
-                                                                    </span>
+                                                            >
+                                                                {selected && (
+                                                                    <span className="size-2 rounded-full bg-white" />
                                                                 )}
-
-                                                                <span className="block">
-                                                                    {address.phone}
-                                                                </span>
-                                                            </address>
+                                                            </span>
                                                         </div>
-
-                                                        <span
-                                                            aria-hidden="true"
-                                                            className={`mt-1 flex size-5 shrink-0 items-center justify-center rounded-full border ${
-                                                                selected
-                                                                    ? 'border-neutral-950 bg-neutral-950'
-                                                                    : 'border-neutral-300'
-                                                            }`}
-                                                        >
-                                                            {selected && (
-                                                                <span className="size-2 rounded-full bg-white" />
-                                                            )}
-                                                        </span>
-                                                    </div>
-                                                </button>
-                                            )
-                                        })}
+                                                    </button>
+                                                )
+                                            },
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="px-5 pt-5 sm:px-6 sm:pt-6">
                                         <div className="rounded-xl bg-neutral-50 p-4 text-sm leading-6 text-neutral-600">
-                                            You do not have a saved delivery address yet. Add one to
-                                            continue checkout.
+                                            You do not
+                                            have a
+                                            saved
+                                            delivery
+                                            address
+                                            yet. Add
+                                            one to
+                                            continue
+                                            checkout.
                                         </div>
                                     </div>
                                 )}
 
                                 {showAddressForm && (
                                     <div className="border-t border-neutral-200 p-5 sm:p-6">
-                                        <form onSubmit={createAddress}>
+                                        <form
+                                            onSubmit={
+                                                createAddress
+                                            }
+                                        >
                                             <AddressForm
-                                                data={addressForm.data}
-                                                errors={addressForm.errors}
-                                                processing={addressForm.processing}
+                                                data={
+                                                    addressForm.data
+                                                }
+                                                errors={
+                                                    addressForm.errors
+                                                }
+                                                processing={
+                                                    addressForm.processing
+                                                }
                                                 submitLabel="Save and use this address"
-                                                onChange={(field, value) => {
-                                                    addressForm.setData({
-                                                        ...addressForm.data,
-                                                        [field]: value,
-                                                    })
+                                                onChange={(
+                                                    field,
+                                                    value,
+                                                ) => {
+                                                    addressForm.setData(
+                                                        {
+                                                            ...addressForm.data,
+
+                                                            [field]:
+                                                                value,
+                                                        },
+                                                    )
                                                 }}
                                             />
                                         </form>
                                     </div>
                                 )}
 
-                                {checkoutForm.errors.address_id && (
+                                {checkoutErrors.address_id && (
                                     <div className="border-t border-red-100 bg-red-50 px-5 py-3 text-sm text-red-700 sm:px-6">
-                                        {checkoutForm.errors.address_id}
+                                        {
+                                            checkoutErrors.address_id
+                                        }
                                     </div>
                                 )}
                             </section>
 
+                            {/* Shipping zone */}
                             <section className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
                                 <div className="border-b border-neutral-200 px-5 py-4 sm:px-6">
                                     <h2 className="text-lg font-bold text-neutral-950">
-                                        Payment method
+                                        Shipping zone
                                     </h2>
 
                                     <p className="mt-1 text-sm text-neutral-500">
-                                        Choose how you would like to pay for this order.
+                                        Select your
+                                        delivery area
+                                        to calculate
+                                        the shipping
+                                        charge.
+                                    </p>
+                                </div>
+
+                                <div className="p-5 sm:p-6">
+                                    {selectedAddressId ===
+                                    null ? (
+                                        <div className="rounded-xl bg-amber-50 p-4 text-sm leading-6 text-amber-800">
+                                            Select a
+                                            delivery
+                                            address
+                                            before
+                                            choosing a
+                                            shipping
+                                            zone.
+                                        </div>
+                                    ) : shippingZones.length ===
+                                      0 ? (
+                                        <div className="rounded-xl bg-amber-50 p-4 text-sm leading-6 text-amber-800">
+                                            No shipping
+                                            zones are
+                                            currently
+                                            available.
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            <label
+                                                htmlFor="shipping-zone"
+                                                className="text-sm font-semibold text-neutral-900"
+                                            >
+                                                Delivery
+                                                area
+                                            </label>
+
+                                            <select
+                                                id="shipping-zone"
+                                                value={
+                                                    checkoutForm.data
+                                                        .shipping_rate_id ??
+                                                    ''
+                                                }
+                                                onChange={(
+                                                    event,
+                                                ) =>
+                                                    selectShippingZone(
+                                                        event
+                                                            .target
+                                                            .value,
+                                                    )
+                                                }
+                                                className="mt-2 block w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm font-medium text-neutral-900 outline-none transition focus:border-neutral-950 focus:ring-1 focus:ring-neutral-950"
+                                            >
+                                                <option value="">
+                                                    Select
+                                                    shipping
+                                                    zone
+                                                </option>
+
+                                                {shippingZones.map(
+                                                    (
+                                                        zone,
+                                                    ) => (
+                                                        <option
+                                                            key={
+                                                                zone.zone_id
+                                                            }
+                                                            value={
+                                                                zone.shipping_rate_id
+                                                            }
+                                                        >
+                                                            {
+                                                                zone.zone_name
+                                                            }{' '}
+                                                            —{' '}
+                                                            {zone.free
+                                                                ? 'Free'
+                                                                : formatMoney(
+                                                                      zone.amount,
+                                                                  )}
+                                                        </option>
+                                                    ),
+                                                )}
+                                            </select>
+
+                                            {selectedShippingZone && (
+                                                <div className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+                                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                                        <div className="min-w-0">
+                                                            <p className="font-semibold text-neutral-950">
+                                                                {
+                                                                    selectedShippingZone.zone_name
+                                                                }
+                                                            </p>
+
+                                                            <p className="mt-1 text-sm text-neutral-500">
+                                                                {
+                                                                    selectedShippingZone.rate_name
+                                                                }
+                                                            </p>
+
+                                                            <p className="mt-1 text-xs text-neutral-400">
+                                                                {
+                                                                    selectedShippingZone.method_name
+                                                                }
+                                                            </p>
+                                                        </div>
+
+                                                        <p className="shrink-0 text-lg font-bold text-neutral-950">
+                                                            {selectedShippingZone.free
+                                                                ? 'Free'
+                                                                : formatMoney(
+                                                                      selectedShippingZone.amount,
+                                                                  )}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {checkoutErrors.shipping_rate_id && (
+                                        <p
+                                            role="alert"
+                                            className="mt-3 rounded-xl bg-red-50 p-4 text-sm text-red-700"
+                                        >
+                                            {
+                                                checkoutErrors.shipping_rate_id
+                                            }
+                                        </p>
+                                    )}
+                                </div>
+                            </section>
+
+                            {/* Payment method */}
+                            <section className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+                                <div className="border-b border-neutral-200 px-5 py-4 sm:px-6">
+                                    <h2 className="text-lg font-bold text-neutral-950">
+                                        Payment
+                                        method
+                                    </h2>
+
+                                    <p className="mt-1 text-sm text-neutral-500">
+                                        Choose how
+                                        you would
+                                        like to pay
+                                        for this
+                                        order.
                                     </p>
                                 </div>
 
@@ -313,7 +748,9 @@ export default function Index({
                                         <input
                                             type="radio"
                                             name="payment_method"
-                                            value={payment.method}
+                                            value={
+                                                payment.method
+                                            }
                                             checked
                                             readOnly
                                             className="mt-1 h-4 w-4 border-neutral-300 text-neutral-950 focus:ring-neutral-900"
@@ -321,11 +758,15 @@ export default function Index({
 
                                         <span className="min-w-0">
                                             <span className="block font-semibold text-neutral-950">
-                                                {payment.label}
+                                                {
+                                                    payment.label
+                                                }
                                             </span>
 
                                             <span className="mt-1 block text-sm leading-6 text-neutral-600">
-                                                {payment.description}
+                                                {
+                                                    payment.description
+                                                }
                                             </span>
 
                                             <span className="mt-3 inline-flex rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-800">
@@ -335,12 +776,21 @@ export default function Index({
                                     </label>
 
                                     <p className="mt-3 text-xs leading-5 text-neutral-500">
-                                        Online payment gateways can be added later without changing
-                                        the checkout order contract.
+                                        Online
+                                        payment
+                                        gateways can
+                                        be added
+                                        later
+                                        without
+                                        changing the
+                                        checkout
+                                        order
+                                        contract.
                                     </p>
                                 </div>
                             </section>
 
+                            {/* Order items */}
                             <section className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
                                 <div className="border-b border-neutral-200 px-5 py-4 sm:px-6">
                                     <h2 className="text-lg font-bold text-neutral-950">
@@ -348,70 +798,121 @@ export default function Index({
                                     </h2>
 
                                     <p className="mt-1 text-sm text-neutral-500">
-                                        {cart.item_count} {cart.item_count === 1 ? 'item' : 'items'}
+                                        {
+                                            cart.item_count
+                                        }{' '}
+                                        {cart.item_count ===
+                                        1
+                                            ? 'item'
+                                            : 'items'}
                                     </p>
                                 </div>
 
-                                <div className="divide-y divide-neutral-100">
-                                    {cart.items.map((item) => (
-                                        <article key={item.key} className="flex gap-4 p-5 sm:p-6">
-                                            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100">
-                                                {item.image_url ? (
-                                                    <img
-                                                        src={item.image_url}
-                                                        alt=""
-                                                        className="h-full w-full object-cover"
-                                                    />
-                                                ) : (
-                                                    <div className="flex h-full w-full items-center justify-center text-xs text-neutral-400">
-                                                        No image
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <div className="min-w-0 flex-1">
-                                                <Link
-                                                    href={route('products.show', item.slug)}
-                                                    className="font-semibold text-neutral-950 hover:underline"
+                                {cart.items.length >
+                                0 ? (
+                                    <div className="divide-y divide-neutral-100">
+                                        {cart.items.map(
+                                            (
+                                                item,
+                                            ) => (
+                                                <article
+                                                    key={
+                                                        item.key
+                                                    }
+                                                    className="flex gap-4 p-5 sm:p-6"
                                                 >
-                                                    {item.name}
-                                                </Link>
-
-                                                {item.variant_name && (
-                                                    <p className="mt-1 text-sm text-neutral-500">
-                                                        {item.variant_name}
-                                                    </p>
-                                                )}
-
-                                                <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
-                                                    <div className="text-sm text-neutral-600">
-                                                        <span>Qty: {item.quantity}</span>
-
-                                                        <span className="mx-2 text-neutral-300">
-                                                            ×
-                                                        </span>
-
-                                                        <span>{formatMoney(item.unit_price)}</span>
+                                                    <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100">
+                                                        {item.image_url ? (
+                                                            <img
+                                                                src={
+                                                                    item.image_url
+                                                                }
+                                                                alt=""
+                                                                loading="lazy"
+                                                                decoding="async"
+                                                                className="h-full w-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="flex h-full w-full items-center justify-center text-xs text-neutral-400">
+                                                                No
+                                                                image
+                                                            </div>
+                                                        )}
                                                     </div>
 
-                                                    <p className="font-bold text-neutral-950">
-                                                        {formatMoney(item.line_total)}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </article>
-                                    ))}
-                                </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <Link
+                                                            href={route(
+                                                                'products.show',
+                                                                item.slug,
+                                                            )}
+                                                            className="font-semibold text-neutral-950 hover:underline"
+                                                        >
+                                                            {
+                                                                item.name
+                                                            }
+                                                        </Link>
+
+                                                        {item.variant_name && (
+                                                            <p className="mt-1 text-sm text-neutral-500">
+                                                                {
+                                                                    item.variant_name
+                                                                }
+                                                            </p>
+                                                        )}
+
+                                                        <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
+                                                            <div className="text-sm text-neutral-600">
+                                                                <span>
+                                                                    Qty:{' '}
+                                                                    {
+                                                                        item.quantity
+                                                                    }
+                                                                </span>
+
+                                                                <span className="mx-2 text-neutral-300">
+                                                                    ×
+                                                                </span>
+
+                                                                <span>
+                                                                    {formatMoney(
+                                                                        item.unit_price,
+                                                                    )}
+                                                                </span>
+                                                            </div>
+
+                                                            <p className="font-bold text-neutral-950">
+                                                                {formatMoney(
+                                                                    item.line_total,
+                                                                )}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </article>
+                                            ),
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="p-6 text-sm text-neutral-500">
+                                        No checkout
+                                        items are
+                                        currently
+                                        available.
+                                    </div>
+                                )}
                             </section>
 
                             <Link
-                                href={route('cart.show')}
+                                href={route(
+                                    'cart.show',
+                                )}
                                 className="inline-flex text-sm font-semibold text-neutral-600 hover:text-neutral-950"
                             >
                                 ← Return to cart
                             </Link>
                         </div>
 
+                        {/* Order summary */}
                         <aside className="lg:sticky lg:top-6 lg:self-start">
                             <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6">
                                 <h2 className="text-lg font-bold text-neutral-950">
@@ -420,42 +921,69 @@ export default function Index({
 
                                 <div className="mt-5 space-y-3">
                                     <div className="flex items-center justify-between gap-4 text-sm">
-                                        <span className="text-neutral-600">Subtotal</span>
+                                        <span className="text-neutral-600">
+                                            Subtotal
+                                        </span>
 
                                         <span className="font-semibold text-neutral-950">
-                                            {formatMoney(totals.subtotal)}
+                                            {formatMoney(
+                                                totals.subtotal,
+                                            )}
                                         </span>
                                     </div>
 
                                     <div className="flex items-center justify-between gap-4 text-sm">
-                                        <span className="text-neutral-600">Discount</span>
+                                        <span className="text-neutral-600">
+                                            Discount
+                                        </span>
 
                                         <span className="font-semibold text-neutral-950">
-                                            {formatMoney(totals.discount_total)}
+                                            {formatMoney(
+                                                totals.discount_total,
+                                            )}
                                         </span>
                                     </div>
 
                                     <div className="flex items-center justify-between gap-4 text-sm">
-                                        <span className="text-neutral-600">Delivery</span>
+                                        <span className="text-neutral-600">
+                                            Delivery
+                                        </span>
 
                                         <span className="font-semibold text-neutral-950">
-                                            {formatMoney(totals.delivery_total)}
+                                            {selectedAddressId ===
+                                                null ||
+                                            selectedShippingZone ===
+                                                null
+                                                ? '—'
+                                                : selectedShippingZone.free
+                                                  ? 'Free'
+                                                  : formatMoney(
+                                                        displayedDeliveryTotal,
+                                                    )}
                                         </span>
                                     </div>
 
                                     <div className="flex items-center justify-between gap-4 text-sm">
-                                        <span className="text-neutral-600">Tax</span>
+                                        <span className="text-neutral-600">
+                                            Tax
+                                        </span>
 
                                         <span className="font-semibold text-neutral-950">
-                                            {formatMoney(totals.tax_total)}
+                                            {formatMoney(
+                                                totals.tax_total,
+                                            )}
                                         </span>
                                     </div>
 
                                     <div className="flex items-center justify-between gap-4 text-sm">
-                                        <span className="text-neutral-600">Payment</span>
+                                        <span className="text-neutral-600">
+                                            Payment
+                                        </span>
 
                                         <span className="text-right font-medium text-neutral-950">
-                                            {payment.label}
+                                            {
+                                                payment.label
+                                            }
                                         </span>
                                     </div>
                                 </div>
@@ -467,45 +995,118 @@ export default function Index({
                                         </span>
 
                                         <span className="text-xl font-bold text-neutral-950">
-                                            {formatMoney(totals.grand_total)}
+                                            {formatMoney(
+                                                displayedGrandTotal,
+                                            )}
                                         </span>
                                     </div>
                                 </div>
 
-                                {selectedAddressId !== null ? (
-                                    <div className="mt-6 rounded-xl bg-green-50 p-4 text-sm font-medium leading-6 text-green-800">
-                                        Delivery address selected.
+                                {selectedAddressId ===
+                                null ? (
+                                    <div className="mt-6 rounded-xl bg-amber-50 p-4 text-sm leading-6 text-amber-800">
+                                        Select or add
+                                        a delivery
+                                        address
+                                        before
+                                        continuing.
+                                    </div>
+                                ) : shippingZones.length ===
+                                  0 ? (
+                                    <div className="mt-6 rounded-xl bg-red-50 p-4 text-sm leading-6 text-red-700">
+                                        No shipping
+                                        zone is
+                                        currently
+                                        available.
+                                    </div>
+                                ) : selectedShippingZone ===
+                                  null ? (
+                                    <div className="mt-6 rounded-xl bg-amber-50 p-4 text-sm leading-6 text-amber-800">
+                                        Select your
+                                        shipping zone
+                                        before placing
+                                        the order.
                                     </div>
                                 ) : (
-                                    <div className="mt-6 rounded-xl bg-amber-50 p-4 text-sm leading-6 text-amber-800">
-                                        Select or add a delivery address before continuing.
+                                    <div className="mt-6 rounded-xl bg-green-50 p-4 text-sm font-medium leading-6 text-green-800">
+                                        <div>
+                                            {
+                                                selectedShippingZone.zone_name
+                                            }
+                                        </div>
+
+                                        <div className="mt-1">
+                                            {
+                                                selectedShippingZone.rate_name
+                                            }{' '}
+                                            ·{' '}
+                                            {selectedShippingZone.free
+                                                ? 'Free delivery'
+                                                : formatMoney(
+                                                      selectedShippingZone.amount,
+                                                  )}
+                                        </div>
                                     </div>
                                 )}
 
-                                {checkoutForm.errors.cart && (
+                                {checkoutErrors.cart && (
                                     <div className="mt-4 rounded-xl bg-red-50 p-4 text-sm leading-6 text-red-700">
-                                        {checkoutForm.errors.cart}
+                                        {
+                                            checkoutErrors.cart
+                                        }
                                     </div>
                                 )}
 
-                                {checkoutForm.errors.address_id && (
+                                {checkoutErrors.address_id && (
                                     <div className="mt-4 rounded-xl bg-red-50 p-4 text-sm leading-6 text-red-700">
-                                        {checkoutForm.errors.address_id}
+                                        {
+                                            checkoutErrors.address_id
+                                        }
+                                    </div>
+                                )}
+
+                                {checkoutErrors.shipping_rate_id && (
+                                    <div className="mt-4 rounded-xl bg-red-50 p-4 text-sm leading-6 text-red-700">
+                                        {
+                                            checkoutErrors.shipping_rate_id
+                                        }
                                     </div>
                                 )}
 
                                 <button
                                     type="button"
-                                    onClick={placeOrder}
-                                    disabled={selectedAddressId === null || checkoutForm.processing}
+                                    onClick={
+                                        placeOrder
+                                    }
+                                    disabled={
+                                        selectedAddressId ===
+                                            null ||
+                                        selectedShippingRateId ===
+                                            null ||
+                                        shippingZones.length ===
+                                            0 ||
+                                        checkoutForm.processing
+                                    }
                                     className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-neutral-950 px-5 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-600"
                                 >
-                                    {checkoutForm.processing ? 'Placing order...' : 'Place order'}
+                                    {checkoutForm.processing
+                                        ? 'Placing order...'
+                                        : 'Place order'}
                                 </button>
 
                                 <p className="mt-3 text-center text-xs leading-5 text-neutral-500">
-                                    Your cart, delivery address, payment method, prices, stock, and
-                                    totals will be verified again by the server before the order is
+                                    Your cart,
+                                    delivery
+                                    address,
+                                    shipping zone,
+                                    shipping rate,
+                                    payment method,
+                                    prices, stock,
+                                    and totals will
+                                    be verified
+                                    again by the
+                                    server before
+                                    the order is
                                     placed.
                                 </p>
                             </div>

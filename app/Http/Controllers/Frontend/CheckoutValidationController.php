@@ -6,15 +6,15 @@ namespace App\Http\Controllers\Frontend;
 
 use App\Domain\Checkout\Actions\ValidateCheckoutAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Checkout\ValidateCheckoutRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 final class CheckoutValidationController extends Controller
 {
     public function __invoke(
-        Request $request,
+        ValidateCheckoutRequest $request,
         ValidateCheckoutAction $action,
     ): RedirectResponse {
         $user = $request->user();
@@ -26,11 +26,13 @@ final class CheckoutValidationController extends Controller
 
         try {
             $action->execute(
-                $user,
+                user: $user,
+
+                shippingRateId: $request->integer(
+                    'shipping_rate_id',
+                ),
             );
-        } catch (
-            ValidationException $exception
-        ) {
+        } catch (ValidationException $exception) {
             return redirect()
                 ->route(
                     'checkout.index',
@@ -40,11 +42,6 @@ final class CheckoutValidationController extends Controller
                 );
         }
 
-        /*
-         * Phase 6.3E stops here.
-         *
-         * Order creation begins in Phase 6.4.
-         */
         return redirect()
             ->route(
                 'checkout.index',

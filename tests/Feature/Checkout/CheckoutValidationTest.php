@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Checkout;
 
 use App\Models\Address;
+use App\Models\ShippingRate;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -55,10 +56,20 @@ final class CheckoutValidationTest extends TestCase
         $user = User::factory()
             ->create();
 
-        Address::factory()
-            ->for($user)
-            ->default()
-            ->create();
+        /*
+         * Shipping selection is now a required checkout
+         * prerequisite.
+         *
+         * This test is about the empty-cart domain rule,
+         * so provide a valid unrelated shipping rate to
+         * allow the request to reach ValidateCheckoutAction.
+         */
+        $shippingRate =
+            ShippingRate::factory()
+                ->create([
+                    'amount' => 0,
+                    'is_active' => true,
+                ]);
 
         $response = $this
             ->actingAs(
@@ -68,17 +79,23 @@ final class CheckoutValidationTest extends TestCase
                 route(
                     'checkout.validate',
                 ),
+                [
+                    'shipping_rate_id' => $shippingRate->id,
+                ],
             );
 
-        $response->assertRedirect(
-            route(
-                'checkout.index',
-            ),
-        );
-
-        $response->assertSessionHasErrors([
-            'cart',
-        ]);
+        $response
+            ->assertRedirect(
+                route(
+                    'checkout.index',
+                ),
+            )
+            ->assertSessionHasErrors(
+                'cart',
+            )
+            ->assertSessionDoesntHaveErrors(
+                'shipping_rate_id',
+            );
     }
 
     public function test_missing_delivery_address_cannot_be_used_for_checkout(): void

@@ -16,6 +16,7 @@ import {
     AlertTriangle,
     Ban,
     LoaderCircle,
+    ExternalLink,
     X,
 } from 'lucide-react'
 
@@ -61,6 +62,26 @@ interface CustomerOrderItem {
     line_total: number
 }
 
+interface CustomerOrderShipment {
+    id: number
+
+    status: CustomerOrderStatus
+
+    provider: {
+        code: string | null
+        label: string | null
+    }
+
+    carrier: string | null
+    service: string | null
+    tracking_number: string | null
+    tracking_url: string | null
+
+    shipped_at: string | null
+    delivered_at: string | null
+    returned_at: string | null
+}
+
 interface CustomerOrderDetails {
     id: number
     order_number: string
@@ -76,6 +97,8 @@ interface CustomerOrderDetails {
     placed_at: string | null
 
     delivery_address: CustomerOrderDeliveryAddress
+    shipping_selection: ShippingSelectionSnapshot
+    shipments: CustomerOrderShipment[]
 
     items: CustomerOrderItem[]
     timeline: CustomerOrderTimelineEntry[]
@@ -116,6 +139,18 @@ type OrderShowPageProps = PageProps<CustomerOrderShowPageProps>
 interface CancellationFormErrors {
     reason?: string
     cancellation?: string
+}
+
+interface ShippingSelectionSnapshot {
+    method_id: number | null
+    method_code: string | null
+    method_name: string | null
+
+    rate_id: number | null
+    rate_code: string | null
+    rate_name: string | null
+
+    delivery_total: number
 }
 
 export default function Show() {
@@ -681,6 +716,134 @@ export default function Show() {
                 </section>
 
                 <section
+                    aria-labelledby="shipment-tracking-heading"
+                    className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm"
+                >
+                    <div className="border-b border-neutral-100 bg-gradient-to-r from-neutral-50 via-white to-blue-50/50 px-5 py-5 sm:px-6">
+                        <div className="flex items-start gap-3">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700 ring-1 ring-blue-100">
+                                <Truck
+                                    className="h-5 w-5"
+                                    aria-hidden="true"
+                                />
+                            </div>
+
+                            <div className="min-w-0">
+                                <h2
+                                    id="shipment-tracking-heading"
+                                    className="font-bold text-neutral-950"
+                                >
+                                    Shipment & tracking
+                                </h2>
+
+                                <p className="mt-1 text-sm leading-6 text-neutral-500">
+                                    Physical courier and tracking details for your parcel.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {order.shipments.length === 0 ? (
+                        <div className="p-5 sm:p-6">
+                            <div className="flex items-start gap-3 rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-4">
+                                <Package
+                                    className="mt-0.5 h-5 w-5 shrink-0 text-neutral-400"
+                                    aria-hidden="true"
+                                />
+
+                                <div>
+                                    <p className="font-semibold text-neutral-900">
+                                        Shipment is being prepared
+                                    </p>
+
+                                    <p className="mt-1 text-sm leading-6 text-neutral-500">
+                                        Courier and tracking details will appear here after a shipment is created.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-neutral-100">
+                            {order.shipments.map(
+                                (
+                                    shipment,
+                                    index,
+                                ) => (
+                                    <CustomerShipmentCard
+                                        key={
+                                            shipment.id
+                                        }
+                                        shipment={
+                                            shipment
+                                        }
+                                        sequence={
+                                            index + 1
+                                        }
+                                        multiple={
+                                            order.shipments.length >
+                                            1
+                                        }
+                                    />
+                                ),
+                            )}
+                        </div>
+                    )}
+                </section>
+
+                <section className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm">
+                    <div className="border-b border-neutral-200 px-5 py-4 sm:px-6">
+                        <h2 className="font-semibold text-neutral-950">
+                            Delivery selection
+                        </h2>
+
+                        <p className="mt-1 text-sm text-neutral-500">
+                            Checkout delivery service and charge selected for this order.
+                        </p>
+                    </div>
+
+                    <div className="grid gap-5 p-5 sm:grid-cols-3 sm:p-6">
+                        <div>
+                            <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+                                Method
+                            </p>
+
+                            <p className="mt-1 font-semibold text-neutral-950">
+                                {order.shipping_selection.method_name ??
+                                    'Delivery'}
+                            </p>
+                        </div>
+
+                        <div>
+                            <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+                                Rate
+                            </p>
+
+                            <p className="mt-1 font-semibold text-neutral-950">
+                                {order.shipping_selection.rate_name ??
+                                    'Standard delivery'}
+                            </p>
+                        </div>
+
+                        <div>
+                            <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+                                Delivery charge
+                            </p>
+
+                            <p className="mt-1 text-lg font-bold text-neutral-950">
+                                {order.shipping_selection
+                                    .delivery_total === 0
+                                    ? 'Free'
+                                    : formatMoney(
+                                        order.shipping_selection
+                                            .delivery_total,
+                                        order.currency_code,
+                                    )}
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <section
                     aria-labelledby="order-summary-heading"
                     className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm"
                 >
@@ -802,6 +965,245 @@ export default function Show() {
                 </section>
             </div>
         </CustomerLayout>
+    )
+}
+
+function CustomerShipmentCard({
+    shipment,
+    sequence,
+    multiple,
+}: {
+    shipment: CustomerOrderShipment
+    sequence: number
+    multiple: boolean
+}) {
+    const isManual = shipment.provider.code === 'manual'
+
+    const courier =
+        shipment.carrier ??
+        (!isManual ? shipment.provider.label : null) ??
+        'Shipping carrier not assigned yet'
+
+    const providerLabel = isManual
+        ? shipment.carrier
+            ? 'Manual'
+            : 'Not assigned'
+        : (shipment.provider.label ?? 'Not assigned')
+
+    const service =
+        shipment.service ??
+        'Not specified'
+
+    const hasTracking =
+        Boolean(shipment.tracking_number) ||
+        Boolean(shipment.tracking_url)
+
+    return (
+        <article className="p-5 sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-bold text-neutral-950">
+                            {multiple
+                                ? `Shipment ${sequence}`
+                                : 'Shipment'}
+                        </h3>
+
+                        <ShipmentStatusBadge
+                            status={
+                                shipment.status
+                            }
+                        />
+                    </div>
+
+                    <p className="mt-1 text-sm text-neutral-500">
+                        {hasTracking
+                            ? 'Your parcel has courier tracking information available.'
+                            : 'Tracking information will appear when the courier assigns it.'}
+                    </p>
+                </div>
+
+                {shipment.tracking_url && (
+                    <a
+                        href={shipment.tracking_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2"
+                    >
+                        <ExternalLink
+                            className="h-4 w-4"
+                            aria-hidden="true"
+                        />
+
+                        Track shipment
+                    </a>
+                )}
+            </div>
+
+            <dl className="mt-5 grid gap-4 rounded-xl border border-neutral-200 bg-neutral-50 p-4 sm:grid-cols-2 lg:grid-cols-4">
+                <ShipmentDetail
+                    label="Courier"
+                    value={
+                        courier
+                    }
+                />
+
+                <ShipmentDetail
+                    label="Service"
+                    value={service}
+                />
+
+                <ShipmentDetail
+                    label="Consignment / Tracking ID"
+                    value={
+                        shipment.tracking_number ??
+                        'Not assigned yet'
+                    }
+                    mono={
+                        Boolean(
+                            shipment.tracking_number,
+                        )
+                    }
+                />
+
+                <ShipmentDetail
+                    label="Provider"
+                    value={
+                        providerLabel
+                    }
+                />
+            </dl>
+
+            {(shipment.shipped_at ||
+                shipment.delivered_at ||
+                shipment.returned_at) && (
+                <dl className="mt-4 grid gap-3 sm:grid-cols-3">
+                    {shipment.shipped_at && (
+                        <ShipmentDetail
+                            label="Shipped"
+                            value={
+                                formatShipmentDate(
+                                    shipment.shipped_at,
+                                )
+                            }
+                        />
+                    )}
+
+                    {shipment.delivered_at && (
+                        <ShipmentDetail
+                            label="Delivered"
+                            value={
+                                formatShipmentDate(
+                                    shipment.delivered_at,
+                                )
+                            }
+                        />
+                    )}
+
+                    {shipment.returned_at && (
+                        <ShipmentDetail
+                            label="Returned"
+                            value={
+                                formatShipmentDate(
+                                    shipment.returned_at,
+                                )
+                            }
+                        />
+                    )}
+                </dl>
+            )}
+        </article>
+    )
+}
+
+function ShipmentDetail({
+    label,
+    value,
+    mono = false,
+}: {
+    label: string
+    value: string
+    mono?: boolean
+}) {
+    return (
+        <div className="min-w-0">
+            <dt className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+                {label}
+            </dt>
+
+            <dd
+                className={[
+                    'mt-1 break-words text-sm font-semibold text-neutral-900',
+                    mono
+                        ? 'font-mono'
+                        : '',
+                ].join(' ')}
+            >
+                {value}
+            </dd>
+        </div>
+    )
+}
+
+function ShipmentStatusBadge({
+    status,
+}: {
+    status: CustomerOrderStatus
+}) {
+    const className =
+        status.value ===
+        'delivered'
+            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+            : status.value ===
+                'shipped'
+              ? 'border-blue-200 bg-blue-50 text-blue-700'
+              : status.value ===
+                  'returned'
+                ? 'border-violet-200 bg-violet-50 text-violet-700'
+                : status.value ===
+                    'cancelled'
+                  ? 'border-red-200 bg-red-50 text-red-700'
+                  : status.value ===
+                      'processing'
+                    ? 'border-sky-200 bg-sky-50 text-sky-700'
+                    : 'border-neutral-200 bg-neutral-100 text-neutral-700'
+
+    return (
+        <span
+            className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${className}`}
+        >
+            {status.label}
+        </span>
+    )
+}
+
+function formatShipmentDate(
+    value: string,
+): string {
+    const date =
+        new Date(
+            value,
+        )
+
+    if (
+        Number.isNaN(
+            date.getTime(),
+        )
+    ) {
+        return 'Date unavailable'
+    }
+
+    return new Intl.DateTimeFormat(
+        undefined,
+        {
+            dateStyle:
+                'medium',
+
+            timeStyle:
+                'short',
+        },
+    ).format(
+        date,
     )
 }
 

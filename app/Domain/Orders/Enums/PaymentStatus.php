@@ -7,6 +7,7 @@ namespace App\Domain\Orders\Enums;
 enum PaymentStatus: string
 {
     case Unpaid = 'unpaid';
+    case Due = 'due';
     case Pending = 'pending';
     case Paid = 'paid';
     case Failed = 'failed';
@@ -17,6 +18,7 @@ enum PaymentStatus: string
     {
         return match ($this) {
             self::Unpaid => 'Unpaid',
+            self::Due => 'Due',
             self::Pending => 'Pending',
             self::Paid => 'Paid',
             self::Failed => 'Failed',
@@ -32,6 +34,12 @@ enum PaymentStatus: string
     {
         return match ($this) {
             self::Unpaid => [
+                self::Pending,
+                self::Due,
+                self::Paid,
+            ],
+
+            self::Due => [
                 self::Pending,
                 self::Paid,
             ],

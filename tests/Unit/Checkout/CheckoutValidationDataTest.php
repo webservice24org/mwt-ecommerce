@@ -8,6 +8,7 @@ use App\Domain\Cart\Data\CartSummaryData;
 use App\Domain\Checkout\Data\CheckoutTotalsData;
 use App\Domain\Checkout\Data\CheckoutValidationData;
 use App\Domain\Orders\Enums\PaymentMethod;
+use App\Domain\Shipping\Data\ShippingRateQuote;
 use App\Models\Address;
 use PHPUnit\Framework\TestCase;
 
@@ -34,11 +35,18 @@ final class CheckoutValidationDataTest extends TestCase
         $paymentMethod =
             PaymentMethod::CashOnDelivery;
 
+        $shippingQuote =
+            $this->shippingQuote(
+                amount: 0,
+                free: true,
+            );
+
         $checkout = new CheckoutValidationData(
             cart: $cart,
             totals: $totals,
             address: $address,
             paymentMethod: $paymentMethod,
+            shippingQuote: $shippingQuote,
         );
 
         $this->assertSame(
@@ -60,6 +68,11 @@ final class CheckoutValidationDataTest extends TestCase
             PaymentMethod::CashOnDelivery,
             $checkout->paymentMethod,
         );
+
+        $this->assertSame(
+            $shippingQuote,
+            $checkout->shippingQuote,
+        );
     }
 
     public function test_it_preserves_authoritative_monetary_values(): void
@@ -78,11 +91,18 @@ final class CheckoutValidationDataTest extends TestCase
             grandTotal: 34149,
         );
 
+        $shippingQuote =
+            $this->shippingQuote(
+                amount: 150,
+                free: false,
+            );
+
         $checkout = new CheckoutValidationData(
             cart: $cart,
             totals: $totals,
             address: new Address,
             paymentMethod: PaymentMethod::CashOnDelivery,
+            shippingQuote: $shippingQuote,
         );
 
         $this->assertSame(
@@ -116,6 +136,35 @@ final class CheckoutValidationDataTest extends TestCase
             $checkout
                 ->totals
                 ->grandTotal,
+        );
+
+        $this->assertSame(
+            150,
+            $checkout
+                ->shippingQuote
+                ->amount,
+        );
+
+        $this->assertFalse(
+            $checkout
+                ->shippingQuote
+                ->free,
+        );
+    }
+
+    private function shippingQuote(
+        int $amount,
+        bool $free,
+    ): ShippingRateQuote {
+        return new ShippingRateQuote(
+            shippingMethodId: 1,
+            shippingRateId: 1,
+            methodCode: 'standard',
+            methodName: 'Standard Delivery',
+            rateCode: 'standard-rate',
+            rateName: 'Standard Rate',
+            amount: $amount,
+            free: $free,
         );
     }
 }

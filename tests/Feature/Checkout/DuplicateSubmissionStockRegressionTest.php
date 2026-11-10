@@ -9,6 +9,7 @@ use App\Domain\Orders\Actions\CreateOrderAction;
 use App\Domain\Orders\Enums\PaymentMethod;
 use App\Models\Address;
 use App\Models\Product;
+use App\Models\ShippingRate;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -19,6 +20,8 @@ final class DuplicateSubmissionStockRegressionTest extends TestCase
 
     public function test_same_submission_token_returns_same_order(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         $user = User::factory()
             ->create();
 
@@ -69,14 +72,16 @@ final class DuplicateSubmissionStockRegressionTest extends TestCase
 
         $firstOrder = $action
             ->execute(
-                $user,
-                $token,
+                user: $user,
+                shippingRateId: $shippingRate->id,
+                idempotencyKey: $token,
             );
 
         $secondOrder = $action
             ->execute(
-                $user,
-                $token,
+                user: $user,
+                shippingRateId: $shippingRate->id,
+                idempotencyKey: $token,
             );
 
         $this->assertSame(
@@ -98,5 +103,14 @@ final class DuplicateSubmissionStockRegressionTest extends TestCase
             $token,
             $firstOrder->idempotency_key,
         );
+    }
+
+    private function createShippingRate(): ShippingRate
+    {
+        return ShippingRate::factory()
+            ->create([
+                'amount' => 0,
+                'is_active' => true,
+            ]);
     }
 }

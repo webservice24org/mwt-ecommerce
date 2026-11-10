@@ -11,6 +11,7 @@ use App\Domain\Orders\Enums\PaymentStatus;
 use App\Models\Address;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\ShippingRate;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -21,6 +22,8 @@ final class CashOnDeliveryRegressionTest extends TestCase
 
     public function test_successful_cod_checkout_creates_expected_initial_order_state(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         [
             'user' => $user,
         ] = $this->prepareCheckout();
@@ -33,6 +36,9 @@ final class CashOnDeliveryRegressionTest extends TestCase
                 route(
                     'checkout.order.store',
                 ),
+                [
+                    'shipping_rate_id' => $shippingRate->id,
+                ],
             );
 
         $order = Order::query()
@@ -78,6 +84,8 @@ final class CashOnDeliveryRegressionTest extends TestCase
 
     public function test_cod_checkout_persists_expected_database_values(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         [
             'user' => $user,
         ] = $this->prepareCheckout();
@@ -90,6 +98,9 @@ final class CashOnDeliveryRegressionTest extends TestCase
                 route(
                     'checkout.order.store',
                 ),
+                [
+                    'shipping_rate_id' => $shippingRate->id,
+                ],
             )
             ->assertRedirect();
 
@@ -125,6 +136,8 @@ final class CashOnDeliveryRegressionTest extends TestCase
 
     public function test_client_cannot_override_cod_payment_method(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         [
             'user' => $user,
         ] = $this->prepareCheckout();
@@ -138,6 +151,8 @@ final class CashOnDeliveryRegressionTest extends TestCase
                     'checkout.order.store',
                 ),
                 [
+                    'shipping_rate_id' => $shippingRate->id,
+
                     'payment_method' => 'card',
                 ],
             )
@@ -159,6 +174,8 @@ final class CashOnDeliveryRegressionTest extends TestCase
 
     public function test_client_cannot_mark_cod_order_as_paid(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         [
             'user' => $user,
         ] = $this->prepareCheckout();
@@ -172,6 +189,8 @@ final class CashOnDeliveryRegressionTest extends TestCase
                     'checkout.order.store',
                 ),
                 [
+                    'shipping_rate_id' => $shippingRate->id,
+
                     'payment_status' => 'paid',
                 ],
             )
@@ -193,6 +212,8 @@ final class CashOnDeliveryRegressionTest extends TestCase
 
     public function test_client_cannot_override_order_or_fulfilment_state_during_cod_checkout(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         [
             'user' => $user,
         ] = $this->prepareCheckout();
@@ -206,6 +227,8 @@ final class CashOnDeliveryRegressionTest extends TestCase
                     'checkout.order.store',
                 ),
                 [
+                    'shipping_rate_id' => $shippingRate->id,
+
                     'status' => 'completed',
 
                     'fulfilment_status' => 'delivered',
@@ -234,6 +257,8 @@ final class CashOnDeliveryRegressionTest extends TestCase
 
     public function test_successful_cod_checkout_clears_cart(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         [
             'user' => $user,
         ] = $this->prepareCheckout();
@@ -246,6 +271,9 @@ final class CashOnDeliveryRegressionTest extends TestCase
                 route(
                     'checkout.order.store',
                 ),
+                [
+                    'shipping_rate_id' => $shippingRate->id,
+                ],
             )
             ->assertRedirect();
 
@@ -258,6 +286,8 @@ final class CashOnDeliveryRegressionTest extends TestCase
 
     public function test_cod_order_keeps_delivery_snapshot_after_saved_address_changes(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         [
             'user' => $user,
             'address' => $address,
@@ -271,6 +301,9 @@ final class CashOnDeliveryRegressionTest extends TestCase
                 route(
                     'checkout.order.store',
                 ),
+                [
+                    'shipping_rate_id' => $shippingRate->id,
+                ],
             )
             ->assertRedirect();
 
@@ -310,6 +343,8 @@ final class CashOnDeliveryRegressionTest extends TestCase
 
     public function test_cod_order_keeps_item_snapshot_after_product_changes(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         [
             'user' => $user,
             'product' => $product,
@@ -323,6 +358,9 @@ final class CashOnDeliveryRegressionTest extends TestCase
                 route(
                     'checkout.order.store',
                 ),
+                [
+                    'shipping_rate_id' => $shippingRate->id,
+                ],
             )
             ->assertRedirect();
 
@@ -428,5 +466,14 @@ final class CashOnDeliveryRegressionTest extends TestCase
 
             'product' => $product,
         ];
+    }
+
+    private function createShippingRate(): ShippingRate
+    {
+        return ShippingRate::factory()
+            ->create([
+                'amount' => 0,
+                'is_active' => true,
+            ]);
     }
 }

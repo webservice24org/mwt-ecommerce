@@ -15,6 +15,7 @@ use App\Mail\Orders\OrderPlacedCustomerMail;
 use App\Models\Address;
 use App\Models\MailSetting;
 use App\Models\Product;
+use App\Models\ShippingRate;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
@@ -26,6 +27,8 @@ final class CreateOrderActionTest extends TestCase
 
     public function test_valid_checkout_creates_order_and_item_snapshots(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         Mail::fake();
 
         $this->enableMail();
@@ -87,8 +90,9 @@ final class CreateOrderActionTest extends TestCase
         $order = app(
             CreateOrderAction::class,
         )->execute(
-            $user,
-            $idempotencyKey,
+            user: $user,
+            shippingRateId: $shippingRate->id,
+            idempotencyKey: $idempotencyKey,
         );
 
         $this->assertNull(
@@ -211,6 +215,8 @@ final class CreateOrderActionTest extends TestCase
 
     public function test_action_can_resolve_server_owned_idempotency_key_automatically(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         $user = User::factory()
             ->create();
 
@@ -254,7 +260,8 @@ final class CreateOrderActionTest extends TestCase
         $order = app(
             CreateOrderAction::class,
         )->execute(
-            $user,
+            user: $user,
+            shippingRateId: $shippingRate->id,
         );
 
         $this->assertNotNull(
@@ -278,6 +285,8 @@ final class CreateOrderActionTest extends TestCase
 
     public function test_order_preserves_address_snapshot_after_address_changes(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         $user = User::factory()
             ->create();
 
@@ -327,8 +336,9 @@ final class CreateOrderActionTest extends TestCase
         $order = app(
             CreateOrderAction::class,
         )->execute(
-            $user,
-            $idempotencyKey,
+            user: $user,
+            shippingRateId: $shippingRate->id,
+            idempotencyKey: $idempotencyKey,
         );
 
         $address->update([
@@ -359,6 +369,8 @@ final class CreateOrderActionTest extends TestCase
 
     public function test_order_item_snapshot_survives_product_changes(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         $user = User::factory()
             ->create();
 
@@ -406,8 +418,9 @@ final class CreateOrderActionTest extends TestCase
         $order = app(
             CreateOrderAction::class,
         )->execute(
-            $user,
-            $idempotencyKey,
+            user: $user,
+            shippingRateId: $shippingRate->id,
+            idempotencyKey: $idempotencyKey,
         );
 
         $product->update([
@@ -440,6 +453,8 @@ final class CreateOrderActionTest extends TestCase
 
     public function test_order_number_is_generated(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         $user = User::factory()
             ->create();
 
@@ -483,8 +498,9 @@ final class CreateOrderActionTest extends TestCase
         $order = app(
             CreateOrderAction::class,
         )->execute(
-            $user,
-            $idempotencyKey,
+            user: $user,
+            shippingRateId: $shippingRate->id,
+            idempotencyKey: $idempotencyKey,
         );
 
         $this->assertStringStartsWith(
@@ -506,6 +522,8 @@ final class CreateOrderActionTest extends TestCase
 
     public function test_same_idempotency_key_returns_existing_order(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         Mail::fake();
 
         $this->enableMail();
@@ -560,8 +578,9 @@ final class CreateOrderActionTest extends TestCase
 
         $firstOrder = $action
             ->execute(
-                $user,
-                $idempotencyKey,
+                user: $user,
+                shippingRateId: $shippingRate->id,
+                idempotencyKey: $idempotencyKey,
             );
 
         /*
@@ -574,8 +593,9 @@ final class CreateOrderActionTest extends TestCase
          */
         $secondOrder = $action
             ->execute(
-                $user,
-                $idempotencyKey,
+                user: $user,
+                shippingRateId: $shippingRate->id,
+                idempotencyKey: $idempotencyKey,
             );
 
         $this->assertSame(
@@ -611,6 +631,8 @@ final class CreateOrderActionTest extends TestCase
 
     public function test_successful_creator_rotates_submission_token(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         $user = User::factory()
             ->create();
 
@@ -661,8 +683,9 @@ final class CreateOrderActionTest extends TestCase
         $order = app(
             CreateOrderAction::class,
         )->execute(
-            $user,
-            $originalToken,
+            user: $user,
+            shippingRateId: $shippingRate->id,
+            idempotencyKey: $originalToken,
         );
 
         $newToken = $checkoutSession
@@ -681,6 +704,8 @@ final class CreateOrderActionTest extends TestCase
 
     public function test_different_users_can_use_same_idempotency_key(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         $sharedKey =
             'shared-idempotency-key';
 
@@ -727,8 +752,9 @@ final class CreateOrderActionTest extends TestCase
         $firstOrder = app(
             CreateOrderAction::class,
         )->execute(
-            $firstUser,
-            $sharedKey,
+            user: $firstUser,
+            shippingRateId: $shippingRate->id,
+            idempotencyKey: $sharedKey,
         );
 
         $secondUser = User::factory()
@@ -774,8 +800,9 @@ final class CreateOrderActionTest extends TestCase
         $secondOrder = app(
             CreateOrderAction::class,
         )->execute(
-            $secondUser,
-            $sharedKey,
+            user: $secondUser,
+            shippingRateId: $shippingRate->id,
+            idempotencyKey: $sharedKey,
         );
 
         $this->assertNotSame(
@@ -801,6 +828,8 @@ final class CreateOrderActionTest extends TestCase
 
     public function test_checkout_succeeds_without_queueing_mail_when_mail_delivery_is_disabled(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         Mail::fake();
 
         MailSetting::current()
@@ -850,8 +879,9 @@ final class CreateOrderActionTest extends TestCase
         $order = app(
             CreateOrderAction::class,
         )->execute(
-            $user,
-            $idempotencyKey,
+            user: $user,
+            shippingRateId: $shippingRate->id,
+            idempotencyKey: $idempotencyKey,
         );
 
         $this->assertDatabaseHas(
@@ -881,6 +911,15 @@ final class CreateOrderActionTest extends TestCase
                 'from_address' => 'store@example.com',
                 'from_name' => 'MWT Ecommerce',
                 'admin_order_notification_email' => $adminEmail,
+            ]);
+    }
+
+    private function createShippingRate(): ShippingRate
+    {
+        return ShippingRate::factory()
+            ->create([
+                'amount' => 0,
+                'is_active' => true,
             ]);
     }
 }

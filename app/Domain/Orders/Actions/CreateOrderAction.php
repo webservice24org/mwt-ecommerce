@@ -32,13 +32,9 @@ final readonly class CreateOrderAction
 
     public function execute(
         User $user,
+        int $shippingRateId,
         ?string $idempotencyKey = null,
     ): Order {
-        /*
-         * Existing callers may omit the key.
-         *
-         * The submission identity remains server-owned.
-         */
         $idempotencyKey ??= $this
             ->checkoutSession
             ->orderSubmissionToken();
@@ -48,11 +44,8 @@ final readonly class CreateOrderAction
          * IDEMPOTENCY FAST PATH
          * ==================================================
          *
-         * This must happen before checkout validation.
-         *
-         * A successful first submission clears the cart, so
-         * a repeated request with the same logical submission
-         * key must return the already-created order.
+         * Must remain before checkout validation because a
+         * successful first request clears the cart.
          */
         $existingOrder = $this
             ->findExistingOrder(
@@ -68,16 +61,18 @@ final readonly class CreateOrderAction
          * ==================================================
          * AUTHORITATIVE CHECKOUT VALIDATION
          * ==================================================
+         *
+         * The shipping rate ID comes from the client, but
+         * availability and price are resolved again by the
+         * server.
          */
         $checkout = $this
             ->validateCheckout
             ->execute(
-                $user,
+                user: $user,
+                shippingRateId: $shippingRateId,
             );
 
-        /*
-         * Build immutable item snapshots before persistence.
-         */
         $itemSnapshots = $this
             ->buildItemSnapshots
             ->execute(
@@ -85,22 +80,6 @@ final readonly class CreateOrderAction
             );
 
         try {
-            /*
-             * ==================================================
-             * ATOMIC ORDER + STOCK + INITIAL HISTORY
-             * ==================================================
-             *
-             * All of the following belong to one transaction:
-             *
-             * - stock validation/decrement
-             * - order persistence
-             * - order-item snapshots
-             * - initial order status history
-             * - initial payment status history
-             * - initial fulfilment status history
-             *
-             * A failure anywhere rolls everything back.
-             */
             $order = DB::transaction(
                 function () use ($user, $checkout, $itemSnapshots, $idempotencyKey): Order {
                     $this->stock->execute(
@@ -113,6 +92,9 @@ final readonly class CreateOrderAction
                     $totals =
                         $checkout->totals;
 
+                    $shippingQuote =
+                        $checkout->shippingQuote;
+
                     $order = Order::query()
                         ->create([
                             'user_id' => $user->id,
@@ -120,6 +102,34 @@ final readonly class CreateOrderAction
                             'idempotency_key' => $idempotencyKey,
 
                             'delivery_address_id' => $address->id,
+
+                            /*
+                             * Current shipping references.
+                             */
+                            'shipping_method_id' => $shippingQuote
+                                ->shippingMethodId,
+
+                            'shipping_rate_id' => $shippingQuote
+                                ->shippingRateId,
+
+                            /*
+                             * Immutable shipping snapshots.
+                             *
+                             * Historical orders must not
+                             * change if an administrator later
+                             * renames a method or rate.
+                             */
+                            'shipping_method_code' => $shippingQuote
+                                ->methodCode,
+
+                            'shipping_method_name' => $shippingQuote
+                                ->methodName,
+
+                            'shipping_rate_code' => $shippingQuote
+                                ->rateCode,
+
+                            'shipping_rate_name' => $shippingQuote
+                                ->rateName,
 
                             'order_number' => $this
                                 ->orderNumberGenerator
@@ -141,6 +151,10 @@ final readonly class CreateOrderAction
                             'discount_total' => $totals
                                 ->discountTotal,
 
+                            /*
+                             * Server-calculated shipping
+                             * amount only.
+                             */
                             'delivery_total' => $totals
                                 ->deliveryTotal,
 
@@ -194,12 +208,8 @@ final readonly class CreateOrderAction
                      * ==================================================
                      * INITIAL STATUS HISTORY
                      * ==================================================
-                     *
-                     * These are creation events, therefore there is
-                     * no previous status.
                      */
-                    $changedAt =
-                        now();
+                    $changedAt = now();
 
                     $order
                         ->statusHistories()
@@ -211,9 +221,11 @@ final readonly class CreateOrderAction
                             'to_status' => OrderStatus::Pending
                                 ->value,
 
-                            'actor_type' => $user->getMorphClass(),
+                            'actor_type' => $user
+                                ->getMorphClass(),
 
-                            'actor_id' => $user->getKey(),
+                            'actor_id' => $user
+                                ->getKey(),
 
                             'note' => 'Order placed.',
 
@@ -230,9 +242,11 @@ final readonly class CreateOrderAction
                             'to_status' => PaymentStatus::Unpaid
                                 ->value,
 
-                            'actor_type' => $user->getMorphClass(),
+                            'actor_type' => $user
+                                ->getMorphClass(),
 
-                            'actor_id' => $user->getKey(),
+                            'actor_id' => $user
+                                ->getKey(),
 
                             'note' => 'Payment awaiting collection.',
 
@@ -249,9 +263,11 @@ final readonly class CreateOrderAction
                             'to_status' => FulfilmentStatus::Unfulfilled
                                 ->value,
 
-                            'actor_type' => $user->getMorphClass(),
+                            'actor_type' => $user
+                                ->getMorphClass(),
 
-                            'actor_id' => $user->getKey(),
+                            'actor_id' => $user
+                                ->getKey(),
 
                             'note' => 'Order awaiting fulfilment.',
 
@@ -265,15 +281,6 @@ final readonly class CreateOrderAction
                 },
             );
         } catch (QueryException $exception) {
-            /*
-             * ==================================================
-             * CONCURRENT DUPLICATE SUBMISSION
-             * ==================================================
-             *
-             * If another request won the unique idempotency-key
-             * race, this transaction—including any initial
-             * history rows—has rolled back.
-             */
             $existingOrder = $this
                 ->findExistingOrder(
                     $user,
@@ -288,8 +295,8 @@ final readonly class CreateOrderAction
         }
 
         /*
-         * Only the request that actually created the order
-         * reaches this point.
+         * Only the request that actually created
+         * the order reaches this point.
          */
         $this->cart->clear();
 
@@ -298,20 +305,7 @@ final readonly class CreateOrderAction
             ->rotateOrderSubmissionToken();
 
         /*
-         * ==================================================
-         * POST-COMMIT ORDER NOTIFICATIONS
-         * ==================================================
-         *
-         * The order transaction has already committed before
-         * this point. Only the request that actually created
-         * the order reaches this path:
-         *
-         * - normal idempotent retries return earlier
-         * - concurrent duplicate submissions return earlier
-         *
-         * Therefore the initial customer/admin notifications
-         * are queued exactly once for the successful creation
-         * path and never for a rolled-back order.
+         * Notification dispatch remains post-commit.
          */
         $this
             ->sendOrderPlacedNotifications

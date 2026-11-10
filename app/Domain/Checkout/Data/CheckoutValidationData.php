@@ -6,6 +6,7 @@ namespace App\Domain\Checkout\Data;
 
 use App\Domain\Cart\Data\CartSummaryData;
 use App\Domain\Orders\Enums\PaymentMethod;
+use App\Domain\Shipping\Data\ShippingRateQuote;
 use App\Models\Address;
 
 final readonly class CheckoutValidationData
@@ -15,5 +16,6 @@ final readonly class CheckoutValidationData
         public CheckoutTotalsData $totals,
         public Address $address,
         public PaymentMethod $paymentMethod,
+        public ShippingRateQuote $shippingQuote,
     ) {}
 }

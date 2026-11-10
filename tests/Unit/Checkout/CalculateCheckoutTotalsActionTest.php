@@ -21,7 +21,8 @@ final class CalculateCheckoutTotalsActionTest extends TestCase
         $totals = (
             new CalculateCheckoutTotalsAction
         )->execute(
-            $cart,
+            cart: $cart,
+            deliveryTotal: 0,
         );
 
         $this->assertSame(
@@ -61,7 +62,8 @@ final class CalculateCheckoutTotalsActionTest extends TestCase
         $totals = (
             new CalculateCheckoutTotalsAction
         )->execute(
-            $cart,
+            cart: $cart,
+            deliveryTotal: 0,
         );
 
         $this->assertSame(
@@ -73,6 +75,37 @@ final class CalculateCheckoutTotalsActionTest extends TestCase
                 'grand_total' => 9999,
             ],
             $totals->toArray(),
+        );
+    }
+
+    public function test_delivery_total_is_included_in_grand_total(): void
+    {
+        $cart = new CartSummaryData(
+            items: [],
+            itemCount: 1,
+            subtotal: 1000,
+        );
+
+        $totals = (
+            new CalculateCheckoutTotalsAction
+        )->execute(
+            cart: $cart,
+            deliveryTotal: 80,
+        );
+
+        $this->assertSame(
+            1000,
+            $totals->subtotal,
+        );
+
+        $this->assertSame(
+            80,
+            $totals->deliveryTotal,
+        );
+
+        $this->assertSame(
+            1080,
+            $totals->grandTotal,
         );
     }
 }

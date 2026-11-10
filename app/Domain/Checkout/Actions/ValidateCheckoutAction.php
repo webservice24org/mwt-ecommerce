@@ -7,6 +7,8 @@ namespace App\Domain\Checkout\Actions;
 use App\Domain\Cart\Services\CartService;
 use App\Domain\Checkout\Data\CheckoutValidationData;
 use App\Domain\Checkout\Services\CheckoutSessionService;
+use App\Domain\Shipping\Actions\ResolveSelectedShippingRateAction;
+use App\Domain\Shipping\Data\ShippingDestinationData;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
 
@@ -16,6 +18,7 @@ final class ValidateCheckoutAction
         private readonly CartService $cart,
         private readonly CheckoutSessionService $checkoutSession,
         private readonly CalculateCheckoutTotalsAction $calculateTotals,
+        private readonly ResolveSelectedShippingRateAction $resolveShippingRate,
     ) {}
 
     /**
@@ -23,6 +26,7 @@ final class ValidateCheckoutAction
      */
     public function execute(
         User $user,
+        int $shippingRateId,
     ): CheckoutValidationData {
         $cartValidation =
             $this->cart
@@ -81,18 +85,86 @@ final class ValidateCheckoutAction
             $this->checkoutSession
                 ->paymentMethod();
 
+        /*
+         * Build the shipping destination exclusively from
+         * the server-owned customer address. Never trust
+         * independently posted address values when deciding
+         * which shipping rates are eligible.
+         */
+        $destination =
+            new ShippingDestinationData(
+                countryCode: $ownedAddress
+                    ->country_code,
+
+                stateOrRegion: $ownedAddress
+                    ->state_or_region,
+
+                city: $ownedAddress
+                    ->city,
+
+                postalCode: $ownedAddress
+                    ->postal_code,
+            );
+
+        /*
+         * The cart currently exposes its subtotal as a float,
+         * while authoritative checkout/order money uses
+         * integer values throughout the application.
+         */
+        $orderSubtotal = (int) round(
+            $cartValidation
+                ->summary
+                ->subtotal,
+        );
+
+        /*
+         * Re-resolve the selected shipping rate on the
+         * server against:
+         *
+         * - active shipping method
+         * - active rate
+         * - subtotal boundaries
+         * - destination / shipping zone
+         * - free-shipping threshold
+         *
+         * The client supplies only the rate ID.
+         */
+        $shippingQuote =
+            $this->resolveShippingRate
+                ->execute(
+                    shippingRateId: $shippingRateId,
+
+                    orderSubtotal: $orderSubtotal,
+
+                    destination: $destination,
+                );
+
+        /*
+         * deliveryTotal comes exclusively from the
+         * authoritative shipping quote. A client-provided
+         * delivery amount is never used here.
+         */
         $totals =
             $this->calculateTotals
                 ->execute(
-                    $cartValidation
+                    cart: $cartValidation
                         ->summary,
+
+                    deliveryTotal: $shippingQuote
+                        ->amount,
                 );
 
         return new CheckoutValidationData(
-            cart: $cartValidation->summary,
+            cart: $cartValidation
+                ->summary,
+
             totals: $totals,
+
             address: $ownedAddress,
+
             paymentMethod: $paymentMethod,
+
+            shippingQuote: $shippingQuote,
         );
     }
 }

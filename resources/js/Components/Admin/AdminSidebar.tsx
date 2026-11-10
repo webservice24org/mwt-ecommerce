@@ -8,10 +8,12 @@ import {
     Gauge,
     Layers3,
     ListTree,
+    Mail,
     Package,
     Palette,
     PanelBottom,
     PanelTop,
+    Percent,
     PlusCircle,
     ReceiptText,
     Settings,
@@ -19,12 +21,13 @@ import {
     Store,
     Tag,
     Tags,
+    Ticket,
     X,
-    Mail,
     type LucideIcon,
 } from 'lucide-react'
-
 import { useState } from 'react'
+
+import ShippingSidebarLinks from '@/Components/Admin/Shipping/ShippingSidebarLinks'
 
 type Props = {
     open: boolean
@@ -50,20 +53,26 @@ type NavigationGroup = {
 const mainNavigation: NavigationItem[] = [
     {
         label: 'Dashboard',
-        href: route('admin.dashboard'),
+        href: route(
+            'admin.dashboard',
+        ),
         match: '/admin',
         exact: true,
         icon: Gauge,
     },
     {
         label: 'Administrators',
-        href: route('admin.admins.index'),
+        href: route(
+            'admin.admins.index',
+        ),
         match: '/admin/admins',
         icon: ShieldCheck,
     },
     {
         label: 'Pages',
-        href: route('admin.pages.index'),
+        href: route(
+            'admin.pages.index',
+        ),
         match: '/admin/pages',
         icon: FileText,
     },
@@ -73,29 +82,40 @@ const productNavigation: NavigationGroup = {
     label: 'Products',
     icon: Package,
     match: '/admin/products',
+
     children: [
         {
             label: 'All Products',
-            href: route('admin.products.index'),
+            href: route(
+                'admin.products.index',
+            ),
             match: '/admin/products',
             exact: true,
             icon: Package,
         },
         {
             label: 'Add New Product',
-            href: route('admin.products.create'),
-            match: '/admin/products/create',
+            href: route(
+                'admin.products.create',
+            ),
+            match:
+                '/admin/products/create',
             icon: PlusCircle,
         },
         {
             label: 'Categories',
-            href: route('admin.categories.index'),
-            match: '/admin/categories',
+            href: route(
+                'admin.categories.index',
+            ),
+            match:
+                '/admin/categories',
             icon: FolderTree,
         },
         {
             label: 'Brands',
-            href: route('admin.brands.index'),
+            href: route(
+                'admin.brands.index',
+            ),
             match: '/admin/brands',
             icon: Tags,
         },
@@ -106,99 +126,226 @@ const productNavigation: NavigationGroup = {
         },
         {
             label: 'Attributes',
-            href: route('admin.attributes.index'),
-            match: '/admin/attributes',
+            href: route(
+                'admin.attributes.index',
+            ),
+            match:
+                '/admin/attributes',
             icon: ListTree,
         },
     ],
 }
 
-const websiteSettingsNavigation: NavigationGroup = {
-    label: 'Website Settings',
-    icon: Settings,
-    match: '/admin/website-settings',
-    children: [
-        {
-            label: 'Footer Builder',
-            href: route('admin.website-settings.footer-builder.edit'),
-            match: '/admin/website-settings/footer-builder',
-            icon: PanelBottom,
-        },
-        {
-            label: 'Header Builder',
-            icon: PanelTop,
-            disabled: true,
-        },
-        {
-            label: 'Invoice Settings',
-            href: route('admin.website-settings.invoice.edit'),
-            match: '/admin/website-settings/invoice',
-            icon: ReceiptText,
-        },
-        {
-            label: 'Mail Settings',
-            href: route('admin.website-settings.mail.edit'),
-            match: '/admin/website-settings/mail',
-            icon: Mail,
-        },
-        {
-            label: 'Theme Settings',
-            icon: Palette,
-            disabled: true,
-        },
-    ],
-}
+const websiteSettingsNavigation: NavigationGroup =
+    {
+        label: 'Website Settings',
+        icon: Settings,
+        match:
+            '/admin/website-settings',
 
-export default function AdminSidebar({ open, onClose }: Props) {
+        children: [
+            {
+                label: 'Footer Builder',
+                href: route(
+                    'admin.website-settings.footer-builder.edit',
+                ),
+                match:
+                    '/admin/website-settings/footer-builder',
+                icon: PanelBottom,
+            },
+            {
+                label: 'Header Builder',
+                href: route(
+                    'admin.website-settings.header-builder.edit',
+                ),
+                match:
+                    '/admin/website-settings/header-builder',
+                icon: PanelTop,
+            },
+            {
+                label: 'Invoice Settings',
+                href: route(
+                    'admin.website-settings.invoice.edit',
+                ),
+                match:
+                    '/admin/website-settings/invoice',
+                icon: ReceiptText,
+            },
+            {
+                label: 'Mail Settings',
+                href: route(
+                    'admin.website-settings.mail.edit',
+                ),
+                match:
+                    '/admin/website-settings/mail',
+                icon: Mail,
+            },
+            {
+                label: 'Theme Settings',
+                icon: Palette,
+                disabled: true,
+            },
+        ],
+    }
+
+export default function AdminSidebar({
+    open,
+    onClose,
+}: Props) {
     const { url } = usePage()
 
+    /*
+     * ==================================================
+     * ACTIVE GROUPS
+     * ==================================================
+     */
+
     const productSectionActive =
-        url.startsWith('/admin/products') ||
-        url.startsWith('/admin/categories') ||
-        url.startsWith('/admin/brands') ||
-        url.startsWith('/admin/tags') ||
-        url.startsWith('/admin/attributes')
+        url.startsWith(
+            '/admin/products',
+        ) ||
+        url.startsWith(
+            '/admin/categories',
+        ) ||
+        url.startsWith(
+            '/admin/brands',
+        ) ||
+        url.startsWith(
+            '/admin/tags',
+        ) ||
+        url.startsWith(
+            '/admin/attributes',
+        )
 
-    const websiteSettingsActive = url.startsWith('/admin/website-settings')
+    const websiteSettingsActive =
+        url.startsWith(
+            '/admin/website-settings',
+        )
 
-    const [productsOpen, setProductsOpen] = useState(productSectionActive)
+    const storeSectionActive =
+        url.startsWith(
+            '/admin/orders',
+        ) ||
+        url.startsWith(
+            '/admin/shipping',
+        ) ||
+        url.startsWith(
+            '/admin/promotions',
+        ) ||
+        url.startsWith(
+            '/admin/promo-codes',
+        ) ||
+        url.startsWith(
+            '/admin/customers',
+        )
 
-    const [websiteSettingsOpen, setWebsiteSettingsOpen] = useState(websiteSettingsActive)
+    /*
+     * ==================================================
+     * DROPDOWN STATE
+     * ==================================================
+     */
 
-    const showProducts = productSectionActive || productsOpen
+    const [
+        productsOpen,
+        setProductsOpen,
+    ] = useState(
+        productSectionActive,
+    )
 
-    const showWebsiteSettings = websiteSettingsActive || websiteSettingsOpen
+    const [
+        websiteSettingsOpen,
+        setWebsiteSettingsOpen,
+    ] = useState(
+        websiteSettingsActive,
+    )
 
-    const isActive = (item: NavigationItem): boolean => {
+    const [
+        storeOpen,
+        setStoreOpen,
+    ] = useState(
+        storeSectionActive,
+    )
+
+    /*
+     * Active sections stay expanded automatically.
+     */
+    const showProducts =
+        productSectionActive ||
+        productsOpen
+
+    const showWebsiteSettings =
+        websiteSettingsActive ||
+        websiteSettingsOpen
+
+    const showStore =
+        storeSectionActive ||
+        storeOpen
+
+    /*
+     * ==================================================
+     * NAVIGATION HELPERS
+     * ==================================================
+     */
+
+    const isActive = (
+        item: NavigationItem,
+    ): boolean => {
         if (!item.match) {
             return false
         }
 
         if (item.exact) {
-            return url === item.match
+            return (
+                url === item.match
+            )
         }
 
-        return url.startsWith(item.match)
+        return url.startsWith(
+            item.match,
+        )
     }
 
-    const renderNavigationItem = (item: NavigationItem, nested = false) => {
-        const Icon = item.icon
+    const renderNavigationItem = (
+        item: NavigationItem,
+        nested = false,
+    ) => {
+        const Icon =
+            item.icon
 
-        const active = isActive(item)
+        const active =
+            isActive(item)
 
-        if (item.disabled || !item.href) {
+        if (
+            item.disabled ||
+            !item.href
+        ) {
             return (
                 <div
-                    key={item.label}
+                    key={
+                        item.label
+                    }
                     className={[
                         'group flex cursor-not-allowed items-center gap-3 rounded-lg text-sm font-medium text-neutral-400',
-                        nested ? 'px-3 py-2' : 'px-3 py-2.5',
+
+                        nested
+                            ? 'px-3 py-2'
+                            : 'px-3 py-2.5',
                     ].join(' ')}
                     title="Coming soon"
                 >
-                    <Icon className="h-4 w-4 shrink-0" strokeWidth={1.8} />
+                    <Icon
+                        className="h-4 w-4 shrink-0"
+                        strokeWidth={
+                            1.8
+                        }
+                        aria-hidden="true"
+                    />
 
-                    <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                    <span className="min-w-0 flex-1 truncate">
+                        {
+                            item.label
+                        }
+                    </span>
 
                     <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-400">
                         Soon
@@ -209,12 +356,22 @@ export default function AdminSidebar({ open, onClose }: Props) {
 
         return (
             <Link
-                key={item.label}
-                href={item.href}
-                onClick={onClose}
+                key={
+                    item.label
+                }
+                href={
+                    item.href
+                }
+                onClick={
+                    onClose
+                }
                 className={[
                     'group relative flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-150',
-                    nested ? 'px-3 py-2' : 'px-3 py-2.5',
+
+                    nested
+                        ? 'px-3 py-2'
+                        : 'px-3 py-2.5',
+
                     active
                         ? 'bg-neutral-900 text-white shadow-sm'
                         : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950',
@@ -223,14 +380,26 @@ export default function AdminSidebar({ open, onClose }: Props) {
                 <Icon
                     className={[
                         'h-4 w-4 shrink-0 transition',
-                        active ? 'text-white' : 'text-neutral-400 group-hover:text-neutral-700',
+
+                        active
+                            ? 'text-white'
+                            : 'text-neutral-400 group-hover:text-neutral-700',
                     ].join(' ')}
-                    strokeWidth={1.9}
+                    strokeWidth={
+                        1.9
+                    }
+                    aria-hidden="true"
                 />
 
-                <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                <span className="min-w-0 flex-1 truncate">
+                    {
+                        item.label
+                    }
+                </span>
 
-                {active && <span className="absolute right-2 h-1.5 w-1.5 rounded-full bg-white" />}
+                {active && (
+                    <span className="absolute right-2 h-1.5 w-1.5 rounded-full bg-white" />
+                )}
             </Link>
         )
     }
@@ -241,7 +410,9 @@ export default function AdminSidebar({ open, onClose }: Props) {
                 <button
                     type="button"
                     aria-label="Close navigation"
-                    onClick={onClose}
+                    onClick={
+                        onClose
+                    }
                     className="fixed inset-0 z-40 bg-black/50 backdrop-blur-[1px] lg:hidden"
                 />
             )}
@@ -249,19 +420,33 @@ export default function AdminSidebar({ open, onClose }: Props) {
             <aside
                 className={[
                     'fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-neutral-200 bg-white shadow-xl transition-transform duration-200 lg:shadow-none',
+
                     'lg:translate-x-0',
-                    open ? 'translate-x-0' : '-translate-x-full',
+
+                    open
+                        ? 'translate-x-0'
+                        : '-translate-x-full',
                 ].join(' ')}
             >
                 {/* Brand */}
                 <div className="flex h-16 shrink-0 items-center justify-between border-b border-neutral-200 px-4">
                     <Link
-                        href={route('admin.dashboard')}
-                        onClick={onClose}
+                        href={route(
+                            'admin.dashboard',
+                        )}
+                        onClick={
+                            onClose
+                        }
                         className="group flex min-w-0 items-center gap-3"
                     >
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neutral-900 text-white shadow-sm">
-                            <Store className="h-5 w-5" strokeWidth={1.9} />
+                            <Store
+                                className="h-5 w-5"
+                                strokeWidth={
+                                    1.9
+                                }
+                                aria-hidden="true"
+                            />
                         </div>
 
                         <div className="min-w-0">
@@ -270,19 +455,28 @@ export default function AdminSidebar({ open, onClose }: Props) {
                             </div>
 
                             <div className="truncate text-[11px] text-neutral-400">
-                                Ecommerce Control
+                                Ecommerce
+                                Control
                             </div>
                         </div>
                     </Link>
 
                     <button
                         type="button"
-                        onClick={onClose}
+                        onClick={
+                            onClose
+                        }
                         className="rounded-lg p-2 text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-900 lg:hidden"
                     >
-                        <span className="sr-only">Close sidebar</span>
+                        <span className="sr-only">
+                            Close
+                            sidebar
+                        </span>
 
-                        <X className="h-5 w-5" />
+                        <X
+                            className="h-5 w-5"
+                            aria-hidden="true"
+                        />
                     </button>
                 </div>
 
@@ -295,7 +489,14 @@ export default function AdminSidebar({ open, onClose }: Props) {
                         </p>
 
                         <div className="space-y-1">
-                            {mainNavigation.map((item) => renderNavigationItem(item))}
+                            {mainNavigation.map(
+                                (
+                                    item,
+                                ) =>
+                                    renderNavigationItem(
+                                        item,
+                                    ),
+                            )}
                         </div>
                     </div>
 
@@ -308,44 +509,86 @@ export default function AdminSidebar({ open, onClose }: Props) {
                         <div className="space-y-1">
                             <button
                                 type="button"
-                                onClick={() => setProductsOpen((current) => !current)}
+                                aria-expanded={
+                                    showProducts
+                                }
+                                aria-controls="admin-products-navigation"
+                                onClick={() =>
+                                    setProductsOpen(
+                                        (
+                                            current,
+                                        ) =>
+                                            !current,
+                                    )
+                                }
                                 className={[
                                     'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
+
                                     productSectionActive
                                         ? 'bg-neutral-100 text-neutral-950'
                                         : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950',
-                                ].join(' ')}
+                                ].join(
+                                    ' ',
+                                )}
                             >
                                 <productNavigation.icon
                                     className={[
                                         'h-4 w-4 shrink-0',
+
                                         productSectionActive
                                             ? 'text-neutral-900'
                                             : 'text-neutral-400',
-                                    ].join(' ')}
-                                    strokeWidth={1.9}
+                                    ].join(
+                                        ' ',
+                                    )}
+                                    strokeWidth={
+                                        1.9
+                                    }
+                                    aria-hidden="true"
                                 />
 
-                                <span className="flex-1 text-left">{productNavigation.label}</span>
+                                <span className="flex-1 text-left">
+                                    {
+                                        productNavigation.label
+                                    }
+                                </span>
 
                                 <ChevronDown
                                     className={[
                                         'h-4 w-4 text-neutral-400 transition-transform duration-200',
-                                        showProducts ? 'rotate-180' : '',
-                                    ].join(' ')}
+
+                                        showProducts
+                                            ? 'rotate-180'
+                                            : '',
+                                    ].join(
+                                        ' ',
+                                    )}
+                                    aria-hidden="true"
                                 />
                             </button>
 
                             <div
+                                id="admin-products-navigation"
                                 className={[
                                     'grid transition-all duration-200',
-                                    showProducts ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
-                                ].join(' ')}
+
+                                    showProducts
+                                        ? 'grid-rows-[1fr]'
+                                        : 'grid-rows-[0fr]',
+                                ].join(
+                                    ' ',
+                                )}
                             >
                                 <div className="overflow-hidden">
                                     <div className="relative ml-5 mt-1 space-y-1 border-l border-neutral-200 pl-3">
-                                        {productNavigation.children.map((item) =>
-                                            renderNavigationItem(item, true),
+                                        {productNavigation.children.map(
+                                            (
+                                                item,
+                                            ) =>
+                                                renderNavigationItem(
+                                                    item,
+                                                    true,
+                                                ),
                                         )}
                                     </div>
                                 </div>
@@ -362,46 +605,86 @@ export default function AdminSidebar({ open, onClose }: Props) {
                         <div className="space-y-1">
                             <button
                                 type="button"
-                                onClick={() => setWebsiteSettingsOpen((current) => !current)}
+                                aria-expanded={
+                                    showWebsiteSettings
+                                }
+                                aria-controls="admin-website-settings-navigation"
+                                onClick={() =>
+                                    setWebsiteSettingsOpen(
+                                        (
+                                            current,
+                                        ) =>
+                                            !current,
+                                    )
+                                }
                                 className={[
                                     'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
+
                                     websiteSettingsActive
                                         ? 'bg-neutral-100 text-neutral-950'
                                         : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950',
-                                ].join(' ')}
+                                ].join(
+                                    ' ',
+                                )}
                             >
                                 <websiteSettingsNavigation.icon
                                     className={[
                                         'h-4 w-4 shrink-0',
+
                                         websiteSettingsActive
                                             ? 'text-neutral-900'
                                             : 'text-neutral-400',
-                                    ].join(' ')}
-                                    strokeWidth={1.9}
+                                    ].join(
+                                        ' ',
+                                    )}
+                                    strokeWidth={
+                                        1.9
+                                    }
+                                    aria-hidden="true"
                                 />
 
                                 <span className="flex-1 text-left">
-                                    {websiteSettingsNavigation.label}
+                                    {
+                                        websiteSettingsNavigation.label
+                                    }
                                 </span>
 
                                 <ChevronDown
                                     className={[
                                         'h-4 w-4 text-neutral-400 transition-transform duration-200',
-                                        showWebsiteSettings ? 'rotate-180' : '',
-                                    ].join(' ')}
+
+                                        showWebsiteSettings
+                                            ? 'rotate-180'
+                                            : '',
+                                    ].join(
+                                        ' ',
+                                    )}
+                                    aria-hidden="true"
                                 />
                             </button>
 
                             <div
+                                id="admin-website-settings-navigation"
                                 className={[
                                     'grid transition-all duration-200',
-                                    showWebsiteSettings ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
-                                ].join(' ')}
+
+                                    showWebsiteSettings
+                                        ? 'grid-rows-[1fr]'
+                                        : 'grid-rows-[0fr]',
+                                ].join(
+                                    ' ',
+                                )}
                             >
                                 <div className="overflow-hidden">
                                     <div className="relative ml-5 mt-1 space-y-1 border-l border-neutral-200 pl-3">
-                                        {websiteSettingsNavigation.children.map((item) =>
-                                            renderNavigationItem(item, true),
+                                        {websiteSettingsNavigation.children.map(
+                                            (
+                                                item,
+                                            ) =>
+                                                renderNavigationItem(
+                                                    item,
+                                                    true,
+                                                ),
                                         )}
                                     </div>
                                 </div>
@@ -416,39 +699,133 @@ export default function AdminSidebar({ open, onClose }: Props) {
                         </p>
 
                         <div className="space-y-1">
-                            <Link
-                                href={route('admin.orders.index')}
-                                onClick={onClose}
+                            {/* Store dropdown */}
+                            <button
+                                type="button"
+                                aria-expanded={
+                                    showStore
+                                }
+                                aria-controls="admin-store-navigation"
+                                onClick={() =>
+                                    setStoreOpen(
+                                        (
+                                            current,
+                                        ) =>
+                                            !current,
+                                    )
+                                }
                                 className={[
-                                    'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150',
-                                    url.startsWith('/admin/orders')
-                                        ? 'bg-neutral-900 text-white shadow-sm'
+                                    'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
+
+                                    storeSectionActive
+                                        ? 'bg-neutral-100 text-neutral-950'
                                         : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950',
-                                ].join(' ')}
+                                ].join(
+                                    ' ',
+                                )}
                             >
-                                <Layers3
+                                <Store
                                     className={[
-                                        'h-4 w-4 shrink-0 transition',
-                                        url.startsWith('/admin/orders')
-                                            ? 'text-white'
-                                            : 'text-neutral-400 group-hover:text-neutral-700',
-                                    ].join(' ')}
-                                    strokeWidth={1.9}
+                                        'h-4 w-4 shrink-0',
+
+                                        storeSectionActive
+                                            ? 'text-neutral-900'
+                                            : 'text-neutral-400',
+                                    ].join(
+                                        ' ',
+                                    )}
+                                    strokeWidth={
+                                        1.9
+                                    }
+                                    aria-hidden="true"
                                 />
 
-                                <span className="min-w-0 flex-1 truncate">Orders</span>
+                                <span className="flex-1 text-left">
+                                    Store
+                                </span>
 
-                                {url.startsWith('/admin/orders') && (
-                                    <span className="absolute right-2 h-1.5 w-1.5 rounded-full bg-white" />
+                                <ChevronDown
+                                    className={[
+                                        'h-4 w-4 text-neutral-400 transition-transform duration-200',
+
+                                        showStore
+                                            ? 'rotate-180'
+                                            : '',
+                                    ].join(
+                                        ' ',
+                                    )}
+                                    aria-hidden="true"
+                                />
+                            </button>
+
+                            <div
+                                id="admin-store-navigation"
+                                className={[
+                                    'grid transition-all duration-200',
+
+                                    showStore
+                                        ? 'grid-rows-[1fr]'
+                                        : 'grid-rows-[0fr]',
+                                ].join(
+                                    ' ',
                                 )}
-                            </Link>
+                            >
+                                <div className="overflow-hidden">
+                                    <div className="relative ml-5 mt-1 space-y-1 border-l border-neutral-200 pl-3">
+                                        {renderNavigationItem(
+                                            {
+                                                label: 'Orders',
+                                                href: route(
+                                                    'admin.orders.index',
+                                                ),
+                                                match:
+                                                    '/admin/orders',
+                                                icon: Layers3,
+                                            },
+                                            true,
+                                        )}
 
-                            {renderNavigationItem({
-                                label: 'Customers',
-                                href: route('admin.customers.index'),
-                                match: '/admin/customers',
-                                icon: CircleUserRound,
-                            })}
+                                        <ShippingSidebarLinks
+                                            onClose={
+                                                onClose
+                                            }
+                                        />
+
+                                        {renderNavigationItem(
+                                            {
+                                                label: 'Promotions',
+                                                href: route('admin.promotions.index'),
+                                                match: '/admin/promotions',
+                                                icon: Percent,
+                                            },
+                                            true,
+                                        )}
+
+                                        {renderNavigationItem(
+                                            {
+                                                label: 'Promo Codes',
+                                                href: route('admin.promo-codes.index'),
+                                                match: '/admin/promo-codes',
+                                                icon: Ticket,
+                                            },
+                                            true,
+                                        )}
+
+                                        {renderNavigationItem(
+                                            {
+                                                label: 'Customers',
+                                                href: route(
+                                                    'admin.customers.index',
+                                                ),
+                                                match:
+                                                    '/admin/customers',
+                                                icon: CircleUserRound,
+                                            },
+                                            true,
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </nav>
@@ -457,24 +834,39 @@ export default function AdminSidebar({ open, onClose }: Props) {
                 <div className="shrink-0 border-t border-neutral-200 p-3">
                     <Link
                         href="/"
-                        onClick={onClose}
+                        onClick={
+                            onClose
+                        }
                         className="group flex items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3 text-sm font-medium text-neutral-700 transition hover:border-neutral-300 hover:bg-white hover:text-neutral-950"
                     >
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-neutral-200">
-                            <Store className="h-4 w-4 text-neutral-500" strokeWidth={1.9} />
+                            <Store
+                                className="h-4 w-4 text-neutral-500"
+                                strokeWidth={
+                                    1.9
+                                }
+                                aria-hidden="true"
+                            />
                         </div>
 
                         <div className="min-w-0 flex-1">
-                            <div>View Store</div>
+                            <div>
+                                View
+                                Store
+                            </div>
 
                             <div className="mt-0.5 text-[11px] font-normal text-neutral-400">
-                                Open storefront
+                                Open
+                                storefront
                             </div>
                         </div>
 
                         <ExternalLink
                             className="h-4 w-4 text-neutral-400 transition group-hover:text-neutral-700"
-                            strokeWidth={1.8}
+                            strokeWidth={
+                                1.8
+                            }
+                            aria-hidden="true"
                         />
                     </Link>
                 </div>

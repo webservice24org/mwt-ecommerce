@@ -9,6 +9,7 @@ use App\Domain\Orders\Enums\PaymentMethod;
 use App\Models\Address;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\ShippingRate;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
@@ -20,6 +21,8 @@ final class OrderStockTest extends TestCase
 
     public function test_simple_product_stock_is_decremented_when_order_is_created(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         $user = User::factory()
             ->create();
 
@@ -50,7 +53,8 @@ final class OrderStockTest extends TestCase
         app(
             CreateOrderAction::class,
         )->execute(
-            $user,
+            user: $user,
+            shippingRateId: $shippingRate->id,
         );
 
         $product->refresh();
@@ -63,6 +67,8 @@ final class OrderStockTest extends TestCase
 
     public function test_simple_product_order_fails_when_stock_is_insufficient(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         $user = User::factory()
             ->create();
 
@@ -94,7 +100,8 @@ final class OrderStockTest extends TestCase
             app(
                 CreateOrderAction::class,
             )->execute(
-                $user,
+                user: $user,
+                shippingRateId: $shippingRate->id,
             );
 
             $this->fail(
@@ -129,6 +136,8 @@ final class OrderStockTest extends TestCase
 
     public function test_non_inventory_product_does_not_decrement_stock(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         $user = User::factory()
             ->create();
 
@@ -162,7 +171,8 @@ final class OrderStockTest extends TestCase
         app(
             CreateOrderAction::class,
         )->execute(
-            $user,
+            user: $user,
+            shippingRateId: $shippingRate->id,
         );
 
         $product->refresh();
@@ -180,6 +190,8 @@ final class OrderStockTest extends TestCase
 
     public function test_variable_product_decrements_variant_stock(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         $user = User::factory()
             ->create();
 
@@ -220,7 +232,8 @@ final class OrderStockTest extends TestCase
         app(
             CreateOrderAction::class,
         )->execute(
-            $user,
+            user: $user,
+            shippingRateId: $shippingRate->id,
         );
 
         $variant->refresh();
@@ -243,6 +256,8 @@ final class OrderStockTest extends TestCase
 
     public function test_variable_product_order_fails_when_variant_stock_is_insufficient(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         $user = User::factory()
             ->create();
 
@@ -288,7 +303,8 @@ final class OrderStockTest extends TestCase
             app(
                 CreateOrderAction::class,
             )->execute(
-                $user,
+                user: $user,
+                shippingRateId: $shippingRate->id,
             );
         } finally {
             $variant->refresh();
@@ -307,6 +323,8 @@ final class OrderStockTest extends TestCase
 
     public function test_competing_simple_product_checkouts_cannot_oversell_last_stock(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         $firstUser = User::factory()
             ->create();
 
@@ -354,8 +372,9 @@ final class OrderStockTest extends TestCase
         $firstOrder = app(
             CreateOrderAction::class,
         )->execute(
-            $firstUser,
-            'stock-race-simple-first',
+            user: $firstUser,
+            shippingRateId: $shippingRate->id,
+            idempotencyKey: 'stock-race-simple-first',
         );
 
         $product->refresh();
@@ -386,8 +405,9 @@ final class OrderStockTest extends TestCase
             app(
                 CreateOrderAction::class,
             )->execute(
-                $secondUser,
-                'stock-race-simple-second',
+                user: $secondUser,
+                shippingRateId: $shippingRate->id,
+                idempotencyKey: 'stock-race-simple-second',
             );
 
             $this->fail(
@@ -454,6 +474,8 @@ final class OrderStockTest extends TestCase
 
     public function test_competing_variant_checkouts_cannot_oversell_last_variant_stock(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         $firstUser = User::factory()
             ->create();
 
@@ -508,8 +530,9 @@ final class OrderStockTest extends TestCase
         $firstOrder = app(
             CreateOrderAction::class,
         )->execute(
-            $firstUser,
-            'stock-race-variant-first',
+            user: $firstUser,
+            shippingRateId: $shippingRate->id,
+            idempotencyKey: 'stock-race-variant-first',
         );
 
         $variant->refresh();
@@ -540,8 +563,9 @@ final class OrderStockTest extends TestCase
             app(
                 CreateOrderAction::class,
             )->execute(
-                $secondUser,
-                'stock-race-variant-second',
+                user: $secondUser,
+                shippingRateId: $shippingRate->id,
+                idempotencyKey: 'stock-race-variant-second',
             );
 
             $this->fail(
@@ -659,5 +683,14 @@ final class OrderStockTest extends TestCase
             'storefront.checkout.payment_method' => PaymentMethod::CashOnDelivery
                 ->value,
         ];
+    }
+
+    private function createShippingRate(): ShippingRate
+    {
+        return ShippingRate::factory()
+            ->create([
+                'amount' => 0,
+                'is_active' => true,
+            ]);
     }
 }

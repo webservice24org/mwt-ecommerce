@@ -96,11 +96,11 @@ final class FooterBuilderController extends Controller
                 ),
 
                 'abilities' => [
-                'update' => $admin?->can(
-                    'updateAny',
-                    FooterSetting::class,
-                ) ??
-                    false,
+                    'update' => $admin?->can(
+                        'updateAny',
+                        FooterSetting::class,
+                    ) ??
+                        false,
                 ],
             ],
         );

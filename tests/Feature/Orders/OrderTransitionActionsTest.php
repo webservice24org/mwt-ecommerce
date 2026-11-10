@@ -7,6 +7,7 @@ namespace Tests\Feature\Orders;
 use App\Domain\Orders\Actions\CompleteOrderAction;
 use App\Domain\Orders\Actions\ConfirmOrderAction;
 use App\Domain\Orders\Actions\DeliverOrderAction;
+use App\Domain\Orders\Actions\MarkOrderPaidAction;
 use App\Domain\Orders\Actions\ShipOrderAction;
 use App\Domain\Orders\Actions\StartOrderProcessingAction;
 use App\Domain\Orders\Enums\FulfilmentStatus;
@@ -155,6 +156,15 @@ final class OrderTransitionActionsTest extends TestCase
             $user,
             'Delivery confirmed.',
         );
+        $order = app(
+            MarkOrderPaidAction::class,
+        )->execute(
+            order: $order,
+
+            actor: $user,
+
+            note: 'COD payment collected.',
+        );
 
         $this->assertSame(
             FulfilmentStatus::Delivered,
@@ -176,7 +186,7 @@ final class OrderTransitionActionsTest extends TestCase
 
         $this->assertDatabaseCount(
             'order_status_histories',
-            6,
+            7,
         );
     }
 

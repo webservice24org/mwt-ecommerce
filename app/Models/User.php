@@ -87,4 +87,12 @@ class User extends Authenticatable implements MustVerifyEmail
             CustomerStatusHistory::class,
         );
     }
+
+    /**
+     * @return HasMany<PromoCodeUsage, $this>
+     */
+    public function promoCodeUsages(): HasMany
+    {
+        return $this->hasMany(PromoCodeUsage::class);
+    }
 }

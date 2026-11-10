@@ -8,6 +8,7 @@ use App\Domain\Orders\Actions\CreateOrderAction;
 use App\Domain\Orders\Enums\PaymentMethod;
 use App\Models\Address;
 use App\Models\Product;
+use App\Models\ShippingRate;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
@@ -19,6 +20,8 @@ final class OrderCartClearingTest extends TestCase
 
     public function test_cart_is_cleared_after_successful_order_creation(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         $user = User::factory()
             ->create();
 
@@ -57,7 +60,8 @@ final class OrderCartClearingTest extends TestCase
         $order = app(
             CreateOrderAction::class,
         )->execute(
-            $user,
+            user: $user,
+            shippingRateId: $shippingRate->id,
         );
 
         $this->assertDatabaseHas(
@@ -76,6 +80,8 @@ final class OrderCartClearingTest extends TestCase
 
     public function test_cart_remains_when_stock_validation_fails(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         $user = User::factory()
             ->create();
 
@@ -112,7 +118,8 @@ final class OrderCartClearingTest extends TestCase
             app(
                 CreateOrderAction::class,
             )->execute(
-                $user,
+                user: $user,
+                shippingRateId: $shippingRate->id,
             );
 
             $this->fail(
@@ -153,6 +160,8 @@ final class OrderCartClearingTest extends TestCase
 
     public function test_cart_remains_when_checkout_validation_fails(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         $user = User::factory()
             ->create();
 
@@ -194,7 +203,8 @@ final class OrderCartClearingTest extends TestCase
             app(
                 CreateOrderAction::class,
             )->execute(
-                $user,
+                user: $user,
+                shippingRateId: $shippingRate->id,
             );
 
             $this->fail(
@@ -223,6 +233,8 @@ final class OrderCartClearingTest extends TestCase
 
     public function test_successful_order_does_not_clear_checkout_address_or_payment_state(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         $user = User::factory()
             ->create();
 
@@ -255,7 +267,8 @@ final class OrderCartClearingTest extends TestCase
         app(
             CreateOrderAction::class,
         )->execute(
-            $user,
+            user: $user,
+            shippingRateId: $shippingRate->id,
         );
 
         $this->assertNull(
@@ -311,5 +324,14 @@ final class OrderCartClearingTest extends TestCase
             'storefront.checkout.payment_method' => PaymentMethod::CashOnDelivery
                 ->value,
         ];
+    }
+
+    private function createShippingRate(): ShippingRate
+    {
+        return ShippingRate::factory()
+            ->create([
+                'amount' => 0,
+                'is_active' => true,
+            ]);
     }
 }

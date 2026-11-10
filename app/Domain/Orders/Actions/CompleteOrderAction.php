@@ -6,6 +6,7 @@ namespace App\Domain\Orders\Actions;
 
 use App\Domain\Orders\Enums\FulfilmentStatus;
 use App\Domain\Orders\Enums\OrderStatus;
+use App\Domain\Orders\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
 use Illuminate\Database\Eloquent\Model;
@@ -56,6 +57,25 @@ final readonly class CompleteOrderAction
                 ) {
                     throw ValidationException::withMessages([
                         'fulfilment_status' => 'Order cannot be completed before fulfilment is delivered.',
+                    ]);
+                }
+
+                /*
+                 * Payment must be resolved before completing
+                 * the commercial order.
+                 */
+                if (
+                    ! in_array(
+                        $lockedOrder->payment_status,
+                        [
+                            PaymentStatus::Paid,
+                            PaymentStatus::Due,
+                        ],
+                        true,
+                    )
+                ) {
+                    throw ValidationException::withMessages([
+                        'payment_status' => 'Resolve the payment first. Mark this order as Paid or Due before completing it.',
                     ]);
                 }
 

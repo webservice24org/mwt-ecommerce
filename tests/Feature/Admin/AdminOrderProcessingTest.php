@@ -7,6 +7,7 @@ namespace Tests\Feature\Admin;
 use App\Domain\Auth\Admin\Enums\AdminRole;
 use App\Domain\Orders\Enums\FulfilmentStatus;
 use App\Domain\Orders\Enums\OrderStatus;
+use App\Domain\Orders\Enums\PaymentStatus;
 use App\Models\Admin;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
@@ -161,6 +162,43 @@ final class AdminOrderProcessingTest extends TestCase
             $order->fulfilment_status,
         );
 
+        /*
+         * COD payment must be resolved after delivery
+         * before the order may be completed.
+         */
+        $this
+            ->actingAs(
+                $admin,
+                'admin',
+            )
+            ->patch(
+                route(
+                    'admin.orders.payment.paid',
+                    $order,
+                ),
+                [
+                    'note' => 'COD payment collected.',
+                ],
+            )
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(
+                route(
+                    'admin.orders.show',
+                    $order,
+                ),
+            );
+
+        $order->refresh();
+
+        $this->assertSame(
+            PaymentStatus::Paid,
+            $order->payment_status,
+        );
+
+        $this->assertNotNull(
+            $order->paid_at,
+        );
+
         $this
             ->actingAs(
                 $admin,
@@ -172,6 +210,7 @@ final class AdminOrderProcessingTest extends TestCase
                     $order,
                 ),
             )
+            ->assertSessionHasNoErrors()
             ->assertRedirect(
                 route(
                     'admin.orders.show',
@@ -195,11 +234,12 @@ final class AdminOrderProcessingTest extends TestCase
          * 3 Unfulfilled -> Processing
          * 4 Processing -> Shipped
          * 5 Shipped -> Delivered
-         * 6 Processing -> Completed
+         * 6 Unpaid -> Paid
+         * 7 Processing -> Completed
          */
         $this->assertDatabaseCount(
             'order_status_histories',
-            6,
+            7,
         );
     }
 

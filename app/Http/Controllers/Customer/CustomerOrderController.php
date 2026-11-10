@@ -10,10 +10,12 @@ use App\Domain\Orders\Enums\OrderStatus;
 use App\Domain\Orders\Queries\FindCustomerOrderQuery;
 use App\Domain\Orders\Queries\GetOrderStatusTimelineQuery;
 use App\Domain\Orders\Queries\ListCustomerOrdersQuery;
+use App\Domain\Shipping\Enums\ShippingProviderCode;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\Orders\CancelOrderRequest;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Shipment;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -105,6 +107,26 @@ final class CustomerOrderController extends Controller
             'invoice',
         );
 
+        /*
+         * The order itself was resolved through the customer-scoped
+         * query above. Fetching shipments by that already-authorized
+         * order ID keeps shipment/tracking data inside the same IDOR
+         * boundary while exposing only customer-safe fulfilment data.
+         */
+        $customerShipments = Shipment::query()
+            ->with([
+                'shippingMethod:id,driver',
+                'providerSubmission:id,shipment_id,external_reference',
+            ])
+            ->where(
+                'order_id',
+                $customerOrder->id,
+            )
+            ->orderBy(
+                'id',
+            )
+            ->get();
+
         return Inertia::render(
             'Customer/Orders/Show',
             [
@@ -144,6 +166,13 @@ final class CustomerOrderController extends Controller
                                 ->payment_status
                                 ->label(),
                         ],
+                        'due_at' => $customerOrder
+                            ->payment_due_at
+                            ?->toISOString(),
+
+                        'paid_at' => $customerOrder
+                            ->paid_at
+                            ?->toISOString(),
                     ],
 
                     'fulfilment_status' => [
@@ -177,6 +206,117 @@ final class CustomerOrderController extends Controller
                     'placed_at' => $customerOrder
                         ->placed_at
                         ?->toISOString(),
+
+                    'shipping_selection' => [
+                        'method_id' => $customerOrder
+                            ->shipping_method_id,
+
+                        'method_code' => $customerOrder
+                            ->shipping_method_code,
+
+                        'method_name' => $customerOrder
+                            ->shipping_method_name,
+
+                        'rate_id' => $customerOrder
+                            ->shipping_rate_id,
+
+                        'rate_code' => $customerOrder
+                            ->shipping_rate_code,
+
+                        'rate_name' => $customerOrder
+                            ->shipping_rate_name,
+
+                        'delivery_total' => $customerOrder
+                            ->delivery_total,
+                    ],
+
+                    'shipments' => $customerShipments
+                        ->map(
+                            static function (Shipment $shipment): array {
+                                $providerCode =
+                                    $shipment
+                                        ->effectiveProviderCode();
+
+                                $provider =
+                                    is_string(
+                                        $providerCode,
+                                    )
+                                    ? ShippingProviderCode::tryFrom(
+                                        $providerCode,
+                                    )
+                                    : null;
+
+                                $trackingNumber =
+                                    $shipment
+                                        ->tracking_number
+                                    ?? $shipment
+                                        ->providerSubmission
+                                        ?->external_reference;
+
+                                return [
+                                    'id' => $shipment
+                                        ->id,
+
+                                    'status' => [
+                                        'value' => $shipment
+                                            ->status
+                                            ->value,
+
+                                        'label' => $shipment
+                                            ->status
+                                            ->label(),
+                                    ],
+
+                                    'provider' => [
+                                        'code' => $providerCode,
+
+                                        'label' => $provider
+                                            ?->label()
+                                            ?? (
+                                                is_string(
+                                                    $providerCode,
+                                                )
+                                                ? ucfirst(
+                                                    $providerCode,
+                                                )
+                                                : null
+                                            ),
+                                    ],
+
+                                    'carrier' => $shipment
+                                        ->carrier,
+
+                                    'service' => $shipment
+                                        ->service,
+
+                                    /*
+                                     * Pathao uses the Consignment ID as the
+                                     * tracking number. The provider submission
+                                     * reference is a safe fallback for older
+                                     * successful submissions that predate
+                                     * tracking-number persistence.
+                                     */
+                                    'tracking_number' => $trackingNumber,
+
+                                    'tracking_url' => $shipment
+                                        ->tracking_url,
+
+                                    'shipped_at' => $shipment
+                                        ->shipped_at
+                                        ?->toISOString(),
+
+                                    'delivered_at' => $shipment
+                                        ->delivered_at
+                                        ?->toISOString(),
+
+                                    'returned_at' => $shipment
+                                        ->returned_at
+                                        ?->toISOString(),
+                                ];
+                            },
+                        )
+                        ->values()
+                        ->all(),
 
                     'delivery_address' => [
                         'recipient_name' => $customerOrder

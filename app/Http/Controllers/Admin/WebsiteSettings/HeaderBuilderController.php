@@ -55,10 +55,10 @@ final class HeaderBuilderController extends Controller
                 ),
 
                 'abilities' => [
-                'update' => $admin?->can(
-                    'updateAny',
-                    HeaderSetting::class,
-                ) ?? false,
+                    'update' => $admin?->can(
+                        'updateAny',
+                        HeaderSetting::class,
+                    ) ?? false,
                 ],
             ],
         );

@@ -21,12 +21,19 @@ use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\InvoiceSettingController;
 use App\Http\Controllers\Admin\MailSettingController;
 use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\OrderPaymentController;
 use App\Http\Controllers\Admin\PageBuilderBrandSearchController;
 use App\Http\Controllers\Admin\PageBuilderController;
 use App\Http\Controllers\Admin\PageBuilderImageController;
 use App\Http\Controllers\Admin\PageBuilderProductSearchController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\PageSectionController;
+use App\Http\Controllers\Admin\Promotion\PromoCodeController;
+use App\Http\Controllers\Admin\Promotion\PromotionController;
+use App\Http\Controllers\Admin\ShipmentController;
+use App\Http\Controllers\Admin\Shipping\ShippingProviderAccountController;
+use App\Http\Controllers\Admin\Shipping\ShippingRateController;
+use App\Http\Controllers\Admin\Shipping\ShippingZoneController;
 use App\Http\Controllers\Admin\WebsiteSettings\HeaderBuilderController;
 use App\Models\FooterSetting;
 use App\Models\HeaderSetting;
@@ -141,6 +148,16 @@ Route::middleware([
     Route::post('website-settings/mail', [MailSettingController::class, 'update'])->name('website-settings.mail.update');
 
     Route::post('website-settings/mail/test', [MailSettingController::class, 'test'])->name('website-settings.mail.test');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Promotion processing
+    |--------------------------------------------------------------------------
+    */
+
+    Route::resource('promotions', PromotionController::class)->except(['show']);
+    Route::resource('promo-codes', PromoCodeController::class)->except(['show']);
+
     /*
     |--------------------------------------------------------------------------
     | Oerder processing
@@ -155,6 +172,89 @@ Route::middleware([
     Route::post('orders/{order}/deliver', [OrderController::class, 'deliver'])->whereNumber('order')->name('orders.deliver');
     Route::post('orders/{order}/complete', [OrderController::class, 'complete'])->whereNumber('order')->name('orders.complete');
     Route::post('orders/{order}/cancel', [OrderController::class, 'cancel'])->whereNumber('order')->name('orders.cancel');
+
+    Route::post('orders/{order}/shipments', [ShipmentController::class, 'store'])
+        ->whereNumber('order')
+        ->name('orders.shipments.store');
+
+    Route::patch('orders/{order}/shipments/{shipment}/tracking', [ShipmentController::class, 'updateTracking'])
+        ->whereNumber('order')
+        ->whereNumber('shipment')
+        ->name('orders.shipments.tracking.update');
+
+    Route::post('orders/{order}/shipments/{shipment}/start-processing', [ShipmentController::class, 'startProcessing'])
+        ->whereNumber('order')
+        ->whereNumber('shipment')
+        ->name('orders.shipments.start-processing');
+
+    Route::post('orders/{order}/shipments/{shipment}/ship', [ShipmentController::class, 'ship'])
+        ->whereNumber('order')
+        ->whereNumber('shipment')
+        ->name('orders.shipments.ship');
+
+    Route::post('orders/{order}/shipments/{shipment}/deliver', [ShipmentController::class, 'deliver'])
+        ->whereNumber('order')
+        ->whereNumber('shipment')
+        ->name('orders.shipments.deliver');
+
+    Route::post('orders/{order}/shipments/{shipment}/cancel', [ShipmentController::class, 'cancel'])
+        ->whereNumber('order')
+        ->whereNumber('shipment')
+        ->name('orders.shipments.cancel');
+
+    Route::post('orders/{order}/shipments/{shipment}/return', [ShipmentController::class, 'returnShipment'])
+        ->whereNumber('order')
+        ->whereNumber('shipment')
+        ->name('orders.shipments.return');
+
+    Route::post('orders/{order}/shipments/{shipment}/provider/submit', [ShipmentController::class, 'submitProvider'])
+        ->whereNumber('order')
+        ->whereNumber('shipment')
+        ->middleware('throttle:10,1')
+        ->name('orders.shipments.provider.submit');
+
+    Route::post('orders/{order}/shipments/{shipment}/provider/sync', [ShipmentController::class, 'syncProvider'])
+        ->whereNumber('order')
+        ->whereNumber('shipment')
+        ->middleware('throttle:10,1')
+        ->name('orders.shipments.provider.sync');
+
+    Route::post('orders/{order}/shipments/{shipment}/provider/review-resolution', [ShipmentController::class, 'resolveProviderReview'])
+        ->whereNumber('order')
+        ->whereNumber('shipment')
+        ->middleware('throttle:5,1')
+        ->name('orders.shipments.provider.review-resolution');
+
+    Route::patch('orders/{order}/payment/due', [OrderPaymentController::class, 'due'])
+        ->whereNumber('order')
+        ->name(
+            'orders.payment.due',
+        );
+
+    Route::patch('orders/{order}/payment/paid', [OrderPaymentController::class, 'paid'])
+        ->whereNumber('order')
+        ->name(
+            'orders.payment.paid',
+        );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Shipping Settings
+    |--------------------------------------------------------------------------
+    */
+
+    Route::prefix('shipping/')
+        ->name('shipping.')
+        ->group(function (): void {
+            Route::resource('zones', ShippingZoneController::class)->except(['show']);
+            Route::resource('rates', ShippingRateController::class)->except(['show']);
+            Route::get('providers', [ShippingProviderAccountController::class, 'index'])->name('providers.index');
+            Route::get('providers/{provider}/edit', [ShippingProviderAccountController::class, 'edit'])->name('providers.edit');
+            Route::put('providers/{provider}', [ShippingProviderAccountController::class, 'update'])->name('providers.update');
+            Route::delete('providers/{provider}', [ShippingProviderAccountController::class, 'disconnect'])->name('providers.disconnect');
+            Route::post('providers/{provider}/test', [ShippingProviderAccountController::class, 'testConnection'])->name('providers.test');
+            Route::put('providers/{provider}/operational-settings', [ShippingProviderAccountController::class, 'updateOperationalSettings'])->name('providers.operational-settings');
+        });
 
     /*
     |--------------------------------------------------------------------------

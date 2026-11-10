@@ -281,6 +281,9 @@ function statusClass(type: 'order' | 'payment' | 'fulfilment', value: string): s
         switch (value) {
             case 'paid':
                 return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+            
+            case 'due':
+                    return 'border-orange-200 bg-orange-50 text-orange-700'
 
             case 'failed':
                 return 'border-red-200 bg-red-50 text-red-700'

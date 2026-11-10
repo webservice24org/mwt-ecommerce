@@ -13,6 +13,7 @@ use App\Domain\Orders\Enums\PaymentStatus;
 use App\Models\Address;
 use App\Models\OrderStatusHistory;
 use App\Models\Product;
+use App\Models\ShippingRate;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -27,6 +28,7 @@ final class OrderInitialStatusHistoryTest extends TestCase
             'user' => $user,
             'address' => $address,
             'product' => $product,
+            'shippingRate' => $shippingRate,
         ] = $this->checkoutFixture();
 
         $this
@@ -53,7 +55,9 @@ final class OrderInitialStatusHistoryTest extends TestCase
         $order = app(
             CreateOrderAction::class,
         )->execute(
-            $user,
+            user: $user,
+
+            shippingRateId: $shippingRate->id,
         );
 
         $this->assertDatabaseCount(
@@ -73,7 +77,8 @@ final class OrderInitialStatusHistoryTest extends TestCase
                 'to_status' => OrderStatus::Pending
                     ->value,
 
-                'actor_type' => $user->getMorphClass(),
+                'actor_type' => $user
+                    ->getMorphClass(),
 
                 'actor_id' => $user->id,
             ],
@@ -119,6 +124,7 @@ final class OrderInitialStatusHistoryTest extends TestCase
             'user' => $user,
             'address' => $address,
             'product' => $product,
+            'shippingRate' => $shippingRate,
         ] = $this->checkoutFixture();
 
         $this
@@ -156,14 +162,27 @@ final class OrderInitialStatusHistoryTest extends TestCase
 
         $firstOrder = $action
             ->execute(
-                $user,
-                $idempotencyKey,
+                user: $user,
+
+                shippingRateId: $shippingRate->id,
+
+                idempotencyKey: $idempotencyKey,
             );
 
+        /*
+         * CreateOrderAction's idempotency fast path executes
+         * before checkout validation. Therefore the second
+         * request can safely reuse the same shipping rate
+         * even though the first successful request cleared
+         * the cart.
+         */
         $secondOrder = $action
             ->execute(
-                $user,
-                $idempotencyKey,
+                user: $user,
+
+                shippingRateId: $shippingRate->id,
+
+                idempotencyKey: $idempotencyKey,
             );
 
         $this->assertSame(
@@ -186,7 +205,8 @@ final class OrderInitialStatusHistoryTest extends TestCase
      * @return array{
      *     user: User,
      *     address: Address,
-     *     product: Product
+     *     product: Product,
+     *     shippingRate: ShippingRate
      * }
      */
     private function checkoutFixture(): array
@@ -211,12 +231,30 @@ final class OrderInitialStatusHistoryTest extends TestCase
                 'track_inventory' => false,
             ]);
 
+        /*
+         * This test covers initial order status history,
+         * not shipping pricing.
+         *
+         * Use a global zero-cost rate so the Phase 8.4
+         * shipping prerequisite is satisfied without
+         * altering the original test's behavior.
+         */
+        $shippingRate =
+            ShippingRate::factory()
+                ->create([
+                    'amount' => 0,
+
+                    'is_active' => true,
+                ]);
+
         return [
             'user' => $user,
 
             'address' => $address,
 
             'product' => $product,
+
+            'shippingRate' => $shippingRate,
         ];
     }
 }

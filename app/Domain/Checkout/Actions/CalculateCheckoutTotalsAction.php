@@ -6,24 +6,25 @@ namespace App\Domain\Checkout\Actions;
 
 use App\Domain\Cart\Data\CartSummaryData;
 use App\Domain\Checkout\Data\CheckoutTotalsData;
+use Illuminate\Validation\ValidationException;
 
 final class CalculateCheckoutTotalsAction
 {
     public function execute(
         CartSummaryData $cart,
+        int $deliveryTotal,
     ): CheckoutTotalsData {
+        if ($deliveryTotal < 0) {
+            throw ValidationException::withMessages([
+                'delivery_total' => 'Delivery total cannot be negative.',
+            ]);
+        }
+
         $subtotal = (int) round(
             $cart->subtotal,
         );
 
-        /*
-         * Phase 6.3C foundation.
-         *
-         * These values are intentionally calculated on the
-         * server and are not accepted from the browser.
-         */
         $discountTotal = 0;
-        $deliveryTotal = 0;
         $taxTotal = 0;
 
         $grandTotal =

@@ -10,6 +10,7 @@ use App\Domain\Orders\Enums\PaymentStatus;
 use App\Models\Address;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\ShippingRate;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -146,11 +147,11 @@ final class CashOnDeliveryOrderContractTest extends TestCase
             ->for($user)
             ->default()
             ->create([
-                'recipient_name' => 'Confirmation Recipient',
+                'recipient_name' => 'COD Contract Customer',
 
                 'phone' => '+8801700000000',
 
-                'address_line_1' => '123 Confirmation Road',
+                'address_line_1' => '123 COD Contract Road',
 
                 'city' => 'Dhaka',
 
@@ -159,14 +160,29 @@ final class CashOnDeliveryOrderContractTest extends TestCase
 
         $product = Product::factory()
             ->create([
-                'name' => 'Confirmation Product',
+                'name' => 'COD Contract Product',
 
-                'sku' => 'CONFIRM-001',
+                'sku' => 'COD-CONTRACT-001',
 
                 'price' => 25000,
 
                 'status' => 'published',
             ]);
+
+        /*
+         * This test is about the COD redirect contract,
+         * not shipping pricing.
+         *
+         * A zero-cost global rate satisfies the mandatory
+         * Phase 8.4 shipping invariant without changing the
+         * original purpose of this test.
+         */
+        $shippingRate =
+            ShippingRate::factory()
+                ->create([
+                    'amount' => 0,
+                    'is_active' => true,
+                ]);
 
         $response = $this
             ->actingAs(
@@ -192,14 +208,22 @@ final class CashOnDeliveryOrderContractTest extends TestCase
                 route(
                     'checkout.order.store',
                 ),
+                [
+                    'shipping_rate_id' => $shippingRate->id,
+                ],
             );
+
+        $response
+            ->assertSessionHasNoErrors();
 
         $order = Order::query()
             ->where(
                 'user_id',
                 $user->id,
             )
-            ->latest('id')
+            ->latest(
+                'id',
+            )
             ->firstOrFail();
 
         $response
@@ -222,6 +246,21 @@ final class CashOnDeliveryOrderContractTest extends TestCase
         $this->assertSame(
             PaymentStatus::Unpaid,
             $order->payment_status,
+        );
+
+        $this->assertSame(
+            $shippingRate->id,
+            $order->shipping_rate_id,
+        );
+
+        $this->assertSame(
+            0,
+            $order->delivery_total,
+        );
+
+        $this->assertSame(
+            25000,
+            $order->grand_total,
         );
     }
 }

@@ -14,6 +14,7 @@ use App\Models\Order;
 use App\Models\OrderStatusHistory;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\ShippingRate;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -765,10 +766,19 @@ final class OrderCancellationStockSafetyTest extends TestCase
                     ->value,
             ]);
 
+        $shippingRate =
+            ShippingRate::factory()
+                ->create([
+                    'amount' => 0,
+                    'is_active' => true,
+                ]);
+
         return app(
             CreateOrderAction::class,
         )->execute(
-            $customer,
+            user: $customer,
+
+            shippingRateId: $shippingRate->id,
         );
     }
 }

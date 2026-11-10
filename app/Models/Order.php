@@ -32,6 +32,8 @@ use Illuminate\Support\Carbon;
  * @property int $delivery_total
  * @property int $tax_total
  * @property int $grand_total
+ * @property Carbon|null $payment_due_at
+ * @property Carbon|null $paid_at
  * @property Carbon|null $placed_at
  */
 final class Order extends Model
@@ -50,6 +52,8 @@ final class Order extends Model
         'status',
         'payment_method',
         'payment_status',
+        'payment_due_at',
+        'paid_at',
         'fulfilment_status',
         'currency_code',
         'subtotal',
@@ -66,6 +70,12 @@ final class Order extends Model
         'delivery_postal_code',
         'delivery_country_code',
         'placed_at',
+        'shipping_method_id',
+        'shipping_rate_id',
+        'shipping_method_code',
+        'shipping_method_name',
+        'shipping_rate_code',
+        'shipping_rate_name',
     ];
 
     /**
@@ -127,6 +137,9 @@ final class Order extends Model
             'payment_method' => PaymentMethod::class,
 
             'payment_status' => PaymentStatus::class,
+            'payment_due_at' => 'datetime',
+
+            'paid_at' => 'datetime',
 
             'fulfilment_status' => FulfilmentStatus::class,
 
@@ -152,5 +165,43 @@ final class Order extends Model
         return $this->hasOne(
             Invoice::class,
         );
+    }
+
+    /**
+     * @return HasMany<Shipment, $this>
+     */
+    public function shipments(): HasMany
+    {
+        return $this->hasMany(
+            Shipment::class,
+        );
+    }
+
+    /**
+     * @return BelongsTo<ShippingMethod, $this>
+     */
+    public function shippingMethod(): BelongsTo
+    {
+        return $this->belongsTo(
+            ShippingMethod::class,
+        );
+    }
+
+    /**
+     * @return BelongsTo<ShippingRate, $this>
+     */
+    public function shippingRate(): BelongsTo
+    {
+        return $this->belongsTo(
+            ShippingRate::class,
+        );
+    }
+
+    /**
+     * @return HasMany<PromoCodeUsage, $this>
+     */
+    public function promoCodeUsages(): HasMany
+    {
+        return $this->hasMany(PromoCodeUsage::class);
     }
 }

@@ -8,6 +8,7 @@ use App\Domain\Orders\Enums\PaymentMethod;
 use App\Models\Address;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\ShippingRate;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -18,6 +19,8 @@ final class InvalidStaleCheckoutRegressionTest extends TestCase
 
     public function test_empty_cart_cannot_create_order(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         $user = User::factory()
             ->create();
 
@@ -40,6 +43,9 @@ final class InvalidStaleCheckoutRegressionTest extends TestCase
                 route(
                     'checkout.order.store',
                 ),
+                [
+                    'shipping_rate_id' => $shippingRate->id,
+                ],
             );
 
         $response->assertSessionHasErrors();
@@ -52,6 +58,8 @@ final class InvalidStaleCheckoutRegressionTest extends TestCase
 
     public function test_customer_cannot_checkout_using_another_customers_address(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         $user = User::factory()
             ->create();
 
@@ -98,6 +106,9 @@ final class InvalidStaleCheckoutRegressionTest extends TestCase
                 route(
                     'checkout.order.store',
                 ),
+                [
+                    'shipping_rate_id' => $shippingRate->id,
+                ],
             );
 
         $response->assertSessionHasErrors();
@@ -110,6 +121,8 @@ final class InvalidStaleCheckoutRegressionTest extends TestCase
 
     public function test_deleted_selected_address_cannot_create_order(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         [
             'user' => $user,
             'address' => $address,
@@ -142,6 +155,9 @@ final class InvalidStaleCheckoutRegressionTest extends TestCase
                 route(
                     'checkout.order.store',
                 ),
+                [
+                    'shipping_rate_id' => $shippingRate->id,
+                ],
             );
 
         $response->assertSessionHasErrors();
@@ -154,6 +170,8 @@ final class InvalidStaleCheckoutRegressionTest extends TestCase
 
     public function test_unpublished_product_cannot_be_ordered_from_stale_cart(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         [
             'user' => $user,
             'address' => $address,
@@ -188,6 +206,9 @@ final class InvalidStaleCheckoutRegressionTest extends TestCase
                 route(
                     'checkout.order.store',
                 ),
+                [
+                    'shipping_rate_id' => $shippingRate->id,
+                ],
             );
 
         $response->assertSessionHasErrors();
@@ -200,6 +221,8 @@ final class InvalidStaleCheckoutRegressionTest extends TestCase
 
     public function test_deleted_product_cannot_be_ordered_from_stale_cart(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         [
             'user' => $user,
             'address' => $address,
@@ -234,6 +257,9 @@ final class InvalidStaleCheckoutRegressionTest extends TestCase
                 route(
                     'checkout.order.store',
                 ),
+                [
+                    'shipping_rate_id' => $shippingRate->id,
+                ],
             );
 
         $response->assertSessionHasErrors();
@@ -246,6 +272,8 @@ final class InvalidStaleCheckoutRegressionTest extends TestCase
 
     public function test_stale_product_price_is_recalculated_server_side(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         [
             'user' => $user,
             'address' => $address,
@@ -284,6 +312,9 @@ final class InvalidStaleCheckoutRegressionTest extends TestCase
                 route(
                     'checkout.order.store',
                 ),
+                [
+                    'shipping_rate_id' => $shippingRate->id,
+                ],
             );
 
         $response->assertRedirect();
@@ -370,6 +401,8 @@ final class InvalidStaleCheckoutRegressionTest extends TestCase
 
     public function test_missing_selected_address_falls_back_to_customers_default_address(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         [
             'user' => $user,
             'address' => $address,
@@ -405,6 +438,9 @@ final class InvalidStaleCheckoutRegressionTest extends TestCase
                 route(
                     'checkout.order.store',
                 ),
+                [
+                    'shipping_rate_id' => $shippingRate->id,
+                ],
             );
 
         $order = Order::query()
@@ -442,6 +478,8 @@ final class InvalidStaleCheckoutRegressionTest extends TestCase
 
     public function test_customer_with_no_delivery_address_cannot_create_order(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         $user = User::factory()
             ->create();
 
@@ -478,6 +516,9 @@ final class InvalidStaleCheckoutRegressionTest extends TestCase
                 route(
                     'checkout.order.store',
                 ),
+                [
+                    'shipping_rate_id' => $shippingRate->id,
+                ],
             );
 
         $response->assertSessionHasErrors();
@@ -486,5 +527,14 @@ final class InvalidStaleCheckoutRegressionTest extends TestCase
             'orders',
             0,
         );
+    }
+
+    private function createShippingRate(): ShippingRate
+    {
+        return ShippingRate::factory()
+            ->create([
+                'amount' => 0,
+                'is_active' => true,
+            ]);
     }
 }

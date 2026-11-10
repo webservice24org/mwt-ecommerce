@@ -7,6 +7,7 @@ namespace Tests\Feature\Orders;
 use App\Domain\Auth\Admin\Enums\AdminRole;
 use App\Domain\Orders\Enums\FulfilmentStatus;
 use App\Domain\Orders\Enums\OrderStatus;
+use App\Domain\Orders\Enums\PaymentStatus;
 use App\Models\Admin;
 use App\Models\Order;
 use App\Models\User;
@@ -195,7 +196,46 @@ final class AdminOrderLifecycleIntegrationTest extends TestCase
         );
 
         /*
-         * Delivered → Completed
+         * Delivered → Paid
+         *
+         * COD payment must be resolved before the
+         * delivered order can be completed.
+         */
+        $this
+            ->actingAs(
+                $admin,
+                'admin',
+            )
+            ->patch(
+                route(
+                    'admin.orders.payment.paid',
+                    $order,
+                ),
+                [
+                    'note' => 'COD payment collected.',
+                ],
+            )
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(
+                route(
+                    'admin.orders.show',
+                    $order,
+                ),
+            );
+
+        $order->refresh();
+
+        $this->assertSame(
+            PaymentStatus::Paid,
+            $order->payment_status,
+        );
+
+        $this->assertNotNull(
+            $order->paid_at,
+        );
+
+        /*
+         * Delivered + Paid → Completed
          */
         $this
             ->actingAs(
@@ -211,7 +251,13 @@ final class AdminOrderLifecycleIntegrationTest extends TestCase
                     'note' => 'Order closed.',
                 ],
             )
-            ->assertSessionHasNoErrors();
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(
+                route(
+                    'admin.orders.show',
+                    $order,
+                ),
+            );
 
         $order->refresh();
 

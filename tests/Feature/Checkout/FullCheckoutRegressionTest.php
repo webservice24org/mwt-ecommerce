@@ -11,6 +11,7 @@ use App\Domain\Orders\Enums\PaymentStatus;
 use App\Models\Address;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\ShippingRate;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -21,6 +22,8 @@ final class FullCheckoutRegressionTest extends TestCase
 
     public function test_customer_can_complete_full_cod_checkout_journey(): void
     {
+        $shippingRate = $this->createShippingRate();
+
         $user = User::factory()
             ->create();
 
@@ -90,6 +93,9 @@ final class FullCheckoutRegressionTest extends TestCase
                 route(
                     'checkout.validate',
                 ),
+                [
+                    'shipping_rate_id' => $shippingRate->id,
+                ],
             )
             ->assertSessionHasNoErrors();
 
@@ -101,6 +107,9 @@ final class FullCheckoutRegressionTest extends TestCase
                 route(
                     'checkout.order.store',
                 ),
+                [
+                    'shipping_rate_id' => $shippingRate->id,
+                ],
             );
 
         $order = Order::query()
@@ -248,5 +257,14 @@ final class FullCheckoutRegressionTest extends TestCase
             'order_items',
             1,
         );
+    }
+
+    private function createShippingRate(): ShippingRate
+    {
+        return ShippingRate::factory()
+            ->create([
+                'amount' => 0,
+                'is_active' => true,
+            ]);
     }
 }

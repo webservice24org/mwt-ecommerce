@@ -12,15 +12,20 @@ use App\Domain\Orders\Actions\ShipOrderAction;
 use App\Domain\Orders\Actions\StartOrderProcessingAction;
 use App\Domain\Orders\Enums\FulfilmentStatus;
 use App\Domain\Orders\Enums\OrderStatus;
+use App\Domain\Orders\Enums\PaymentStatus;
 use App\Domain\Orders\Queries\GetOrderStatusTimelineQuery;
+use App\Domain\Shipping\Enums\ShipmentStatus;
+use App\Domain\Shipping\Queries\GetAdminOrderShippingReadModelQuery;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Orders\CancelOrderRequest;
 use App\Http\Requests\Admin\Orders\TransitionOrderRequest;
 use App\Models\Admin;
 use App\Models\Order;
+use App\Models\Shipment;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -122,6 +127,7 @@ final class OrderController extends Controller
     public function show(
         Order $order,
         GetOrderStatusTimelineQuery $timelineQuery,
+        GetAdminOrderShippingReadModelQuery $shippingReadModelQuery,
     ): Response {
         $order->load([
             'user:id,name,email',
@@ -184,6 +190,44 @@ final class OrderController extends Controller
                                 ->payment_status
                                 ->label(),
                         ],
+
+                        'due_at' => $order
+                            ->payment_due_at
+                            ?->toISOString(),
+
+                        'paid_at' => $order
+                            ->paid_at
+                            ?->toISOString(),
+
+                        'actions' => [
+                            'can_mark_due' => $order->fulfilment_status ===
+                                FulfilmentStatus::Delivered
+                                &&
+                                $order->payment_status ===
+                                PaymentStatus::Unpaid,
+
+                            'can_mark_paid' => $order->fulfilment_status ===
+                                FulfilmentStatus::Delivered
+                                &&
+                                in_array(
+                                    $order->payment_status,
+                                    [
+                                        PaymentStatus::Unpaid,
+                                        PaymentStatus::Due,
+                                    ],
+                                    true,
+                                ),
+
+                            'due_url' => route(
+                                'admin.orders.payment.due',
+                                $order,
+                            ),
+
+                            'paid_url' => route(
+                                'admin.orders.payment.paid',
+                                $order,
+                            ),
+                        ],
                     ],
 
                     'fulfilment_status' => [
@@ -211,6 +255,28 @@ final class OrderController extends Controller
                     'placed_at' => $order
                         ->placed_at
                         ?->toISOString(),
+
+                    /*
+                     * Immutable checkout shipping snapshot.
+                     *
+                     * Never replace these values with the current
+                     * ShippingMethod / ShippingRate records.
+                     */
+                    'shipping_selection' => [
+                        'method_id' => $order->shipping_method_id,
+
+                        'method_code' => $order->shipping_method_code,
+
+                        'method_name' => $order->shipping_method_name,
+
+                        'rate_id' => $order->shipping_rate_id,
+
+                        'rate_code' => $order->shipping_rate_code,
+
+                        'rate_name' => $order->shipping_rate_name,
+
+                        'delivery_total' => $order->delivery_total,
+                    ],
 
                     'delivery_address' => [
                         'recipient_name' => $order
@@ -278,10 +344,9 @@ final class OrderController extends Controller
                         ),
 
                     'cancellation' => [
-                        'allowed' => $order
-                            ->status
-                            ->canTransitionTo(
-                                OrderStatus::Cancelled,
+                        'allowed' => $this
+                            ->orderCancellationAllowed(
+                                $order,
                             ),
 
                         'url' => route(
@@ -302,6 +367,11 @@ final class OrderController extends Controller
                             ),
                         ]
                         : null,
+
+                    'shipping' => $shippingReadModelQuery
+                        ->get(
+                            $order,
+                        ),
                 ],
             ],
         );
@@ -356,6 +426,12 @@ final class OrderController extends Controller
         Order $order,
         ShipOrderAction $action,
     ): RedirectResponse {
+        $this->assertLegacyAggregateTransitionAllowed(
+            order: $order,
+
+            transition: 'ship',
+        );
+
         $action->execute(
             $order,
             $this->admin(
@@ -378,6 +454,12 @@ final class OrderController extends Controller
         Order $order,
         DeliverOrderAction $action,
     ): RedirectResponse {
+        $this->assertLegacyAggregateTransitionAllowed(
+            order: $order,
+
+            transition: 'deliver',
+        );
+
         $action->execute(
             $order,
             $this->admin(
@@ -422,6 +504,10 @@ final class OrderController extends Controller
         Order $order,
         CancelOrderAction $action,
     ): RedirectResponse {
+        $this->assertOrderCancellationCompatibleWithShipments(
+            $order,
+        );
+
         $action->execute(
             $order,
             $this->admin(
@@ -500,37 +586,54 @@ final class OrderController extends Controller
         return match (
             $order->fulfilment_status
         ) {
-            FulfilmentStatus::Processing => [
-                [
-                    'key' => 'ship',
+            FulfilmentStatus::Processing => $this->hasPhysicalShipments(
+                $order,
+            )
+                ? []
+                : [
+                    [
+                        'key' => 'ship',
 
-                    'label' => 'Mark Shipped',
+                        'label' => 'Mark Shipped',
 
-                    'description' => 'Record that the order has left fulfilment.',
+                        'description' => 'Record that the order has left fulfilment.',
 
-                    'url' => route(
-                        'admin.orders.ship',
-                        $order,
-                    ),
+                        'url' => route(
+                            'admin.orders.ship',
+                            $order,
+                        ),
+                    ],
                 ],
-            ],
 
-            FulfilmentStatus::Shipped => [
-                [
-                    'key' => 'deliver',
+            FulfilmentStatus::Shipped => $this->hasPhysicalShipments(
+                $order,
+            )
+                ? []
+                : [
+                    [
+                        'key' => 'deliver',
 
-                    'label' => 'Mark Delivered',
+                        'label' => 'Mark Delivered',
 
-                    'description' => 'Confirm that the customer received the order.',
+                        'description' => 'Confirm that the customer received the order.',
 
-                    'url' => route(
-                        'admin.orders.deliver',
-                        $order,
-                    ),
+                        'url' => route(
+                            'admin.orders.deliver',
+                            $order,
+                        ),
+                    ],
                 ],
-            ],
 
-            FulfilmentStatus::Delivered => [
+            FulfilmentStatus::Delivered => in_array(
+                $order
+                    ->payment_status,
+                [
+                    PaymentStatus::Paid,
+                    PaymentStatus::Due,
+                ],
+                true,
+            )
+                ? [
                 [
                     'key' => 'complete',
 
@@ -543,10 +646,95 @@ final class OrderController extends Controller
                         $order,
                     ),
                 ],
-            ],
+            ]
+                : [],
 
             default => [],
         };
+    }
+
+    private function orderCancellationAllowed(
+        Order $order,
+    ): bool {
+        return $order
+            ->status
+            ->canTransitionTo(
+                OrderStatus::Cancelled,
+            ) &&
+            ! $this->hasActivePhysicalShipments(
+                $order,
+            );
+    }
+
+    private function assertOrderCancellationCompatibleWithShipments(
+        Order $order,
+    ): void {
+        if (
+            ! $this->hasActivePhysicalShipments(
+                $order,
+            )
+        ) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'cancellation' => 'Cancel every active physical shipment before cancelling the order.',
+        ]);
+    }
+
+    private function hasActivePhysicalShipments(
+        Order $order,
+    ): bool {
+        return Shipment::query()
+            ->where(
+                'order_id',
+                $order->id,
+            )
+            ->where(
+                'status',
+                '!=',
+                ShipmentStatus::Cancelled
+                    ->value,
+            )
+            ->exists();
+    }
+
+    private function assertLegacyAggregateTransitionAllowed(
+        Order $order,
+        string $transition,
+    ): void {
+        if (
+            ! $this->hasPhysicalShipments(
+                $order,
+            )
+        ) {
+            return;
+        }
+
+        $message = match (
+            $transition
+        ) {
+            'ship' => 'This order has physical shipments. Ship the remaining shipment quantities instead of changing aggregate fulfilment directly.',
+
+            'deliver' => 'This order has physical shipments. Deliver the physical shipments instead of changing aggregate fulfilment directly.',
+
+            default => 'This aggregate fulfilment transition is unavailable because physical shipments exist.',
+        };
+
+        throw ValidationException::withMessages([
+            'fulfilment_status' => $message,
+        ]);
+    }
+
+    private function hasPhysicalShipments(
+        Order $order,
+    ): bool {
+        return Shipment::query()
+            ->where(
+                'order_id',
+                $order->id,
+            )
+            ->exists();
     }
 
     private function admin(
