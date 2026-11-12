@@ -4,26 +4,31 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Checkout;
 
+use App\Domain\Cart\Data\CartPricingSummaryData;
+use App\Domain\Cart\Data\CartPromoData;
 use App\Domain\Cart\Data\CartSummaryData;
 use App\Domain\Checkout\Actions\CalculateCheckoutTotalsAction;
 use PHPUnit\Framework\TestCase;
 
 final class CalculateCheckoutTotalsActionTest extends TestCase
 {
-    public function test_checkout_totals_are_calculated_from_cart_subtotal(): void
+    public function test_checkout_totals_are_calculated_from_authoritative_cart_pricing(): void
     {
-        $cart = new CartSummaryData(
-            items: [],
-            itemCount: 2,
-            subtotal: 25000,
-        );
+        $pricing =
+            $this->pricing(
+                subtotal: 25000,
 
-        $totals = (
-            new CalculateCheckoutTotalsAction
-        )->execute(
-            cart: $cart,
-            deliveryTotal: 0,
-        );
+                discount: 0,
+            );
+
+        $totals =
+            (
+                new CalculateCheckoutTotalsAction
+            )->execute(
+                pricing: $pricing,
+
+                deliveryTotal: 0,
+            );
 
         $this->assertSame(
             25000,
@@ -51,61 +56,140 @@ final class CalculateCheckoutTotalsActionTest extends TestCase
         );
     }
 
-    public function test_totals_array_uses_checkout_contract_keys(): void
+    public function test_promo_discount_is_preserved_in_checkout_totals(): void
     {
-        $cart = new CartSummaryData(
-            items: [],
-            itemCount: 1,
-            subtotal: 9999,
+        $pricing =
+            $this->pricing(
+                subtotal: 550000,
+
+                discount: 15000,
+            );
+
+        $totals =
+            (
+                new CalculateCheckoutTotalsAction
+            )->execute(
+                pricing: $pricing,
+
+                deliveryTotal: 0,
+            );
+
+        $this->assertSame(
+            550000,
+            $totals->subtotal,
         );
 
-        $totals = (
-            new CalculateCheckoutTotalsAction
-        )->execute(
-            cart: $cart,
-            deliveryTotal: 0,
+        $this->assertSame(
+            15000,
+            $totals->discountTotal,
         );
+
+        $this->assertSame(
+            535000,
+            $totals->grandTotal,
+        );
+    }
+
+    public function test_delivery_is_added_after_promo_discount(): void
+    {
+        $pricing =
+            $this->pricing(
+                subtotal: 550000,
+
+                discount: 15000,
+            );
+
+        $totals =
+            (
+                new CalculateCheckoutTotalsAction
+            )->execute(
+                pricing: $pricing,
+
+                deliveryTotal: 12000,
+            );
+
+        $this->assertSame(
+            550000,
+            $totals->subtotal,
+        );
+
+        $this->assertSame(
+            15000,
+            $totals->discountTotal,
+        );
+
+        $this->assertSame(
+            12000,
+            $totals->deliveryTotal,
+        );
+
+        $this->assertSame(
+            547000,
+            $totals->grandTotal,
+        );
+    }
+
+    public function test_totals_array_uses_checkout_contract_keys(): void
+    {
+        $pricing =
+            $this->pricing(
+                subtotal: 9999,
+
+                discount: 999,
+            );
+
+        $totals =
+            (
+                new CalculateCheckoutTotalsAction
+            )->execute(
+                pricing: $pricing,
+
+                deliveryTotal: 500,
+            );
 
         $this->assertSame(
             [
                 'subtotal' => 9999,
-                'discount_total' => 0,
-                'delivery_total' => 0,
+
+                'discount_total' => 999,
+
+                'delivery_total' => 500,
+
                 'tax_total' => 0,
-                'grand_total' => 9999,
+
+                'grand_total' => 9500,
             ],
             $totals->toArray(),
         );
     }
 
-    public function test_delivery_total_is_included_in_grand_total(): void
-    {
-        $cart = new CartSummaryData(
-            items: [],
-            itemCount: 1,
-            subtotal: 1000,
-        );
+    private function pricing(
+        int $subtotal,
+        int $discount,
+    ): CartPricingSummaryData {
+        return new CartPricingSummaryData(
+            cart: new CartSummaryData(
+                items: [],
 
-        $totals = (
-            new CalculateCheckoutTotalsAction
-        )->execute(
-            cart: $cart,
-            deliveryTotal: 80,
-        );
+                itemCount: 1,
 
-        $this->assertSame(
-            1000,
-            $totals->subtotal,
-        );
+                subtotal: $subtotal,
+            ),
 
-        $this->assertSame(
-            80,
-            $totals->deliveryTotal,
-        );
+            promo: $discount > 0
+            ? new CartPromoData(
+                promoCodeId: 1,
 
-        $this->assertSame(
-            1080,
-            $totals->grandTotal,
+                code: 'TEST10',
+
+                discountAmount: $discount,
+            )
+            : null,
+
+            discountTotal: $discount,
+
+            grandTotal: $subtotal -
+            $discount,
         );
     }
 }

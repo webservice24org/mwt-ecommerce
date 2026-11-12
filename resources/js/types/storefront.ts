@@ -205,10 +205,19 @@ export interface StorefrontCartItem {
     line_total: number
 }
 
+export interface StorefrontCartPromo {
+    promo_code_id: number
+    code: string
+    discount_amount: number
+}
+
 export interface StorefrontCart {
     items: StorefrontCartItem[]
     item_count: number
     subtotal: number
+    promo: StorefrontCartPromo | null
+    discount_total: number
+    grand_total: number
 }
 
 export interface StorefrontCategoryMenuItem {

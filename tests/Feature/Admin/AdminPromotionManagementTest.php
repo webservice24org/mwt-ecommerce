@@ -670,11 +670,23 @@ final class AdminPromotionManagementTest extends TestCase
 
                 'name' => 'Updated Promo',
 
+                /*
+                 * Percentage values remain basis points.
+                 *
+                 * 2000 = 20%
+                 */
                 'discount_value' => 2000,
 
-                'maximum_discount' => 600,
+                /*
+                 * Monetary values are stored in
+                 * minor currency units.
+                 *
+                 * BDT 600  = 60000
+                 * BDT 1200 = 120000
+                 */
+                'maximum_discount' => 60000,
 
-                'minimum_subtotal' => 1200,
+                'minimum_subtotal' => 120000,
 
                 'usage_limit' => 50,
 

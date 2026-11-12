@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Domain\Checkout\Actions;
 
-use App\Domain\Cart\Data\CartSummaryData;
+use App\Domain\Cart\Data\CartPricingSummaryData;
 use App\Domain\Checkout\Data\CheckoutTotalsData;
 use Illuminate\Validation\ValidationException;
 
 final class CalculateCheckoutTotalsAction
 {
     public function execute(
-        CartSummaryData $cart,
+        CartPricingSummaryData $pricing,
         int $deliveryTotal,
     ): CheckoutTotalsData {
         if ($deliveryTotal < 0) {
@@ -20,24 +20,48 @@ final class CalculateCheckoutTotalsAction
             ]);
         }
 
-        $subtotal = (int) round(
-            $cart->subtotal,
-        );
+        /*
+         * All cart pricing is already authoritative.
+         *
+         * Promo calculations must NEVER be duplicated
+         * inside checkout.
+         */
+        $subtotal =
+            $pricing
+                ->cart
+                ->subtotal;
 
-        $discountTotal = 0;
+        $discountTotal =
+            $pricing
+                ->discountTotal;
+
+        /*
+         * Tax is currently zero in the existing
+         * checkout contract.
+         */
         $taxTotal = 0;
 
+        /*
+         * CartPricingSummaryData::grandTotal is:
+         *
+         * subtotal - promo discount
+         *
+         * Checkout adds delivery and tax.
+         */
         $grandTotal =
-            $subtotal
-            - $discountTotal
+            $pricing->grandTotal
             + $deliveryTotal
             + $taxTotal;
 
         return new CheckoutTotalsData(
             subtotal: $subtotal,
+
             discountTotal: $discountTotal,
+
             deliveryTotal: $deliveryTotal,
+
             taxTotal: $taxTotal,
+
             grandTotal: $grandTotal,
         );
     }

@@ -100,6 +100,92 @@ const nullableNumber = (
         ? ''
         : String(value)
 
+/*
+ * Stored monetary values use minor units.
+ *
+ * Example:
+ *
+ * 15000 => BDT 150
+ * 150050 => BDT 1,500.50
+ *
+ * Admin forms should display major-unit
+ * BDT values instead of raw stored integers.
+ */
+const minorMoneyToInput = (
+    value: number | null,
+): string => {
+    if (value === null) {
+        return ''
+    }
+
+    const major =
+        value / 100
+
+    return Number.isInteger(
+        major,
+    )
+        ? String(
+              major,
+          )
+        : major.toFixed(
+              2,
+          )
+}
+
+/*
+ * Percentage discount values are basis points
+ * and must not be divided by 100 here.
+ *
+ * Example:
+ *
+ * 1000 = 10%
+ *
+ * Fixed discount values are monetary minor
+ * units and must be converted back to BDT.
+ */
+const discountValueToInput = (
+    type: string | null,
+    value: number | null,
+): string => {
+    if (value === null) {
+        return ''
+    }
+
+    if (type === 'fixed') {
+        return minorMoneyToInput(
+            value,
+        )
+    }
+
+    return String(
+        value,
+    )
+}
+
+const formatMinorMoney = (
+    value: number,
+): string => {
+    const major =
+        value / 100
+
+    return new Intl.NumberFormat(
+        'en-BD',
+        {
+            minimumFractionDigits:
+                Number.isInteger(
+                    major,
+                )
+                    ? 0
+                    : 2,
+
+            maximumFractionDigits:
+                2,
+        },
+    ).format(
+        major,
+    )
+}
+
 export default function Edit({
     promoCode,
     discountTypes,
@@ -174,17 +260,18 @@ export default function Edit({
                             '',
 
                         discount_value:
-                            nullableNumber(
+                            discountValueToInput(
+                                promoCode.discount_type,
                                 promoCode.discount_value,
                             ),
 
                         maximum_discount:
-                            nullableNumber(
+                            minorMoneyToInput(
                                 promoCode.maximum_discount,
                             ),
 
                         minimum_subtotal:
-                            nullableNumber(
+                            minorMoneyToInput(
                                 promoCode.minimum_subtotal,
                             ),
 
@@ -283,7 +370,9 @@ function EffectiveRulePreview({
                         effective.maximum_discount ===
                         null
                             ? 'No limit'
-                            : `Tk ${effective.maximum_discount}`
+                            : `Tk ${formatMinorMoney(
+                                  effective.maximum_discount,
+                              )}`
                     }
                     source={
                         effective.maximum_discount_source
@@ -296,7 +385,9 @@ function EffectiveRulePreview({
                         effective.minimum_subtotal ===
                         null
                             ? 'None'
-                            : `Tk ${effective.minimum_subtotal}`
+                            : `Tk ${formatMinorMoney(
+                                  effective.minimum_subtotal,
+                              )}`
                     }
                     source={
                         effective.minimum_subtotal_source

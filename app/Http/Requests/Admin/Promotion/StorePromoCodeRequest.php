@@ -55,7 +55,9 @@ final class StorePromoCodeRequest extends FormRequest
 
             'discount_type' => [
                 'nullable',
-                Rule::enum(DiscountType::class),
+                Rule::enum(
+                    DiscountType::class,
+                ),
             ],
 
             'discount_value' => [
@@ -119,13 +121,19 @@ final class StorePromoCodeRequest extends FormRequest
         return [
             function (Validator $validator): void {
                 $hasPromotion =
-                    $this->filled('promotion_id');
+                    $this->filled(
+                        'promotion_id',
+                    );
 
                 $hasOwnDiscountType =
-                    $this->filled('discount_type');
+                    $this->filled(
+                        'discount_type',
+                    );
 
                 $hasOwnDiscountValue =
-                    $this->filled('discount_value');
+                    $this->filled(
+                        'discount_value',
+                    );
 
                 if (
                     ! $hasPromotion &&
@@ -155,9 +163,15 @@ final class StorePromoCodeRequest extends FormRequest
                 }
 
                 if (
-                    $this->input('discount_type') ===
-                    DiscountType::Percentage->value &&
-                    (int) $this->input('discount_value') > 10_000
+                    $this->input(
+                        'discount_type',
+                    ) ===
+                    DiscountType::Percentage
+                        ->value &&
+                    (int) $this->input(
+                        'discount_value',
+                    ) >
+                    10_000
                 ) {
                     $validator
                         ->errors()
@@ -168,7 +182,9 @@ final class StorePromoCodeRequest extends FormRequest
                 }
 
                 $globalLimit =
-                    $this->integer('usage_limit');
+                    $this->integer(
+                        'usage_limit',
+                    );
 
                 $customerLimit =
                     $this->integer(
@@ -177,7 +193,8 @@ final class StorePromoCodeRequest extends FormRequest
 
                 if (
                     $globalLimit > 0 &&
-                    $customerLimit > $globalLimit
+                    $customerLimit >
+                    $globalLimit
                 ) {
                     $validator
                         ->errors()
@@ -192,14 +209,114 @@ final class StorePromoCodeRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $payload = [];
+
         if ($this->has('code')) {
-            $this->merge([
-                'code' => mb_strtoupper(
+            $payload['code'] =
+                mb_strtoupper(
                     trim(
-                        (string) $this->input('code'),
+                        (string) $this->input(
+                            'code',
+                        ),
                     ),
-                ),
-            ]);
+                );
         }
+
+        /*
+         * Percentage discount_value is stored
+         * as basis points:
+         *
+         * 1000 = 10%
+         * 2000 = 20%
+         *
+         * Fixed discounts are monetary values
+         * and therefore stored in minor units.
+         */
+        if (
+            $this->input(
+                'discount_type',
+            ) ===
+            DiscountType::Fixed->value
+        ) {
+            $payload['discount_value'] =
+                $this->moneyToMinor(
+                    $this->input(
+                        'discount_value',
+                    ),
+                );
+        }
+
+        $payload['maximum_discount'] =
+            $this->moneyToMinor(
+                $this->input(
+                    'maximum_discount',
+                ),
+            );
+
+        $payload['minimum_subtotal'] =
+            $this->moneyToMinor(
+                $this->input(
+                    'minimum_subtotal',
+                ),
+            );
+
+        $this->merge(
+            $payload,
+        );
+    }
+
+    private function moneyToMinor(
+        mixed $value,
+    ): mixed {
+        if (
+            $value === null ||
+            $value === ''
+        ) {
+            return null;
+        }
+
+        $normalized =
+            trim(
+                (string) $value,
+            );
+
+        /*
+         * Preserve invalid input so Laravel's
+         * validation rules can reject it.
+         */
+        if (
+            ! preg_match(
+                '/^\d+(?:\.\d{1,2})?$/',
+                $normalized,
+            )
+        ) {
+            return $value;
+        }
+
+        [$whole, $fraction] =
+            array_pad(
+                explode(
+                    '.',
+                    $normalized,
+                    2,
+                ),
+                2,
+                '',
+            );
+
+        $fraction =
+            str_pad(
+                $fraction,
+                2,
+                '0',
+            );
+
+        return
+            ((int) $whole * 100) +
+            (int) substr(
+                $fraction,
+                0,
+                2,
+            );
     }
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Frontend;
 
+use App\Domain\Cart\Data\CartSummaryData;
+use App\Domain\Cart\Services\CartPromoPricingService;
 use App\Domain\Cart\Services\CartService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Frontend\AddCartItemRequest;
@@ -11,30 +13,34 @@ use App\Http\Requests\Frontend\UpdateCartItemRequest;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 
 final class CartController extends Controller
 {
     public function show(
         CartService $cart,
+        CartPromoPricingService $pricing,
     ): JsonResponse {
-        return response()->json(
-            $cart
-                ->summary()
-                ->toArray(),
+        return $this->cartResponse(
+            summary: $cart->summary(),
+
+            pricing: $pricing,
         );
     }
 
     public function store(
         AddCartItemRequest $request,
         CartService $cart,
+        CartPromoPricingService $pricing,
     ): JsonResponse {
-        $product = Product::query()
-            ->published()
-            ->findOrFail(
-                $request->integer(
-                    'product_id',
-                ),
-            );
+        $product =
+            Product::query()
+                ->published()
+                ->findOrFail(
+                    $request->integer(
+                        'product_id',
+                    ),
+                );
 
         $variant = null;
 
@@ -43,20 +49,21 @@ final class CartController extends Controller
                 'variant_id',
             )
         ) {
-            $variant = ProductVariant::query()
-                ->where(
-                    'product_id',
-                    $product->id,
-                )
-                ->where(
-                    'is_active',
-                    true,
-                )
-                ->findOrFail(
-                    $request->integer(
-                        'variant_id',
-                    ),
-                );
+            $variant =
+                ProductVariant::query()
+                    ->where(
+                        'product_id',
+                        $product->id,
+                    )
+                    ->where(
+                        'is_active',
+                        true,
+                    )
+                    ->findOrFail(
+                        $request->integer(
+                            'variant_id',
+                        ),
+                    );
         }
 
         if (
@@ -81,17 +88,22 @@ final class CartController extends Controller
             );
         }
 
-        $summary = $cart->add(
-            product: $product,
-            variant: $variant,
-            quantity: $request->integer(
-                'quantity',
-                1,
-            ),
-        );
+        $summary =
+            $cart->add(
+                product: $product,
 
-        return response()->json(
-            $summary->toArray(),
+                variant: $variant,
+
+                quantity: $request->integer(
+                    'quantity',
+                    1,
+                ),
+            );
+
+        return $this->cartResponse(
+            summary: $summary,
+
+            pricing: $pricing,
         );
     }
 
@@ -99,37 +111,92 @@ final class CartController extends Controller
         string $key,
         UpdateCartItemRequest $request,
         CartService $cart,
+        CartPromoPricingService $pricing,
     ): JsonResponse {
-        $summary = $cart->update(
-            key: $key,
-            quantity: $request->integer(
-                'quantity',
-            ),
-        );
+        $summary =
+            $cart->update(
+                key: $key,
 
-        return response()->json(
-            $summary->toArray(),
+                quantity: $request->integer(
+                    'quantity',
+                ),
+            );
+
+        return $this->cartResponse(
+            summary: $summary,
+
+            pricing: $pricing,
         );
     }
 
     public function destroy(
         string $key,
         CartService $cart,
+        CartPromoPricingService $pricing,
     ): JsonResponse {
-        return response()->json(
-            $cart
-                ->remove($key)
-                ->toArray(),
+        $summary =
+            $cart->remove(
+                $key,
+            );
+
+        return $this->cartResponse(
+            summary: $summary,
+
+            pricing: $pricing,
         );
     }
 
     public function clear(
         CartService $cart,
+        CartPromoPricingService $pricing,
+    ): JsonResponse {
+        /*
+         * CartService::clear() also removes
+         * the selected promo session state.
+         */
+        $summary =
+            $cart->clear();
+
+        return $this->cartResponse(
+            summary: $summary,
+
+            pricing: $pricing,
+        );
+    }
+
+    private function cartResponse(
+        CartSummaryData $summary,
+        CartPromoPricingService $pricing,
     ): JsonResponse {
         return response()->json(
-            $cart
-                ->clear()
+            $pricing
+                ->calculate(
+                    cart: $summary,
+
+                    userId: $this->customerId(),
+                )
                 ->toArray(),
         );
+    }
+
+    private function customerId(): ?int
+    {
+        $id =
+            Auth::guard(
+                'web',
+            )->id();
+
+        if (is_int($id)) {
+            return $id;
+        }
+
+        if (
+            is_string($id)
+            && ctype_digit($id)
+        ) {
+            return (int) $id;
+        }
+
+        return null;
     }
 }

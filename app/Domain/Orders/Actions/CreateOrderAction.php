@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Orders\Actions;
 
+use App\Actions\Promotion\RedeemPromoCodeAction;
 use App\Domain\Cart\Services\CartService;
 use App\Domain\Checkout\Actions\ValidateCheckoutAction;
 use App\Domain\Checkout\Services\CheckoutSessionService;
@@ -12,11 +13,14 @@ use App\Domain\Orders\Enums\FulfilmentStatus;
 use App\Domain\Orders\Enums\OrderStatus;
 use App\Domain\Orders\Enums\PaymentStatus;
 use App\Domain\Orders\Services\OrderNumberGenerator;
+use App\Domain\Promotion\Exceptions\PromoRedemptionException;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
+use App\Models\PromoCode;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 final readonly class CreateOrderAction
 {
@@ -28,6 +32,7 @@ final readonly class CreateOrderAction
         private CartService $cart,
         private CheckoutSessionService $checkoutSession,
         private SendOrderPlacedNotificationsAction $sendOrderPlacedNotifications,
+        private RedeemPromoCodeAction $redeemPromoCode,
     ) {}
 
     public function execute(
@@ -202,6 +207,105 @@ final readonly class CreateOrderAction
                                 $snapshot
                                     ->toArray(),
                             );
+                    }
+
+                    /*
+                     * ==================================================
+                     * PROMO REDEMPTION
+                     * ==================================================
+                     *
+                     * Redemption belongs to the same database
+                     * transaction as:
+                     *
+                     * - stock decrement
+                     * - order creation
+                     * - order items
+                     * - initial status history
+                     *
+                     * A redemption failure therefore rolls the whole
+                     * order back.
+                     */
+                    if ($checkout->promo !== null) {
+                        $promoCode =
+                            PromoCode::query()
+                                ->find(
+                                    $checkout
+                                        ->promo
+                                        ->promoCodeId,
+                                );
+
+                        if (
+                            ! $promoCode instanceof PromoCode
+                        ) {
+                            throw ValidationException::withMessages([
+                                'promo_code' => 'The selected promo code is no longer available.',
+                            ]);
+                        }
+
+                        try {
+                            $redemption =
+                                $this
+                                    ->redeemPromoCode
+                                    ->execute(
+                                        promoCode: $promoCode,
+
+                                        order: $order,
+
+                                        subtotal: $totals
+                                            ->subtotal,
+
+                                        userId: $user->id,
+                                    );
+                        } catch (
+                            PromoRedemptionException $exception
+                        ) {
+                            /*
+                             * Convert the domain redemption error into
+                             * a checkout validation error.
+                             *
+                             * Because this happens inside the outer
+                             * order transaction, everything is rolled
+                             * back before the error reaches the UI.
+                             */
+                            throw ValidationException::withMessages([
+                                'promo_code' => $exception
+                                    ->getMessage(),
+                            ]);
+                        }
+
+                        /*
+                         * Very narrow race protection:
+                         *
+                         * A promotion rule could theoretically change
+                         * after the first checkout validation but before
+                         * RedeemPromoCodeAction obtains its row lock.
+                         *
+                         * Never persist an order whose stored discount
+                         * differs from the discount that was actually
+                         * redeemed.
+                         */
+                        if (
+                            $redemption
+                                ->discountAmount !==
+                            $totals
+                                ->discountTotal
+                        ) {
+                            throw ValidationException::withMessages([
+                                'promo_code' => 'The promo discount changed before your order was placed. Please review your checkout and try again.',
+                            ]);
+                        }
+                    } elseif (
+                        $totals->discountTotal !== 0
+                    ) {
+                        /*
+                         * Defensive invariant:
+                         *
+                         * Checkout must never have a discount without
+                         * an identified promo.
+                         */
+                        throw ValidationException::withMessages([
+                            'promo_code' => 'The checkout discount could not be verified. Please review your checkout and try again.',
+                        ]);
                     }
 
                     /*

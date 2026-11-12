@@ -19,7 +19,7 @@ final class CheckoutValidationDataTest extends TestCase
         $cart = new CartSummaryData(
             items: [],
             itemCount: 2,
-            subtotal: 25000.0,
+            subtotal: 25000,
         );
 
         $totals = new CheckoutTotalsData(
@@ -80,7 +80,7 @@ final class CheckoutValidationDataTest extends TestCase
         $cart = new CartSummaryData(
             items: [],
             itemCount: 1,
-            subtotal: 34999.0,
+            subtotal: 34999,
         );
 
         $totals = new CheckoutTotalsData(

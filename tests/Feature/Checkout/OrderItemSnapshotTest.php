@@ -41,9 +41,9 @@ final class OrderItemSnapshotTest extends TestCase
 
             imageUrl: null,
 
-            unitPrice: 12500.0,
+            unitPrice: 12500,
 
-            lineTotal: 25000.0,
+            lineTotal: 25000,
         );
 
         $snapshot = app(
@@ -130,9 +130,9 @@ final class OrderItemSnapshotTest extends TestCase
 
             imageUrl: null,
 
-            unitPrice: 10000.0,
+            unitPrice: 10000,
 
-            lineTotal: 30000.0,
+            lineTotal: 30000,
         );
 
         $snapshot = app(
@@ -208,9 +208,9 @@ final class OrderItemSnapshotTest extends TestCase
 
             imageUrl: null,
 
-            unitPrice: 10000.0,
+            unitPrice: 10000,
 
-            lineTotal: 10000.0,
+            lineTotal: 10000,
         );
 
         $this->expectException(
@@ -243,9 +243,9 @@ final class OrderItemSnapshotTest extends TestCase
 
             imageUrl: null,
 
-            unitPrice: 10000.0,
+            unitPrice: 10000,
 
-            lineTotal: 10000.0,
+            lineTotal: 10000,
         );
 
         $this->expectException(

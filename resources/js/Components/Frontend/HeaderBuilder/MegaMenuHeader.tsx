@@ -53,6 +53,9 @@ export default function MegaMenuHeader({ config, wishlist, cart }: Props) {
             items: [],
             item_count: 0,
             subtotal: 0,
+            promo: null,
+            discount_total: 0,
+            grand_total: 0,
         },
     )
     const [cartOpen, setCartOpen] = useState(false)
@@ -965,74 +968,386 @@ function CartDrawer({
     cart: StorefrontCart
     onClose: () => void
 }) {
-    const [processingKey, setProcessingKey] = useState<string | null>(null)
-    const [mutationError, setMutationError] = useState<string | null>(null)
-    const drawerRef = useRef<HTMLElement | null>(null)
+    const [processingKey, setProcessingKey] =
+        useState<string | null>(null)
+
+    const [mutationError, setMutationError] =
+        useState<string | null>(null)
+
+    const [promoCode, setPromoCode] =
+        useState('')
+
+    const [promoProcessing, setPromoProcessing] =
+        useState(false)
+
+    const [promoError, setPromoError] =
+        useState<string | null>(null)
+
+    const [promoStatus, setPromoStatus] =
+        useState<string | null>(null)
+
+    const drawerRef =
+        useRef<HTMLElement | null>(null)
 
     useEffect(() => {
         drawerRef.current?.focus()
     }, [])
 
-    const updateQuantity = async (item: StorefrontCartItem, quantity: number) => {
-        if (processingKey !== null) {
+    /*
+     * Reload the authoritative server cart after
+     * promo apply/remove.
+     *
+     * Never calculate discount totals here.
+     */
+    const refreshCart = async () => {
+        const response =
+            await fetch(
+                route('cart.show'),
+                {
+                    method: 'GET',
+                    credentials:
+                        'same-origin',
+                    headers: {
+                        Accept:
+                            'application/json',
+                    },
+                },
+            )
+
+        if (!response.ok) {
+            throw new Error(
+                'Unable to refresh cart.',
+            )
+        }
+
+        const nextCart =
+            (await response.json()) as
+                StorefrontCart
+
+        dispatchCartChanged(
+            nextCart,
+        )
+    }
+
+    const updateQuantity = async (
+        item: StorefrontCartItem,
+        quantity: number,
+    ) => {
+        if (
+            processingKey !== null
+            || promoProcessing
+        ) {
             return
         }
 
-        setProcessingKey(item.key)
-        setMutationError(null)
+        setProcessingKey(
+            item.key,
+        )
+
+        setMutationError(
+            null,
+        )
+
+        setPromoError(
+            null,
+        )
+
+        setPromoStatus(
+            null,
+        )
 
         try {
-            const response = await fetch(`/cart/items/${encodeURIComponent(item.key)}`, {
-                method: 'PATCH',
-                credentials: 'same-origin',
-                headers: jsonRequestHeaders(),
-                body: JSON.stringify({
-                    quantity,
-                }),
-            })
+            const response =
+                await fetch(
+                    `/cart/items/${encodeURIComponent(
+                        item.key,
+                    )}`,
+                    {
+                        method:
+                            'PATCH',
+
+                        credentials:
+                            'same-origin',
+
+                        headers:
+                            jsonRequestHeaders(),
+
+                        body:
+                            JSON.stringify({
+                                quantity,
+                            }),
+                    },
+                )
 
             if (!response.ok) {
-                throw new Error('Unable to update cart item.')
+                throw new Error(
+                    'Unable to update cart item.',
+                )
             }
 
-            const nextCart = (await response.json()) as StorefrontCart
+            const nextCart =
+                (await response.json()) as
+                    StorefrontCart
 
-            dispatchCartChanged(nextCart)
-        } catch (error: unknown) {
-            setMutationError(error instanceof Error ? error.message : 'Unable to update cart item.')
+            dispatchCartChanged(
+                nextCart,
+            )
+        } catch (
+            error: unknown
+        ) {
+            setMutationError(
+                error instanceof Error
+                    ? error.message
+                    : 'Unable to update cart item.',
+            )
         } finally {
-            setProcessingKey(null)
+            setProcessingKey(
+                null,
+            )
         }
     }
 
-    const removeItem = async (item: StorefrontCartItem) => {
-        if (processingKey !== null) {
+    const removeItem = async (
+        item: StorefrontCartItem,
+    ) => {
+        if (
+            processingKey !== null
+            || promoProcessing
+        ) {
             return
         }
 
-        setProcessingKey(item.key)
-        setMutationError(null)
+        setProcessingKey(
+            item.key,
+        )
+
+        setMutationError(
+            null,
+        )
+
+        setPromoError(
+            null,
+        )
+
+        setPromoStatus(
+            null,
+        )
 
         try {
-            const response = await fetch(`/cart/items/${encodeURIComponent(item.key)}`, {
-                method: 'DELETE',
-                credentials: 'same-origin',
-                headers: jsonRequestHeaders(),
-            })
+            const response =
+                await fetch(
+                    `/cart/items/${encodeURIComponent(
+                        item.key,
+                    )}`,
+                    {
+                        method:
+                            'DELETE',
+
+                        credentials:
+                            'same-origin',
+
+                        headers:
+                            jsonRequestHeaders(),
+                    },
+                )
 
             if (!response.ok) {
-                throw new Error('Unable to remove cart item.')
+                throw new Error(
+                    'Unable to remove cart item.',
+                )
             }
 
-            const nextCart = (await response.json()) as StorefrontCart
+            const nextCart =
+                (await response.json()) as
+                    StorefrontCart
 
-            dispatchCartChanged(nextCart)
-        } catch (error: unknown) {
-            setMutationError(error instanceof Error ? error.message : 'Unable to remove cart item.')
+            dispatchCartChanged(
+                nextCart,
+            )
+        } catch (
+            error: unknown
+        ) {
+            setMutationError(
+                error instanceof Error
+                    ? error.message
+                    : 'Unable to remove cart item.',
+            )
         } finally {
-            setProcessingKey(null)
+            setProcessingKey(
+                null,
+            )
         }
     }
+
+    const applyPromoCode = (
+        event: FormEvent<HTMLFormElement>,
+    ) => {
+        event.preventDefault()
+
+        if (
+            promoProcessing
+            || processingKey !== null
+        ) {
+            return
+        }
+
+        const code =
+            promoCode.trim()
+
+        if (code === '') {
+            setPromoError(
+                'Enter a promo code.',
+            )
+
+            return
+        }
+
+        setPromoProcessing(
+            true,
+        )
+
+        setPromoError(
+            null,
+        )
+
+        setPromoStatus(
+            null,
+        )
+
+        router.post(
+            route(
+                'cart.promo-code.store',
+            ),
+            {
+                code,
+            },
+            {
+                preserveScroll:
+                    true,
+
+                preserveState:
+                    true,
+
+                onError: (
+                    errors,
+                ) => {
+                    setPromoError(
+                        errors.promo_code ??
+                            errors.code ??
+                            'Unable to apply promo code.',
+                    )
+                },
+
+                onSuccess: () => {
+                    void (
+                        async () => {
+                            try {
+                                await refreshCart()
+
+                                setPromoCode(
+                                    '',
+                                )
+
+                                setPromoStatus(
+                                    'Promo code applied successfully.',
+                                )
+                            } catch (
+                                error: unknown
+                            ) {
+                                setPromoError(
+                                    error instanceof
+                                        Error
+                                        ? error.message
+                                        : 'Promo code was applied, but the cart could not be refreshed.',
+                                )
+                            }
+                        }
+                    )()
+                },
+
+                onFinish: () => {
+                    setPromoProcessing(
+                        false,
+                    )
+                },
+            },
+        )
+    }
+
+    const removePromoCode =
+        () => {
+            if (
+                promoProcessing
+                || processingKey !==
+                    null
+            ) {
+                return
+            }
+
+            setPromoProcessing(
+                true,
+            )
+
+            setPromoError(
+                null,
+            )
+
+            setPromoStatus(
+                null,
+            )
+
+            router.delete(
+                route(
+                    'cart.promo-code.destroy',
+                ),
+                {
+                    preserveScroll:
+                        true,
+
+                    preserveState:
+                        true,
+
+                    onError: () => {
+                        setPromoError(
+                            'Unable to remove promo code.',
+                        )
+                    },
+
+                    onSuccess: () => {
+                        void (
+                            async () => {
+                                try {
+                                    await refreshCart()
+
+                                    setPromoCode(
+                                        '',
+                                    )
+
+                                    setPromoStatus(
+                                        'Promo code removed.',
+                                    )
+                                } catch (
+                                    error: unknown
+                                ) {
+                                    setPromoError(
+                                        error instanceof
+                                            Error
+                                            ? error.message
+                                            : 'Promo code was removed, but the cart could not be refreshed.',
+                                    )
+                                }
+                            }
+                        )()
+                    },
+
+                    onFinish: () => {
+                        setPromoProcessing(
+                            false,
+                        )
+                    },
+                },
+            )
+        }
 
     return (
         <div className="fixed inset-0 z-[100] overflow-hidden">
@@ -1062,18 +1377,29 @@ function CartDrawer({
                             Your Cart
                         </h2>
 
-                        <p id="cart-drawer-summary" className="mt-1 text-xs text-neutral-500">
-                            {cart.item_count === 1 ? '1 item' : `${cart.item_count} items`}
+                        <p
+                            id="cart-drawer-summary"
+                            className="mt-1 text-xs text-neutral-500"
+                        >
+                            {cart.item_count ===
+                            1
+                                ? '1 item'
+                                : `${cart.item_count} items`}
                         </p>
                     </div>
 
                     <button
                         type="button"
-                        onClick={onClose}
+                        onClick={
+                            onClose
+                        }
                         aria-label="Close cart drawer"
                         className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-neutral-800 text-neutral-400 transition hover:bg-neutral-900 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                     >
-                        <X className="h-4 w-4" aria-hidden="true" />
+                        <X
+                            className="h-4 w-4"
+                            aria-hidden="true"
+                        />
                     </button>
                 </div>
 
@@ -1082,31 +1408,45 @@ function CartDrawer({
                         role="alert"
                         className="shrink-0 border-b border-red-500/20 bg-red-500/10 px-4 py-3 text-xs text-red-300 sm:px-5"
                     >
-                        {mutationError}
+                        {
+                            mutationError
+                        }
                     </div>
                 )}
 
-                {cart.items.length === 0 ? (
+                {cart.items.length ===
+                0 ? (
                     <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-6 py-8 text-center">
                         <div className="max-w-xs">
                             <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-neutral-900 text-neutral-500">
-                                <ShoppingBag className="h-6 w-6" aria-hidden="true" />
+                                <ShoppingBag
+                                    className="h-6 w-6"
+                                    aria-hidden="true"
+                                />
                             </span>
 
                             <h3 className="mt-5 text-base font-semibold text-white">
-                                Your cart is empty
+                                Your cart
+                                is empty
                             </h3>
 
                             <p className="mt-2 text-sm leading-6 text-neutral-500">
-                                Add products from the store and they will appear here.
+                                Add products
+                                from the
+                                store and
+                                they will
+                                appear here.
                             </p>
 
                             <Link
                                 href="/products"
-                                onClick={onClose}
+                                onClick={
+                                    onClose
+                                }
                                 className="mt-5 inline-flex min-h-11 items-center justify-center rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                             >
-                                Browse products
+                                Browse
+                                products
                             </Link>
                         </div>
                     </div>
@@ -1114,146 +1454,408 @@ function CartDrawer({
                     <>
                         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4 sm:px-5">
                             <ul className="space-y-4">
-                                {cart.items.map((item) => {
-                                    const processing = processingKey === item.key
+                                {cart.items.map(
+                                    (
+                                        item,
+                                    ) => {
+                                        const processing =
+                                            processingKey ===
+                                            item.key
 
-                                    return (
-                                        <li
-                                            key={item.key}
-                                            className="min-w-0 rounded-xl border border-neutral-800 bg-neutral-900/70 p-3"
-                                        >
-                                            <div className="flex min-w-0 gap-3">
-                                                <Link
-                                                    href={`/products/${item.slug}`}
-                                                    onClick={onClose}
-                                                    className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                                                    aria-label={`View ${item.name}`}
-                                                >
-                                                    {item.image_url ? (
-                                                        <img
-                                                            src={item.image_url}
-                                                            alt=""
-                                                            className="h-full w-full object-cover"
-                                                        />
-                                                    ) : (
-                                                        <span className="flex h-full w-full items-center justify-center text-neutral-600">
-                                                            <ShoppingBag
-                                                                className="h-5 w-5"
-                                                                aria-hidden="true"
-                                                            />
-                                                        </span>
-                                                    )}
-                                                </Link>
-
-                                                <div className="min-w-0 flex-1">
+                                        return (
+                                            <li
+                                                key={
+                                                    item.key
+                                                }
+                                                className="min-w-0 rounded-xl border border-neutral-800 bg-neutral-900/70 p-3"
+                                            >
+                                                <div className="flex min-w-0 gap-3">
                                                     <Link
                                                         href={`/products/${item.slug}`}
-                                                        onClick={onClose}
-                                                        className="line-clamp-2 break-words text-sm font-semibold text-white transition hover:text-indigo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                                                        onClick={
+                                                            onClose
+                                                        }
+                                                        className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                                                        aria-label={`View ${item.name}`}
                                                     >
-                                                        {item.name}
+                                                        {item.image_url ? (
+                                                            <img
+                                                                src={
+                                                                    item.image_url
+                                                                }
+                                                                alt=""
+                                                                loading="lazy"
+                                                                decoding="async"
+                                                                className="h-full w-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <span className="flex h-full w-full items-center justify-center text-neutral-600">
+                                                                <ShoppingBag
+                                                                    className="h-5 w-5"
+                                                                    aria-hidden="true"
+                                                                />
+                                                            </span>
+                                                        )}
                                                     </Link>
 
-                                                    {item.variant_name && (
-                                                        <p
-                                                            title={item.variant_name}
-                                                            className="mt-1 min-w-0 truncate text-xs text-neutral-500"
+                                                    <div className="min-w-0 flex-1">
+                                                        <Link
+                                                            href={`/products/${item.slug}`}
+                                                            onClick={
+                                                                onClose
+                                                            }
+                                                            className="line-clamp-2 break-words text-sm font-semibold text-white transition hover:text-indigo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                                                         >
-                                                            {item.variant_name}
-                                                        </p>
-                                                    )}
+                                                            {
+                                                                item.name
+                                                            }
+                                                        </Link>
 
-                                                    <p className="mt-2 break-words text-xs font-semibold text-neutral-300">
-                                                        {formatMoney(item.unit_price)}
+                                                        {item.variant_name && (
+                                                            <p
+                                                                title={
+                                                                    item.variant_name
+                                                                }
+                                                                className="mt-1 min-w-0 truncate text-xs text-neutral-500"
+                                                            >
+                                                                {
+                                                                    item.variant_name
+                                                                }
+                                                            </p>
+                                                        )}
+
+                                                        <p className="mt-2 break-words text-xs font-semibold text-neutral-300">
+                                                            {formatMoney(
+                                                                item.unit_price,
+                                                            )}
+                                                        </p>
+                                                    </div>
+
+                                                    <button
+                                                        type="button"
+                                                        disabled={
+                                                            processing ||
+                                                            promoProcessing
+                                                        }
+                                                        onClick={() => {
+                                                            void removeItem(
+                                                                item,
+                                                            )
+                                                        }}
+                                                        aria-label={`Remove ${item.name} from cart`}
+                                                        className="h-fit shrink-0 rounded px-1 py-1 text-xs font-semibold text-neutral-500 transition hover:text-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:cursor-wait disabled:opacity-50"
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                </div>
+
+                                                <div className="mt-3 flex min-w-0 items-center justify-between gap-3 border-t border-neutral-800 pt-3">
+                                                    <div
+                                                        className="inline-flex shrink-0 items-center rounded-lg border border-neutral-700"
+                                                        aria-label={`Quantity for ${item.name}`}
+                                                    >
+                                                        <button
+                                                            type="button"
+                                                            disabled={
+                                                                processing ||
+                                                                promoProcessing
+                                                            }
+                                                            onClick={() => {
+                                                                void updateQuantity(
+                                                                    item,
+                                                                    item.quantity -
+                                                                        1,
+                                                                )
+                                                            }}
+                                                            aria-label={`Decrease quantity of ${item.name}`}
+                                                            className="inline-flex h-10 w-10 items-center justify-center text-neutral-300 transition hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-wait disabled:opacity-50"
+                                                        >
+                                                            −
+                                                        </button>
+
+                                                        <span
+                                                            className="min-w-8 text-center text-xs font-bold text-white"
+                                                            aria-live="polite"
+                                                        >
+                                                            {
+                                                                item.quantity
+                                                            }
+                                                        </span>
+
+                                                        <button
+                                                            type="button"
+                                                            disabled={
+                                                                processing ||
+                                                                promoProcessing ||
+                                                                item.quantity >=
+                                                                    99
+                                                            }
+                                                            onClick={() => {
+                                                                void updateQuantity(
+                                                                    item,
+                                                                    item.quantity +
+                                                                        1,
+                                                                )
+                                                            }}
+                                                            aria-label={`Increase quantity of ${item.name}`}
+                                                            className="inline-flex h-10 w-10 items-center justify-center text-neutral-300 transition hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-wait disabled:opacity-50"
+                                                        >
+                                                            +
+                                                        </button>
+                                                    </div>
+
+                                                    <p className="min-w-0 break-words text-right text-sm font-bold text-white">
+                                                        {formatMoney(
+                                                            item.line_total,
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            </li>
+                                        )
+                                    },
+                                )}
+                            </ul>
+
+                            {/* Promo code */}
+                            <section
+                                aria-labelledby="cart-promo-heading"
+                                className="mt-5 rounded-xl border border-neutral-800 bg-neutral-900/60 p-4"
+                            >
+                                <h3
+                                    id="cart-promo-heading"
+                                    className="text-sm font-bold text-white"
+                                >
+                                    Promo code
+                                </h3>
+
+                                {cart.promo ? (
+                                    <div className="mt-3">
+                                        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3">
+                                            <div className="flex min-w-0 items-start justify-between gap-3">
+                                                <div className="min-w-0">
+                                                    <p className="text-xs font-semibold text-emerald-300">
+                                                        Promo
+                                                        applied
+                                                    </p>
+
+                                                    <p className="mt-1 break-all text-sm font-bold text-white">
+                                                        {
+                                                            cart.promo
+                                                                .code
+                                                        }
+                                                    </p>
+
+                                                    <p className="mt-1 text-xs text-neutral-400">
+                                                        You
+                                                        save{' '}
+                                                        <span className="font-semibold text-emerald-300">
+                                                            {formatMoney(
+                                                                cart
+                                                                    .promo
+                                                                    .discount_amount,
+                                                            )}
+                                                        </span>
                                                     </p>
                                                 </div>
 
                                                 <button
                                                     type="button"
-                                                    disabled={processing}
-                                                    onClick={() => {
-                                                        void removeItem(item)
-                                                    }}
-                                                    aria-label={`Remove ${item.name} from cart`}
-                                                    className="h-fit shrink-0 rounded px-1 py-1 text-xs font-semibold text-neutral-500 transition hover:text-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:cursor-wait disabled:opacity-50"
+                                                    disabled={
+                                                        promoProcessing ||
+                                                        processingKey !==
+                                                            null
+                                                    }
+                                                    onClick={
+                                                        removePromoCode
+                                                    }
+                                                    className="shrink-0 rounded-lg border border-red-500/20 px-3 py-2 text-xs font-semibold text-red-300 transition hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:cursor-wait disabled:opacity-50"
                                                 >
-                                                    Remove
+                                                    {promoProcessing
+                                                        ? 'Removing...'
+                                                        : 'Remove'}
                                                 </button>
                                             </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <form
+                                        onSubmit={
+                                            applyPromoCode
+                                        }
+                                        className="mt-3"
+                                    >
+                                        <label
+                                            htmlFor={`${id}-promo-code`}
+                                            className="sr-only"
+                                        >
+                                            Promo
+                                            code
+                                        </label>
 
-                                            <div className="mt-3 flex min-w-0 items-center justify-between gap-3 border-t border-neutral-800 pt-3">
-                                                <div
-                                                    className="inline-flex shrink-0 items-center rounded-lg border border-neutral-700"
-                                                    aria-label={`Quantity for ${item.name}`}
-                                                >
-                                                    <button
-                                                        type="button"
-                                                        disabled={processing}
-                                                        onClick={() => {
-                                                            void updateQuantity(
-                                                                item,
-                                                                item.quantity - 1,
-                                                            )
-                                                        }}
-                                                        aria-label={`Decrease quantity of ${item.name}`}
-                                                        className="inline-flex h-10 w-10 items-center justify-center text-neutral-300 transition hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-wait disabled:opacity-50"
-                                                    >
-                                                        −
-                                                    </button>
+                                        <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
+                                            <input
+                                                id={`${id}-promo-code`}
+                                                type="text"
+                                                value={
+                                                    promoCode
+                                                }
+                                                onChange={(
+                                                    event,
+                                                ) => {
+                                                    setPromoCode(
+                                                        event
+                                                            .target
+                                                            .value,
+                                                    )
 
-                                                    <span
-                                                        className="min-w-8 text-center text-xs font-bold text-white"
-                                                        aria-live="polite"
-                                                    >
-                                                        {item.quantity}
-                                                    </span>
+                                                    if (
+                                                        promoError !==
+                                                        null
+                                                    ) {
+                                                        setPromoError(
+                                                            null,
+                                                        )
+                                                    }
+                                                }}
+                                                autoComplete="off"
+                                                maxLength={
+                                                    100
+                                                }
+                                                disabled={
+                                                    promoProcessing ||
+                                                    processingKey !==
+                                                        null
+                                                }
+                                                placeholder="Enter promo code"
+                                                aria-describedby={
+                                                    promoError
+                                                        ? `${id}-promo-error`
+                                                        : undefined
+                                                }
+                                                aria-invalid={
+                                                    promoError !==
+                                                    null
+                                                }
+                                                className="min-h-11 min-w-0 flex-1 rounded-lg border border-neutral-700 bg-neutral-950 px-3 text-sm font-medium text-white outline-none placeholder:text-neutral-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:cursor-wait disabled:opacity-60"
+                                            />
 
-                                                    <button
-                                                        type="button"
-                                                        disabled={processing || item.quantity >= 99}
-                                                        onClick={() => {
-                                                            void updateQuantity(
-                                                                item,
-                                                                item.quantity + 1,
-                                                            )
-                                                        }}
-                                                        aria-label={`Increase quantity of ${item.name}`}
-                                                        className="inline-flex h-10 w-10 items-center justify-center text-neutral-300 transition hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-wait disabled:opacity-50"
-                                                    >
-                                                        +
-                                                    </button>
-                                                </div>
+                                            <button
+                                                type="submit"
+                                                disabled={
+                                                    promoProcessing ||
+                                                    processingKey !==
+                                                        null ||
+                                                    promoCode.trim() ===
+                                                        ''
+                                                }
+                                                className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:cursor-not-allowed disabled:bg-neutral-800 disabled:text-neutral-500"
+                                            >
+                                                {promoProcessing
+                                                    ? 'Applying...'
+                                                    : 'Apply'}
+                                            </button>
+                                        </div>
+                                    </form>
+                                )}
 
-                                                <p className="min-w-0 break-words text-right text-sm font-bold text-white">
-                                                    {formatMoney(item.line_total)}
-                                                </p>
-                                            </div>
-                                        </li>
-                                    )
-                                })}
-                            </ul>
+                                {promoError && (
+                                    <p
+                                        id={`${id}-promo-error`}
+                                        role="alert"
+                                        className="mt-3 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs leading-5 text-red-300"
+                                    >
+                                        {
+                                            promoError
+                                        }
+                                    </p>
+                                )}
+
+                                {promoStatus && (
+                                    <p
+                                        role="status"
+                                        aria-live="polite"
+                                        className="mt-3 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs leading-5 text-emerald-300"
+                                    >
+                                        {
+                                            promoStatus
+                                        }
+                                    </p>
+                                )}
+                            </section>
                         </div>
 
-                        <div className="shrink-0 border-t border-neutral-800 p-4 sm:p-5">
-                            <div className="flex min-w-0 items-center justify-between gap-4 text-sm">
-                                <span className="shrink-0 font-medium text-neutral-400">
-                                    Subtotal
-                                </span>
+                        {/* Authoritative totals */}
+                        <div className="shrink-0 border-t border-neutral-800 bg-neutral-950 p-4 sm:p-5">
+                            <div className="space-y-2.5">
+                                <div className="flex min-w-0 items-center justify-between gap-4 text-sm">
+                                    <span className="shrink-0 font-medium text-neutral-400">
+                                        Subtotal
+                                    </span>
 
-                                <strong className="min-w-0 break-words text-right text-base text-white">
-                                    {formatMoney(cart.subtotal)}
-                                </strong>
+                                    <strong className="min-w-0 break-words text-right text-sm text-white">
+                                        {formatMoney(
+                                            cart.subtotal,
+                                        )}
+                                    </strong>
+                                </div>
+
+                                {cart.discount_total >
+                                    0 && (
+                                    <div className="flex min-w-0 items-center justify-between gap-4 text-sm">
+                                        <span className="shrink-0 font-medium text-emerald-400">
+                                            Discount
+                                        </span>
+
+                                        <strong className="min-w-0 break-words text-right text-sm text-emerald-300">
+                                            −{' '}
+                                            {formatMoney(
+                                                cart.discount_total,
+                                            )}
+                                        </strong>
+                                    </div>
+                                )}
+
+                                <div className="border-t border-neutral-800 pt-3">
+                                    <div className="flex min-w-0 items-center justify-between gap-4">
+                                        <span className="font-semibold text-white">
+                                            Cart
+                                            total
+                                        </span>
+
+                                        <strong className="min-w-0 break-words text-right text-lg text-white">
+                                            {formatMoney(
+                                                cart.grand_total,
+                                            )}
+                                        </strong>
+                                    </div>
+                                </div>
                             </div>
 
-                            <p className="mt-2 text-xs leading-5 text-neutral-500">
-                                Shipping, discounts, and taxes are calculated later in checkout.
+                            <p className="mt-3 text-xs leading-5 text-neutral-500">
+                                Shipping
+                                and taxes
+                                are
+                                calculated
+                                during
+                                checkout.
+                                Promo
+                                discounts
+                                are
+                                verified by
+                                the server.
                             </p>
 
                             <Link
-                                href={route('checkout.index')}
-                                className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-neutral-950 px-5 text-sm font-semibold text-white transition hover:bg-neutral-800"
+                                href={route(
+                                    'checkout.index',
+                                )}
+                                onClick={
+                                    onClose
+                                }
+                                className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                             >
-                                Proceed to checkout
+                                Proceed to
+                                checkout
                             </Link>
                         </div>
                     </>

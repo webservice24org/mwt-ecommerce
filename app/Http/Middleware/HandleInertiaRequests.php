@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\Cart\Services\CartPromoPricingService;
 use App\Domain\Cart\Services\CartService;
 use App\Domain\Catalog\Queries\Storefront\StorefrontCategoryMenuQuery;
 use App\Domain\FooterBuilder\Storefront\FooterStorefrontResolver;
@@ -14,7 +15,8 @@ use Inertia\Middleware;
 class HandleInertiaRequests extends Middleware
 {
     /**
-     * The root template that is loaded on the first page visit.
+     * The root template that is loaded
+     * on the first page visit.
      *
      * @var string
      */
@@ -23,73 +25,119 @@ class HandleInertiaRequests extends Middleware
     /**
      * Determine the current asset version.
      */
-    public function version(Request $request): ?string
-    {
-        return parent::version($request);
+    public function version(
+        Request $request,
+    ): ?string {
+        return parent::version(
+            $request,
+        );
     }
 
     /**
-     * Define the props that are shared by default.
+     * Define the props that are shared
+     * by default.
      *
      * @return array<string, mixed>
      */
-    public function share(Request $request): array
-    {
+    public function share(
+        Request $request,
+    ): array {
         return [
-            ...parent::share($request),
+            ...parent::share(
+                $request,
+            ),
+
             'auth' => [
                 'user' => function () use ($request): ?array {
-                    $user = $request->user();
+                    $user =
+                        $request->user();
 
-                    if (! $user instanceof User) {
+                    if (
+                        ! $user instanceof User
+                    ) {
                         return null;
                     }
 
                     return [
                         'id' => $user->id,
+
                         'name' => $user->name,
+
                         'email' => $user->email,
-                        'email_verified_at' => $user->email_verified_at,
+
+                        'email_verified_at' => $user
+                            ->email_verified_at,
                     ];
                 },
             ],
 
             'flash' => [
                 'success' => fn () => $request
-                    ->session()
-                    ->get('success'),
+                ->session()
+                ->get(
+                    'success',
+                ),
 
                 'error' => fn () => $request
-                    ->session()
-                    ->get('error'),
+                ->session()
+                ->get(
+                    'error',
+                ),
             ],
 
-            'storefrontCart' => function (): array {
+            'storefrontCart' => function () use ($request): array {
                 /** @var CartService $cart */
                 $cart = app(
                     CartService::class,
                 );
 
-                return $cart
-                    ->summary()
+                /** @var CartPromoPricingService $pricing */
+                $pricing = app(
+                    CartPromoPricingService::class,
+                );
+
+                $user =
+                    $request->user();
+
+                $userId =
+                    $user instanceof User
+                    ? $user->id
+                    : null;
+
+                return $pricing
+                    ->calculate(
+                        cart: $cart->summary(),
+
+                        userId: $userId,
+                    )
                     ->toArray();
             },
 
             'storefrontHeader' => function (): array {
-                $header = HeaderSetting::singleton();
+                $header =
+                    HeaderSetting::singleton();
 
                 return [
-                    'template' => $header->template->value,
-                    'config' => $header->resolvedConfig(),
-                    'is_enabled' => $header->is_enabled,
+                    'template' => $header
+                        ->template
+                        ->value,
+
+                    'config' => $header
+                        ->resolvedConfig(),
+
+                    'is_enabled' => $header
+                        ->is_enabled,
                 ];
             },
 
             'storefrontFooter' => static function () use ($request): ?array {
                 /*
-                 * The Footer Builder belongs to the public
-                 * storefront. Do not perform the footer
-                 * database lookup for Admin Inertia pages.
+                 * The Footer Builder belongs
+                 * to the public storefront.
+                 *
+                 * Do not perform the footer
+                 * database lookup for Admin
+                 * Inertia pages.
                  */
                 if (
                     $request->routeIs(
@@ -112,6 +160,7 @@ class HandleInertiaRequests extends Middleware
 
                 return [
                     'count' => $wishlist->count(),
+
                     'product_ids' => $wishlist->ids(),
                 ];
             },
@@ -119,7 +168,6 @@ class HandleInertiaRequests extends Middleware
             'storefrontCategoryMenu' => fn (): array => app(
                 StorefrontCategoryMenuQuery::class,
             )->get(),
-
         ];
     }
 }

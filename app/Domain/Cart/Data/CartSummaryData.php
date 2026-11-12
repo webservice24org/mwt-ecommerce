@@ -12,24 +12,39 @@ final readonly class CartSummaryData
     public function __construct(
         public array $items,
         public int $itemCount,
-        public float $subtotal,
+        public int $subtotal,
     ) {}
 
     /**
      * @return array{
-     *     items: array<int, array<string, mixed>>,
+     *     items: array<int, array{
+     *         key: string,
+     *         product_id: int,
+     *         variant_id: int|null,
+     *         quantity: int,
+     *         name: string,
+     *         slug: string,
+     *         variant_name: string|null,
+     *         image_url: string|null,
+     *         unit_price: int,
+     *         line_total: int
+     *     }>,
      *     item_count: int,
-     *     subtotal: float
+     *     subtotal: int
      * }
      */
     public function toArray(): array
     {
         return [
             'items' => array_map(
-                static fn (CartItemData $item): array => $item->toArray(),
+                static fn (
+                    CartItemData $item,
+                ): array => $item->toArray(),
                 $this->items,
             ),
+
             'item_count' => $this->itemCount,
+
             'subtotal' => $this->subtotal,
         ];
     }

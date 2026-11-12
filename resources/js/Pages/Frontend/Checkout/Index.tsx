@@ -43,6 +43,12 @@ interface CheckoutCart {
     subtotal: number
 }
 
+interface CheckoutPromo {
+    promo_code_id: number
+    code: string
+    discount_amount: number
+}
+
 interface CheckoutTotals {
     subtotal: number
     discount_total: number
@@ -77,8 +83,14 @@ interface CheckoutFormErrors {
     address_id?: string
 }
 
+interface PromoFormErrors {
+    code?: string
+    promo_code?: string
+}
+
 interface Props {
     cart?: CheckoutCart
+    promo?: CheckoutPromo | null
     totals?: CheckoutTotals
 
     addresses?: CustomerAddress[]
@@ -121,6 +133,7 @@ const DEFAULT_ADDRESS_DEFAULTS = {
 
 export default function Index({
     cart = EMPTY_CART,
+    promo = null,
     totals = EMPTY_TOTALS,
     addresses = [],
     selectedAddressId = null,
@@ -168,6 +181,16 @@ export default function Index({
 
     const checkoutErrors =
         checkoutForm.errors as CheckoutFormErrors
+
+    const promoForm =
+        useForm<{
+            code: string
+        }>({
+            code: '',
+        })
+
+    const promoErrors =
+        promoForm.errors as PromoFormErrors
 
     const selectedShippingZone =
         shippingZones.find(
@@ -297,6 +320,62 @@ export default function Index({
         checkoutForm.setData(
             'shipping_rate_id',
             shippingRateId,
+        )
+    }
+
+    const applyPromo = (
+        event: FormEvent<HTMLFormElement>,
+    ) => {
+        event.preventDefault()
+
+        if (
+            promoForm.processing ||
+            checkoutForm.processing ||
+            promoForm.data.code.trim() ===
+                ''
+        ) {
+            return
+        }
+
+        promoForm.post(
+            route(
+                'cart.promo-code.store',
+            ),
+            {
+                preserveScroll:
+                    true,
+
+                preserveState:
+                    true,
+
+                onSuccess: () => {
+                    promoForm.reset(
+                        'code',
+                    )
+                },
+            },
+        )
+    }
+
+    const removePromo = () => {
+        if (
+            promoForm.processing ||
+            checkoutForm.processing
+        ) {
+            return
+        }
+
+        router.delete(
+            route(
+                'cart.promo-code.destroy',
+            ),
+            {
+                preserveScroll:
+                    true,
+
+                preserveState:
+                    true,
+            },
         )
     }
 
@@ -919,6 +998,144 @@ export default function Index({
                                     Order summary
                                 </h2>
 
+                                <section
+                                    aria-labelledby="checkout-promo-heading"
+                                    className="mt-5 rounded-xl border border-neutral-200 bg-neutral-50 p-4"
+                                >
+                                    <h3
+                                        id="checkout-promo-heading"
+                                        className="text-sm font-bold text-neutral-950"
+                                    >
+                                        Promo code
+                                    </h3>
+
+                                    {promo ? (
+                                        <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="min-w-0">
+                                                    <p className="text-xs font-semibold text-emerald-700">
+                                                        Promo applied
+                                                    </p>
+
+                                                    <p className="mt-1 break-all font-mono text-sm font-bold text-neutral-950">
+                                                        {promo.code}
+                                                    </p>
+
+                                                    <p className="mt-1 text-xs text-neutral-600">
+                                                        You save{' '}
+                                                        <span className="font-semibold text-emerald-700">
+                                                            {formatMoney(
+                                                                promo.discount_amount,
+                                                            )}
+                                                        </span>
+                                                    </p>
+                                                </div>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={
+                                                        removePromo
+                                                    }
+                                                    disabled={
+                                                        promoForm.processing ||
+                                                        checkoutForm.processing
+                                                    }
+                                                    className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg border border-red-200 bg-white px-3 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-wait disabled:opacity-50"
+                                                >
+                                                    {promoForm.processing
+                                                        ? 'Removing...'
+                                                        : 'Remove'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <form
+                                            onSubmit={
+                                                applyPromo
+                                            }
+                                            className="mt-3"
+                                        >
+                                            <label
+                                                htmlFor="checkout-promo-code"
+                                                className="sr-only"
+                                            >
+                                                Promo code
+                                            </label>
+
+                                            <div className="flex flex-col gap-2 sm:flex-row">
+                                                <input
+                                                    id="checkout-promo-code"
+                                                    type="text"
+                                                    value={
+                                                        promoForm.data
+                                                            .code
+                                                    }
+                                                    onChange={(
+                                                        event,
+                                                    ) => {
+                                                        promoForm.setData(
+                                                            'code',
+                                                            event.target
+                                                                .value,
+                                                        )
+
+                                                        promoForm.clearErrors()
+                                                    }}
+                                                    maxLength={
+                                                        100
+                                                    }
+                                                    autoComplete="off"
+                                                    placeholder="Enter promo code"
+                                                    disabled={
+                                                        promoForm.processing ||
+                                                        checkoutForm.processing
+                                                    }
+                                                    aria-invalid={
+                                                        Boolean(
+                                                            promoErrors.promo_code ||
+                                                                promoErrors.code,
+                                                        )
+                                                    }
+                                                    aria-describedby={
+                                                        promoErrors.promo_code ||
+                                                        promoErrors.code
+                                                            ? 'checkout-promo-error'
+                                                            : undefined
+                                                    }
+                                                    className="min-h-11 min-w-0 flex-1 rounded-lg border border-neutral-300 bg-white px-3 text-sm text-neutral-950 outline-none placeholder:text-neutral-400 focus:border-neutral-950 focus:ring-1 focus:ring-neutral-950 disabled:bg-neutral-100"
+                                                />
+
+                                                <button
+                                                    type="submit"
+                                                    disabled={
+                                                        promoForm.processing ||
+                                                        checkoutForm.processing ||
+                                                        promoForm.data.code.trim() ===
+                                                            ''
+                                                    }
+                                                    className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-neutral-950 px-4 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-600"
+                                                >
+                                                    {promoForm.processing
+                                                        ? 'Applying...'
+                                                        : 'Apply'}
+                                                </button>
+                                            </div>
+                                        </form>
+                                    )}
+
+                                    {(promoErrors.promo_code ||
+                                        promoErrors.code) && (
+                                        <p
+                                            id="checkout-promo-error"
+                                            role="alert"
+                                            className="mt-3 text-sm leading-5 text-red-600"
+                                        >
+                                            {promoErrors.promo_code ??
+                                                promoErrors.code}
+                                        </p>
+                                    )}
+                                </section>
+
                                 <div className="mt-5 space-y-3">
                                     <div className="flex items-center justify-between gap-4 text-sm">
                                         <span className="text-neutral-600">
@@ -933,14 +1150,33 @@ export default function Index({
                                     </div>
 
                                     <div className="flex items-center justify-between gap-4 text-sm">
-                                        <span className="text-neutral-600">
+                                        <span
+                                            className={
+                                                totals.discount_total >
+                                                0
+                                                    ? 'font-medium text-emerald-700'
+                                                    : 'text-neutral-600'
+                                            }
+                                        >
                                             Discount
                                         </span>
 
-                                        <span className="font-semibold text-neutral-950">
-                                            {formatMoney(
-                                                totals.discount_total,
-                                            )}
+                                        <span
+                                            className={
+                                                totals.discount_total >
+                                                0
+                                                    ? 'font-semibold text-emerald-700'
+                                                    : 'font-semibold text-neutral-950'
+                                            }
+                                        >
+                                            {totals.discount_total >
+                                            0
+                                                ? `− ${formatMoney(
+                                                      totals.discount_total,
+                                                  )}`
+                                                : formatMoney(
+                                                      0,
+                                                  )}
                                         </span>
                                     </div>
 
@@ -1085,7 +1321,8 @@ export default function Index({
                                             null ||
                                         shippingZones.length ===
                                             0 ||
-                                        checkoutForm.processing
+                                        checkoutForm.processing ||
+                                        promoForm.processing
                                     }
                                     className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-neutral-950 px-5 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-600"
                                 >

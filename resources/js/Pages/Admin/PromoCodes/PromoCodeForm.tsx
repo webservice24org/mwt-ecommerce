@@ -207,13 +207,19 @@ export default function PromoCodeForm({
                             ? 'Leave blank with discount type to inherit.'
                             : form.data.discount_type ===
                                 'percentage'
-                              ? '2000 = 20%'
-                              : undefined
+                            ? 'Basis points: 1000 = 10%, 2000 = 20%.'
+                            : 'Enter the amount in BDT, for example 150 = BDT 150.'
                     }
                 >
                     <input
                         type="number"
                         min="0"
+                        step={
+                            form.data.discount_type ===
+                            'fixed'
+                                ? '0.01'
+                                : '1'
+                        }
                         value={
                             form.data.discount_value
                         }
@@ -232,10 +238,12 @@ export default function PromoCodeForm({
                     error={
                         form.errors.maximum_discount
                     }
+                    hint="Enter the maximum discount in BDT. Example: 150 = BDT 150."
                 >
                     <input
                         type="number"
                         min="0"
+                        step="0.01"
                         value={
                             form.data.maximum_discount
                         }
@@ -254,10 +262,12 @@ export default function PromoCodeForm({
                     error={
                         form.errors.minimum_subtotal
                     }
+                    hint="Enter the required cart subtotal in BDT. Example: 1500 = BDT 1,500."
                 >
                     <input
                         type="number"
                         min="0"
+                        step="0.01"
                         value={
                             form.data.minimum_subtotal
                         }

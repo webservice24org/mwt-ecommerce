@@ -240,28 +240,58 @@ final class HeaderAccessibilityRegressionTest extends TestCase
 
     public function test_production_cart_uses_shared_storefront_money_formatter(): void
     {
-        $source = $this->productionHeaderSource();
+        $source =
+            $this->productionHeaderSource();
 
         $this->assertStringContainsString(
             "import { formatMoney } from '@/lib/money'",
             $source,
         );
 
-        $this->assertStringContainsString(
-            'formatMoney(item.unit_price)',
+        /*
+         * Cart item money.
+         */
+        $this->assertMatchesRegularExpression(
+            '/formatMoney\(\s*item\.unit_price,\s*\)/',
             $source,
         );
 
-        $this->assertStringContainsString(
-            'formatMoney(item.line_total)',
+        $this->assertMatchesRegularExpression(
+            '/formatMoney\(\s*item\.line_total,\s*\)/',
             $source,
         );
 
-        $this->assertStringContainsString(
-            'formatMoney(cart.subtotal)',
+        /*
+         * Authoritative cart pricing.
+         */
+        $this->assertMatchesRegularExpression(
+            '/formatMoney\(\s*cart\.subtotal,\s*\)/',
             $source,
         );
 
+        $this->assertMatchesRegularExpression(
+            '/formatMoney\(\s*cart\.discount_total,\s*\)/',
+            $source,
+        );
+
+        $this->assertMatchesRegularExpression(
+            '/formatMoney\(\s*cart\.grand_total,\s*\)/',
+            $source,
+        );
+
+        /*
+         * Applied promo savings must also use
+         * the shared storefront money formatter.
+         */
+        $this->assertMatchesRegularExpression(
+            '/formatMoney\(\s*cart\s*\.promo\s*\.discount_amount,\s*\)/',
+            $source,
+        );
+
+        /*
+         * The storefront must not introduce a
+         * hard-coded currency formatter.
+         */
         $this->assertStringNotContainsString(
             "currency: 'USD'",
             $source,
@@ -494,5 +524,56 @@ final class HeaderAccessibilityRegressionTest extends TestCase
         );
 
         return $contents;
+    }
+
+    public function test_production_cart_keeps_accessible_promo_code_controls(): void
+    {
+        $source =
+            $this->productionHeaderSource();
+
+        $this->assertStringContainsString(
+            'aria-labelledby="cart-promo-heading"',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'id="cart-promo-heading"',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'role="alert"',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'role="status"',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'aria-live="polite"',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'aria-invalid={',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'cart.promo',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'cart.discount_total',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'cart.grand_total',
+            $source,
+        );
     }
 }

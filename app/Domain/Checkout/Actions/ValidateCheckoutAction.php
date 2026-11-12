@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Checkout\Actions;
 
+use App\Domain\Cart\Services\CartPromoPricingService;
 use App\Domain\Cart\Services\CartService;
 use App\Domain\Checkout\Data\CheckoutValidationData;
 use App\Domain\Checkout\Services\CheckoutSessionService;
@@ -19,6 +20,7 @@ final class ValidateCheckoutAction
         private readonly CheckoutSessionService $checkoutSession,
         private readonly CalculateCheckoutTotalsAction $calculateTotals,
         private readonly ResolveSelectedShippingRateAction $resolveShippingRate,
+        private readonly CartPromoPricingService $promoPricing,
     ) {}
 
     /**
@@ -28,6 +30,11 @@ final class ValidateCheckoutAction
         User $user,
         int $shippingRateId,
     ): CheckoutValidationData {
+        /*
+         * ==================================================
+         * AUTHORITATIVE CART VALIDATION
+         * ==================================================
+         */
         $cartValidation =
             $this->cart
                 ->validateForCheckout();
@@ -48,6 +55,31 @@ final class ValidateCheckoutAction
             ]);
         }
 
+        /*
+         * ==================================================
+         * FINAL PROMO REVALIDATION
+         * ==================================================
+         *
+         * This happens again immediately before order
+         * creation.
+         *
+         * CartPromoPricingService may clear a stale promo
+         * when it is no longer eligible.
+         */
+        $pricing =
+            $this->promoPricing
+                ->calculate(
+                    cart: $cartValidation
+                        ->summary,
+
+                    userId: $user->id,
+                );
+
+        /*
+         * ==================================================
+         * DELIVERY ADDRESS
+         * ==================================================
+         */
         $address =
             $this->checkoutSession
                 ->resolveAddress(
@@ -62,18 +94,20 @@ final class ValidateCheckoutAction
 
         /*
          * Re-resolve through the authenticated customer's
-         * relationship so checkout can never continue with
-         * an address belonging to another customer.
+         * relationship so checkout cannot use an address
+         * belonging to another customer.
          */
-        $ownedAddress = $user
-            ->addresses()
-            ->whereKey(
-                $address->id,
-            )
-            ->first();
+        $ownedAddress =
+            $user
+                ->addresses()
+                ->whereKey(
+                    $address->id,
+                )
+                ->first();
 
         if ($ownedAddress === null) {
-            $this->checkoutSession
+            $this
+                ->checkoutSession
                 ->forgetAddress();
 
             throw ValidationException::withMessages([
@@ -82,14 +116,20 @@ final class ValidateCheckoutAction
         }
 
         $paymentMethod =
-            $this->checkoutSession
+            $this
+                ->checkoutSession
                 ->paymentMethod();
 
         /*
-         * Build the shipping destination exclusively from
-         * the server-owned customer address. Never trust
-         * independently posted address values when deciding
-         * which shipping rates are eligible.
+         * ==================================================
+         * SHIPPING DESTINATION
+         * ==================================================
+         *
+         * Shipping eligibility is based on the cart
+         * subtotal before promotional discount.
+         *
+         * This preserves the existing shipping-rate
+         * boundary semantics.
          */
         $destination =
             new ShippingDestinationData(
@@ -106,31 +146,19 @@ final class ValidateCheckoutAction
                     ->postal_code,
             );
 
-        /*
-         * The cart currently exposes its subtotal as a float,
-         * while authoritative checkout/order money uses
-         * integer values throughout the application.
-         */
-        $orderSubtotal = (int) round(
+        $orderSubtotal =
             $cartValidation
                 ->summary
-                ->subtotal,
-        );
+                ->subtotal;
 
         /*
-         * Re-resolve the selected shipping rate on the
-         * server against:
-         *
-         * - active shipping method
-         * - active rate
-         * - subtotal boundaries
-         * - destination / shipping zone
-         * - free-shipping threshold
-         *
-         * The client supplies only the rate ID.
+         * ==================================================
+         * FINAL SHIPPING-RATE REVALIDATION
+         * ==================================================
          */
         $shippingQuote =
-            $this->resolveShippingRate
+            $this
+                ->resolveShippingRate
                 ->execute(
                     shippingRateId: $shippingRateId,
 
@@ -140,15 +168,24 @@ final class ValidateCheckoutAction
                 );
 
         /*
-         * deliveryTotal comes exclusively from the
-         * authoritative shipping quote. A client-provided
-         * delivery amount is never used here.
+         * ==================================================
+         * AUTHORITATIVE CHECKOUT TOTALS
+         * ==================================================
+         *
+         * pricing contains:
+         *
+         * subtotal
+         * promo
+         * discount_total
+         * subtotal-after-discount
+         *
+         * Shipping is then added by checkout.
          */
         $totals =
-            $this->calculateTotals
+            $this
+                ->calculateTotals
                 ->execute(
-                    cart: $cartValidation
-                        ->summary,
+                    pricing: $pricing,
 
                     deliveryTotal: $shippingQuote
                         ->amount,
@@ -165,6 +202,8 @@ final class ValidateCheckoutAction
             paymentMethod: $paymentMethod,
 
             shippingQuote: $shippingQuote,
+
+            promo: $pricing->promo,
         );
     }
 }

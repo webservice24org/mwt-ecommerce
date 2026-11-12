@@ -15,10 +15,12 @@ use Illuminate\Support\Facades\Storage;
 
 final readonly class CartService
 {
-    private const SESSION_KEY = 'storefront.cart';
+    private const SESSION_KEY =
+        'storefront.cart';
 
     public function __construct(
         private ProductPricingResolver $pricingResolver,
+        private CartPromoSession $promoSession,
     ) {}
 
     public function add(
@@ -36,18 +38,25 @@ final readonly class CartService
             $variant?->id,
         );
 
-        $items = $this->rawItems();
+        $items =
+            $this->rawItems();
 
-        $currentQuantity = isset(
-            $items[$key],
-        )
-            ? $items[$key]['quantity']
+        $currentQuantity =
+            isset(
+                $items[$key],
+            )
+            ? $items[$key][
+                'quantity'
+            ]
             : 0;
 
         $items[$key] = [
             'product_id' => $product->id,
+
             'variant_id' => $variant?->id,
-            'quantity' => $currentQuantity + $quantity,
+
+            'quantity' => $currentQuantity +
+                $quantity,
         ];
 
         $this->putRawItems(
@@ -61,16 +70,25 @@ final readonly class CartService
         string $key,
         int $quantity,
     ): CartSummaryData {
-        $items = $this->rawItems();
+        $items =
+            $this->rawItems();
 
-        if (! isset($items[$key])) {
+        if (
+            ! isset(
+                $items[$key],
+            )
+        ) {
             return $this->summary();
         }
 
         if ($quantity <= 0) {
-            unset($items[$key]);
+            unset(
+                $items[$key],
+            );
         } else {
-            $items[$key]['quantity'] = $quantity;
+            $items[$key][
+                'quantity'
+            ] = $quantity;
         }
 
         $this->putRawItems(
@@ -83,9 +101,12 @@ final readonly class CartService
     public function remove(
         string $key,
     ): CartSummaryData {
-        $items = $this->rawItems();
+        $items =
+            $this->rawItems();
 
-        unset($items[$key]);
+        unset(
+            $items[$key],
+        );
 
         $this->putRawItems(
             $items,
@@ -100,6 +121,9 @@ final readonly class CartService
             self::SESSION_KEY,
         );
 
+        $this->promoSession
+            ->forget();
+
         return $this->summary();
     }
 
@@ -107,9 +131,13 @@ final readonly class CartService
     {
         return array_sum(
             array_map(
-                static fn (array $item): int => max(
+                static fn (
+                    array $item,
+                ): int => max(
                     0,
-                    $item['quantity'],
+                    $item[
+                        'quantity'
+                    ],
                 ),
                 $this->rawItems(),
             ),
@@ -118,146 +146,208 @@ final readonly class CartService
 
     public function summary(): CartSummaryData
     {
-        $rawItems = $this->rawItems();
+        $rawItems =
+            $this->rawItems();
 
         if ($rawItems === []) {
             return new CartSummaryData(
                 items: [],
                 itemCount: 0,
-                subtotal: 0.0,
+                subtotal: 0,
             );
         }
 
-        $productIds = collect(
-            $rawItems,
-        )
-            ->pluck(
-                'product_id',
+        $productIds =
+            collect(
+                $rawItems,
             )
-            ->unique()
-            ->values();
+                ->pluck(
+                    'product_id',
+                )
+                ->unique()
+                ->values();
 
-        $products = Product::query()
-            ->published()
-            ->whereIn(
-                'id',
-                $productIds,
-            )
-            ->with([
-                'images' => static fn ($query) => $query
-                    ->orderByDesc(
-                        'is_primary',
-                    )
-                    ->orderBy(
-                        'position',
-                    )
-                    ->orderBy(
-                        'id',
-                    ),
+        $products =
+            Product::query()
+                ->published()
+                ->whereIn(
+                    'id',
+                    $productIds,
+                )
+                ->with([
+                    'images' => static fn (
+                        $query,
+                    ) => $query
+                        ->orderByDesc(
+                            'is_primary',
+                        )
+                        ->orderBy(
+                            'position',
+                        )
+                        ->orderBy(
+                            'id',
+                        ),
 
-                'variants' => static fn ($query) => $query
-                    ->where(
-                        'is_active',
-                        true,
-                    ),
-            ])
-            ->get()
-            ->keyBy('id');
+                    'variants' => static fn (
+                        $query,
+                    ) => $query
+                        ->where(
+                            'is_active',
+                            true,
+                        ),
+                ])
+                ->get()
+                ->keyBy(
+                    'id',
+                );
 
+        /** @var array<int, CartItemData> $resolvedItems */
         $resolvedItems = [];
 
         foreach (
             $rawItems as $key => $raw
         ) {
-            $product = $products->get(
-                $raw['product_id'],
-            );
+            $product =
+                $products->get(
+                    $raw[
+                        'product_id'
+                    ],
+                );
 
-            if (! $product instanceof Product) {
+            if (
+                ! $product instanceof Product
+            ) {
                 continue;
             }
 
             $variant = null;
 
-            if ($raw['variant_id'] !== null) {
-                $variant = $product
-                    ->variants
-                    ->firstWhere(
-                        'id',
-                        $raw['variant_id'],
-                    );
+            if (
+                $raw[
+                    'variant_id'
+                ] !== null
+            ) {
+                $variant =
+                    $product
+                        ->variants
+                        ->firstWhere(
+                            'id',
+                            $raw[
+                                'variant_id'
+                            ],
+                        );
 
-                if (! $variant instanceof ProductVariant) {
+                if (
+                    ! $variant instanceof ProductVariant
+                ) {
                     continue;
                 }
             }
 
             $quantity = max(
                 1,
-                $raw['quantity'],
+                $raw[
+                    'quantity'
+                ],
             );
 
-            $pricing = $this
-                ->pricingResolver
-                ->resolve(
-                    product: $product,
-                    variant: $variant,
-                );
+            $pricing =
+                $this
+                    ->pricingResolver
+                    ->resolve(
+                        product: $product,
 
-            if ($pricing->price === null) {
+                        variant: $variant,
+                    );
+
+            if (
+                $pricing->price ===
+                null
+            ) {
                 continue;
             }
 
-            $unitPrice = (float) $pricing->price;
+            /*
+             * ResolvedProductPricing::price
+             * is already ?int.
+             *
+             * Never convert this to float.
+             */
+            $unitPrice =
+                $pricing->price;
 
-            $image = $product
-                ->images
-                ->first();
+            $image =
+                $product
+                    ->images
+                    ->first();
 
             $imageUrl = null;
 
             if ($image !== null) {
                 /** @var FilesystemAdapter $disk */
-                $disk = Storage::disk(
-                    'public',
-                );
+                $disk =
+                    Storage::disk(
+                        'public',
+                    );
 
-                $imageUrl = $disk->url(
-                    $image->path,
-                );
+                $imageUrl =
+                    $disk->url(
+                        $image->path,
+                    );
             }
 
-            $resolvedItems[] = new CartItemData(
-                key: (string) $key,
-                productId: $product->id,
-                variantId: $variant?->id,
-                quantity: $quantity,
-                name: $product->name,
-                slug: $product->slug,
-                variantName: $variant?->name,
-                imageUrl: $imageUrl,
-                unitPrice: $unitPrice,
-                lineTotal: $unitPrice * $quantity,
-            );
+            $resolvedItems[] =
+                new CartItemData(
+                    key: (string) $key,
+
+                    productId: $product->id,
+
+                    variantId: $variant?->id,
+
+                    quantity: $quantity,
+
+                    name: $product->name,
+
+                    slug: $product->slug,
+
+                    variantName: $variant?->name,
+
+                    imageUrl: $imageUrl,
+
+                    unitPrice: $unitPrice,
+
+                    lineTotal: $unitPrice *
+                    $quantity,
+                );
         }
 
-        $itemCount = array_sum(
-            array_map(
-                static fn (CartItemData $item): int => $item->quantity,
-                $resolvedItems,
-            ),
-        );
+        $itemCount =
+            array_sum(
+                array_map(
+                    static fn (
+                        CartItemData $item,
+                    ): int => $item
+                        ->quantity,
+                    $resolvedItems,
+                ),
+            );
 
-        $subtotal = array_sum(
-            array_map(
-                static fn (CartItemData $item): float => $item->lineTotal,
-                $resolvedItems,
-            ),
-        );
+        $subtotal =
+            array_sum(
+                array_map(
+                    static fn (
+                        CartItemData $item,
+                    ): int => $item
+                        ->lineTotal,
+                    $resolvedItems,
+                ),
+            );
 
         return new CartSummaryData(
             items: $resolvedItems,
+
             itemCount: $itemCount,
+
             subtotal: $subtotal,
         );
     }
@@ -271,12 +361,17 @@ final readonly class CartService
      */
     private function rawItems(): array
     {
-        $items = session()->get(
-            self::SESSION_KEY,
-            [],
-        );
+        $items =
+            session()->get(
+                self::SESSION_KEY,
+                [],
+            );
 
-        if (! is_array($items)) {
+        if (
+            ! is_array(
+                $items,
+            )
+        ) {
             return [];
         }
 
@@ -284,11 +379,11 @@ final readonly class CartService
     }
 
     /**
-     * @param  array<string, array{
+     * @param array<string, array{
      *     product_id: int,
      *     variant_id: int|null,
      *     quantity: int
-     * }>  $items
+     * }> $items
      */
     private function putRawItems(
         array $items,
@@ -303,7 +398,10 @@ final readonly class CartService
         int $productId,
         ?int $variantId,
     ): string {
-        if ($variantId !== null) {
+        if (
+            $variantId !==
+            null
+        ) {
             return sprintf(
                 'product:%d:variant:%d',
                 $productId,
@@ -317,31 +415,58 @@ final readonly class CartService
         );
     }
 
-    public function validateForCheckout(): CheckoutCartValidationData
-    {
-        $rawItems = $this->rawItems();
+    public function validateForCheckout(
+    ): CheckoutCartValidationData {
+        $rawItems =
+            $this->rawItems();
 
-        $summary = $this->summary();
+        $summary =
+            $this->summary();
 
+        /** @var array<string, bool> $validKeys */
         $validKeys = [];
 
-        foreach ($summary->items as $item) {
-            $validKeys[$item->key] = true;
+        foreach (
+            $summary->items as $item
+        ) {
+            $validKeys[
+                $item->key
+            ] = true;
         }
 
+        /** @var array<string, array{
+         *     product_id: int,
+         *     variant_id: int|null,
+         *     quantity: int
+         * }> $sanitizedItems
+         */
         $sanitizedItems = [];
 
-        foreach ($rawItems as $key => $rawItem) {
-            if (! isset($validKeys[$key])) {
+        foreach (
+            $rawItems as $key => $rawItem
+        ) {
+            if (
+                ! isset(
+                    $validKeys[
+                        $key
+                    ],
+                )
+            ) {
                 continue;
             }
 
-            $sanitizedItems[$key] = $rawItem;
+            $sanitizedItems[
+                $key
+            ] = $rawItem;
         }
 
         $wasSanitized =
-            count($sanitizedItems) !==
-            count($rawItems);
+            count(
+                $sanitizedItems,
+            ) !==
+            count(
+                $rawItems,
+            );
 
         if ($wasSanitized) {
             $this->putRawItems(
@@ -351,6 +476,7 @@ final readonly class CartService
 
         return new CheckoutCartValidationData(
             summary: $summary,
+
             wasSanitized: $wasSanitized,
         );
     }

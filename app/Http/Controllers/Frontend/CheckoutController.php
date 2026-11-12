@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Frontend;
 
+use App\Domain\Cart\Services\CartPromoPricingService;
 use App\Domain\Cart\Services\CartService;
 use App\Domain\Checkout\Actions\CalculateCheckoutTotalsAction;
 use App\Domain\Checkout\Services\CheckoutSessionService;
@@ -23,6 +24,7 @@ final class CheckoutController extends Controller
         CartService $cart,
         CheckoutSessionService $checkoutSession,
         CalculateCheckoutTotalsAction $calculateTotals,
+        CartPromoPricingService $promoPricing,
     ): Response|RedirectResponse {
         $user = $request->user();
 
@@ -108,28 +110,49 @@ final class CheckoutController extends Controller
 
         /*
          * ==================================================
+         * AUTHORITATIVE PROMO-AWARE CART PRICING
+         * ==================================================
+         *
+         * Promo selection lives in server-side cart state.
+         * Recalculate it for the authenticated customer every
+         * time checkout is rendered. Invalid/stale promos are
+         * cleared by CartPromoPricingService.
+         */
+        $pricing =
+            $promoPricing->calculate(
+                cart: $validation
+                    ->summary,
+
+                userId: $user->id,
+            );
+
+        /*
+         * ==================================================
          * BASE CHECKOUT TOTALS
          * ==================================================
          *
          * No browser-supplied delivery charge is trusted.
          *
-         * React previews the selected zone rate.
-         * Laravel calculates it again during final checkout.
+         * React previews the selected zone rate. Laravel will
+         * calculate both promo discount and delivery again
+         * during final checkout validation.
          */
         $totals =
             $calculateTotals->execute(
-                cart: $validation
-                    ->summary,
+                pricing: $pricing,
 
                 deliveryTotal: 0,
             );
 
+        /*
+         * Shipping eligibility continues to use the original
+         * authoritative cart subtotal rather than a browser
+         * total or client-calculated discounted amount.
+         */
         $subtotal =
-            (int) round(
-                $validation
-                    ->summary
-                    ->subtotal,
-            );
+            $pricing
+                ->cart
+                ->subtotal;
 
         /*
          * ==================================================
@@ -329,9 +352,13 @@ final class CheckoutController extends Controller
         return Inertia::render(
             'Frontend/Checkout/Index',
             [
-                'cart' => $validation
-                    ->summary
+                'cart' => $pricing
+                    ->cart
                     ->toArray(),
+
+                'promo' => $pricing
+                    ->promo
+                    ?->toArray(),
 
                 'totals' => $totals
                     ->toArray(),
