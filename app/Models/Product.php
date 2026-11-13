@@ -180,4 +180,14 @@ final class Product extends Model
         return $this->hasOne(ProductImage::class)
             ->where('is_primary', true);
     }
+
+    /**
+     * @return HasMany<ProductReview, $this>
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(
+            ProductReview::class,
+        );
+    }
 }

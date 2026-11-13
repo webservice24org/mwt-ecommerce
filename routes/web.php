@@ -12,6 +12,7 @@ use App\Http\Controllers\Frontend\CheckoutValidationController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\PageController as StorefrontPageController;
 use App\Http\Controllers\Frontend\ProductController;
+use App\Http\Controllers\Frontend\ProductReviewController;
 use App\Http\Controllers\Frontend\WishlistController;
 use App\Http\Controllers\NewsletterSubscriberController;
 use App\Http\Controllers\ProfileController;
@@ -65,6 +66,10 @@ Route::middleware(['auth', 'customer.active', 'verified'])->group(function (): v
     Route::post('/checkout/validate', CheckoutValidationController::class)->middleware('throttle:10,1')->name('checkout.validate');
 
     Route::post('/checkout/order', CheckoutOrderController::class)->middleware('throttle:5,1')->name('checkout.order.store');
+
+    Route::post('/products/{product}/reviews', [ProductReviewController::class, 'store'])->whereNumber('product')->middleware('throttle:10,1')->name('products.reviews.store');
+
+    Route::patch('/products/{product}/reviews/{review}', [ProductReviewController::class, 'update'])->whereNumber('product')->whereNumber('review')->middleware('throttle:20,1')->name('products.reviews.update');
 });
 
 /*

@@ -8,10 +8,15 @@ use App\Domain\Catalog\Queries\Storefront\StorefrontFilterOptionsQuery;
 use App\Domain\Catalog\Queries\Storefront\StorefrontProductDetailQuery;
 use App\Domain\Catalog\Queries\Storefront\StorefrontProductIndexQuery;
 use App\Domain\Catalog\Queries\Storefront\StorefrontProductSearchSuggestionQuery;
+use App\Domain\Reviews\Queries\StorefrontProductReviewsQuery;
+use App\Domain\Reviews\Queries\StorefrontProductReviewStateQuery;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Frontend\StorefrontProductFilterRequest;
 use App\Http\Requests\Frontend\StorefrontProductSearchSuggestionRequest;
+use App\Models\Product;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -26,36 +31,55 @@ final class ProductController extends Controller
         StorefrontProductIndexQuery $query,
         StorefrontFilterOptionsQuery $filterOptions,
     ): Response {
-        $filters = $request->filters();
+        $filters =
+            $request->filters();
 
-        $search = trim(
-            $request
-                ->string('q')
-                ->toString(),
-        );
+        $search =
+            trim(
+                $request
+                    ->string('q')
+                    ->toString(),
+            );
 
-        return Inertia::render('Frontend/Products/Index', [
-            'products' => $query->paginate(
-                filters: $filters,
-                search: $search !== ''
-                ? $search
-                : null,
-            ),
+        return Inertia::render(
+            'Frontend/Products/Index',
+            [
+                'products' => $query->paginate(
+                    filters: $filters,
 
-            'filters' => [
-                'q' => $search,
-                'sort' => $filters->sort->value,
-                'brand' => $filters->brand,
-                'category' => $filters->category,
-                'min_price' => $filters->minPrice,
-                'max_price' => $filters->maxPrice,
-                'attributes' => $filters->attributes,
+                    search: $search !== ''
+                    ? $search
+                    : null,
+                ),
+
+                'filters' => [
+                    'q' => $search,
+
+                    'sort' => $filters
+                        ->sort
+                        ->value,
+
+                    'brand' => $filters
+                        ->brand,
+
+                    'category' => $filters
+                        ->category,
+
+                    'min_price' => $filters
+                        ->minPrice,
+
+                    'max_price' => $filters
+                        ->maxPrice,
+
+                    'attributes' => $filters
+                        ->attributes,
+                ],
+
+                'filterOptions' => $filterOptions
+                    ->get()
+                    ->toArray(),
             ],
-
-            'filterOptions' => $filterOptions
-                ->get()
-                ->toArray(),
-        ]);
+        );
     }
 
     public function searchSuggestions(
@@ -73,20 +97,53 @@ final class ProductController extends Controller
     }
 
     public function show(
+        Request $request,
         string $slug,
+        StorefrontProductReviewStateQuery $reviewState,
+        StorefrontProductReviewsQuery $reviews,
     ): Response {
-        $product = $this->productDetail
-            ->findBySlug($slug);
+        $productDetail =
+            $this
+                ->productDetail
+                ->findBySlug(
+                    $slug,
+                );
 
         abort_if(
-            $product === null,
+            $productDetail ===
+            null,
             404,
         );
+
+        $product =
+            Product::query()
+                ->findOrFail(
+                    $productDetail
+                        ->id,
+                );
+
+        $user =
+            $request->user();
 
         return Inertia::render(
             'Frontend/Products/Show',
             [
-                'product' => $product->toArray(),
+                'product' => $productDetail
+                    ->toArray(),
+
+                'reviewState' => $reviewState
+                    ->get(
+                        user: $user instanceof User
+                        ? $user
+                        : null,
+
+                        product: $product,
+                    ),
+
+                'reviews' => $reviews
+                    ->get(
+                        product: $product,
+                    ),
             ],
         );
     }

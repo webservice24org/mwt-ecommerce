@@ -823,6 +823,19 @@ export default function AdminSidebar({
                                             },
                                             true,
                                         )}
+
+                                        {renderNavigationItem(
+                                            {
+                                                label: 'Reviews',
+                                                href: route(
+                                                    'admin.reviews.index',
+                                                ),
+                                                match:
+                                                    '/admin/reviews',
+                                                icon: ReceiptText,
+                                            },
+                                            true,
+                                        )}
                                     </div>
                                 </div>
                             </div>

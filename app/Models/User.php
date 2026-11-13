@@ -95,4 +95,30 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(PromoCodeUsage::class);
     }
+
+    /**
+     * Reviews submitted by this customer.
+     *
+     * @return HasMany<ProductReview, $this>
+     */
+    public function productReviews(): HasMany
+    {
+        return $this->hasMany(
+            ProductReview::class,
+            'user_id',
+        );
+    }
+
+    /**
+     * Reviews moderated by this user.
+     *
+     * @return HasMany<ProductReview, $this>
+     */
+    public function moderatedProductReviews(): HasMany
+    {
+        return $this->hasMany(
+            ProductReview::class,
+            'moderated_by',
+        );
+    }
 }

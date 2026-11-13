@@ -30,6 +30,7 @@ use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\PageSectionController;
 use App\Http\Controllers\Admin\Promotion\PromoCodeController;
 use App\Http\Controllers\Admin\Promotion\PromotionController;
+use App\Http\Controllers\Admin\Reviews\ProductReviewController;
 use App\Http\Controllers\Admin\ShipmentController;
 use App\Http\Controllers\Admin\Shipping\ShippingProviderAccountController;
 use App\Http\Controllers\Admin\Shipping\ShippingRateController;
@@ -269,6 +270,15 @@ Route::middleware([
     Route::patch('customers/{customer}/block', [CustomerController::class, 'block'])->whereNumber('customer')->name('customers.block');
     Route::patch('customers/{customer}/unblock', [CustomerController::class, 'unblock'])->whereNumber('customer')->name('customers.unblock');
     Route::delete('customers/{customer}', [CustomerController::class, 'destroy'])->whereNumber('customer')->name('customers.destroy');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Review Management
+    |--------------------------------------------------------------------------
+    */
+    Route::get('reviews', [ProductReviewController::class, 'index'])->name('reviews.index');
+    Route::post('reviews/{review}/approve', [ProductReviewController::class, 'approve'])->whereNumber('review')->name('reviews.approve');
+    Route::post('reviews/{review}/reject', [ProductReviewController::class, 'reject'])->whereNumber('review')->name('reviews.reject');
 
 });
 
