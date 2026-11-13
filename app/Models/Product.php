@@ -190,4 +190,16 @@ final class Product extends Model
             ProductReview::class,
         );
     }
+
+    /**
+     * Wishlist entries containing this product.
+     *
+     * @return HasMany<Wishlist, $this>
+     */
+    public function wishlists(): HasMany
+    {
+        return $this->hasMany(
+            Wishlist::class,
+        );
+    }
 }

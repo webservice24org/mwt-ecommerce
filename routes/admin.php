@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\Catalog\ProductImageController;
 use App\Http\Controllers\Admin\Catalog\ProductVariantController;
 use App\Http\Controllers\Admin\Catalog\ProductVideoController;
 use App\Http\Controllers\Admin\CustomerController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FooterBuilderController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\InvoiceSettingController;
@@ -39,7 +40,6 @@ use App\Http\Controllers\Admin\WebsiteSettings\HeaderBuilderController;
 use App\Models\FooterSetting;
 use App\Models\HeaderSetting;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 Route::middleware('guest:admin')->group(
     function (): void {
@@ -83,9 +83,10 @@ Route::middleware([
     'auth:admin',
     'admin.active',
 ])->group(function (): void {
-    Route::get('/', function () {
-        return Inertia::render('Admin/Dashboard');
-    })->name('dashboard');
+    Route::get(
+        '/',
+        DashboardController::class,
+    )->name('dashboard');
     Route::post('/logout', LogoutController::class)->name('logout');
 
     Route::resource('categories', CategoryController::class)->except(['show']);

@@ -432,6 +432,8 @@ final class AdminFulfilmentSecurityTest extends TestCase
                 'shippingMethod',
             )
             ->create([
+                'carrier' => 'Own Delivery Team',
+
                 'tracking_number' => 'ORIGINAL',
             ]);
 
@@ -455,6 +457,8 @@ final class AdminFulfilmentSecurityTest extends TestCase
                     ],
                 ),
                 [
+                    'carrier' => 'Own Delivery Team',
+
                     'tracking_number' => 'CHANGED',
                 ],
             );
@@ -495,6 +499,8 @@ final class AdminFulfilmentSecurityTest extends TestCase
                 'shippingMethod',
             )
             ->create([
+                'carrier' => 'Own Delivery Team',
+
                 'tracking_number' => 'ORIGINAL',
             ]);
 
@@ -512,6 +518,8 @@ final class AdminFulfilmentSecurityTest extends TestCase
                     ],
                 ),
                 [
+                    'carrier' => 'Attack Carrier',
+
                     'tracking_number' => 'ATTACK',
                 ],
             )

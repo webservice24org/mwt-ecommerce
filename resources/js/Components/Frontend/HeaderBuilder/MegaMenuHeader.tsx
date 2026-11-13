@@ -47,7 +47,8 @@ export default function MegaMenuHeader({ config, wishlist, cart }: Props) {
     const [megaMenuOpen, setMegaMenuOpen] = useState(false)
     const [accountOpen, setAccountOpen] = useState(false)
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-    const [wishlistCount, setWishlistCount] = useState(wishlist?.count ?? 0)
+    const [wishlistCountOverride, setWishlistCountOverride] = useState<number | null>(null)
+    const wishlistCount = wishlistCountOverride ?? wishlist?.count ?? 0
     const [cartState, setCartState] = useState<StorefrontCart>(
         cart ?? {
             items: [],
@@ -73,13 +74,18 @@ export default function MegaMenuHeader({ config, wishlist, cart }: Props) {
         const handleWishlistChanged = (event: Event) => {
             const customEvent = event as CustomEvent<StorefrontWishlistChangedDetail>
 
-            setWishlistCount(customEvent.detail.count)
+            setWishlistCountOverride(customEvent.detail.count)
         }
 
         window.addEventListener(STOREFRONT_WISHLIST_CHANGED, handleWishlistChanged)
 
+        const removeFinishListener = router.on('finish', () => {
+            setWishlistCountOverride(null)
+        })
+
         return () => {
             window.removeEventListener(STOREFRONT_WISHLIST_CHANGED, handleWishlistChanged)
+            removeFinishListener()
         }
     }, [])
 

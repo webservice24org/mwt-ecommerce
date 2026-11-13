@@ -3,6 +3,7 @@ import ProductDetailsLayout from '@/Components/Frontend/Catalog/ProductDetails/P
 import ProductGallery from '@/Components/Frontend/Catalog/ProductDetails/ProductGallery'
 import ProductReviewForm from '@/Components/Frontend/Catalog/ProductDetails/ProductReviewForm'
 import ProductSummary from '@/Components/Frontend/Catalog/ProductDetails/ProductSummary'
+import WishlistToggleButton from '@/Components/Frontend/Wishlist/WishlistToggleButton'
 import StorefrontBreadcrumbs from '@/Components/Frontend/Navigation/StorefrontBreadcrumbs'
 import StorefrontSeo from '@/Components/Frontend/Seo/StorefrontSeo'
 import FrontendLayout from '@/Layouts/Frontend/FrontendLayout'
@@ -136,11 +137,21 @@ export default function Show({
                         />
                     }
                     summary={
-                        <ProductSummary
-                            product={
-                                product
-                            }
-                        />
+                        <div className="min-w-0">
+                            <div className="mb-4 flex justify-end">
+                                <WishlistToggleButton
+                                    productId={
+                                        product.id
+                                    }
+                                />
+                            </div>
+
+                            <ProductSummary
+                                product={
+                                    product
+                                }
+                            />
+                        </div>
                     }
                 />
 
@@ -154,7 +165,7 @@ export default function Show({
                     </div>
                 )}
 
-                 <div className="mt-12 lg:mt-16">
+                <div className="mt-12 lg:mt-16">
                     <ProductReviewsSection
                         reviews={reviews}
                     />
@@ -170,19 +181,6 @@ export default function Show({
                         }
                     />
                 </div>
-
-                <div className="mt-12 lg:mt-16">
-                    <ProductReviewForm
-                        productId={
-                            product.id
-                        }
-                        state={
-                            reviewState
-                        }
-                    />
-                </div>
-
-               
             </main>
         </FrontendLayout>
     )

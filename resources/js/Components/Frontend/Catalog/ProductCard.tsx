@@ -1,12 +1,8 @@
 import ProductImage from '@/Components/Frontend/Catalog/ProductImage'
 import ProductPrice from '@/Components/Frontend/Catalog/ProductPrice'
 import WishlistToggleButton from '@/Components/Frontend/Wishlist/WishlistToggleButton'
-import type { PageProps } from '@/types'
-import type {
-    StorefrontProductCard as ProductCardData,
-    StorefrontWishlist,
-} from '@/types/storefront'
-import { Link, usePage } from '@inertiajs/react'
+import type { StorefrontProductCard as ProductCardData } from '@/types/storefront'
+import { Link } from '@inertiajs/react'
 
 interface ProductCardProps {
     product: ProductCardData
@@ -14,20 +10,12 @@ interface ProductCardProps {
     showBadges?: boolean
 }
 
-type ProductCardPageProps = PageProps<{
-    storefrontWishlist?: StorefrontWishlist
-}>
-
 export default function ProductCard({
     product,
     showPrice = true,
     showBadges = true,
 }: ProductCardProps) {
-    const { storefrontWishlist } = usePage<ProductCardPageProps>().props
-
     const productUrl = `/products/${product.slug}`
-
-    const wishlisted = storefrontWishlist?.product_ids.includes(product.id) ?? false
 
     return (
         <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white transition-shadow duration-200 hover:shadow-sm focus-within:ring-2 focus-within:ring-neutral-950 focus-within:ring-offset-2">
@@ -53,9 +41,10 @@ export default function ProductCard({
                     )}
                 </Link>
 
-                <div className="absolute right-3 top-3 z-10">
-                    <WishlistToggleButton productId={product.id} initialActive={wishlisted} />
-                </div>
+                <WishlistToggleButton
+                    productId={product.id}
+                    className="absolute right-3 top-3 z-10 shadow-sm"
+                />
             </div>
 
             <div className="flex min-w-0 flex-1 flex-col p-4">

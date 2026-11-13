@@ -121,4 +121,16 @@ class User extends Authenticatable implements MustVerifyEmail
             'moderated_by',
         );
     }
+
+    /**
+     * Wishlist entries owned by this customer.
+     *
+     * @return HasMany<Wishlist, $this>
+     */
+    public function wishlists(): HasMany
+    {
+        return $this->hasMany(
+            Wishlist::class,
+        );
+    }
 }

@@ -346,7 +346,9 @@ final class AdminShipmentControllerTest extends TestCase
                 $shippingMethod,
                 'shippingMethod',
             )
-            ->create();
+            ->create([
+                'carrier' => 'Own Delivery Team',
+            ]);
 
         ShipmentItem::factory()
             ->for(

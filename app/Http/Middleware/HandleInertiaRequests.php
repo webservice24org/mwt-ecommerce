@@ -73,16 +73,16 @@ class HandleInertiaRequests extends Middleware
 
             'flash' => [
                 'success' => fn () => $request
-                ->session()
-                ->get(
-                    'success',
-                ),
+                    ->session()
+                    ->get(
+                        'success',
+                    ),
 
                 'error' => fn () => $request
-                ->session()
-                ->get(
-                    'error',
-                ),
+                    ->session()
+                    ->get(
+                        'error',
+                    ),
             ],
 
             'storefrontCart' => function () use ($request): array {
@@ -152,16 +152,42 @@ class HandleInertiaRequests extends Middleware
                 )->resolve();
             },
 
-            'storefrontWishlist' => function (): array {
-                /** @var WishlistService $wishlist */
-                $wishlist = app(
-                    WishlistService::class,
-                );
+            'storefrontWishlist' => function () use ($request): array {
+                $wishlist =
+                    app(
+                        WishlistService::class,
+                    );
+
+                $authenticated =
+                    $request->user();
+
+                $user =
+                    $authenticated instanceof User
+                    ? $authenticated
+                    : null;
+
+                /*
+                 * If the customer has just authenticated,
+                 * merge any pre-login guest wishlist before
+                 * exposing authoritative state.
+                 */
+                if ($user !== null) {
+                    $wishlist->mergeGuestInto(
+                        $user,
+                    );
+                }
+
+                $productIds =
+                    $wishlist->ids(
+                        user: $user,
+                    );
 
                 return [
-                    'count' => $wishlist->count(),
+                    'count' => count(
+                        $productIds,
+                    ),
 
-                    'product_ids' => $wishlist->ids(),
+                    'product_ids' => $productIds,
                 ];
             },
 
