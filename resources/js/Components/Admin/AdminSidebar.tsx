@@ -22,7 +22,7 @@ import {
     Tag,
     Tags,
     Ticket,
-    X,
+    X, BarChart3,
     type LucideIcon,
 } from 'lucide-react'
 import { useState } from 'react'
@@ -237,6 +237,15 @@ export default function AdminSidebar({
         ) ||
         url.startsWith(
             '/admin/customers',
+        ) ||
+        url.startsWith(
+            '/admin/reports/sales',
+        ) ||
+        url.startsWith(
+            '/admin/reports/products',
+        ) ||
+        url.startsWith(
+            '/admin/reviews',
         )
 
     /*
@@ -820,6 +829,31 @@ export default function AdminSidebar({
                                                 match:
                                                     '/admin/customers',
                                                 icon: CircleUserRound,
+                                            },
+                                            true,
+                                        )}
+
+                                        {renderNavigationItem(
+                                            {
+                                                label: 'Sales Report',
+                                                href: route(
+                                                    'admin.reports.sales.index',
+                                                ),
+                                                match:
+                                                    '/admin/reports/sales',
+                                                icon: BarChart3,
+                                            },
+                                            true,
+                                        )}
+                                        {renderNavigationItem(
+                                            {
+                                                label: 'Product Performance',
+                                                href: route(
+                                                    'admin.reports.products.index',
+                                                ),
+                                                match:
+                                                    '/admin/reports/products',
+                                                icon: BarChart3,
                                             },
                                             true,
                                         )}

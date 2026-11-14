@@ -29,9 +29,13 @@ use App\Http\Controllers\Admin\PageBuilderImageController;
 use App\Http\Controllers\Admin\PageBuilderProductSearchController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\PageSectionController;
+use App\Http\Controllers\Admin\ProductPerformanceReportController;
+use App\Http\Controllers\Admin\ProductPerformanceReportExportController;
 use App\Http\Controllers\Admin\Promotion\PromoCodeController;
 use App\Http\Controllers\Admin\Promotion\PromotionController;
 use App\Http\Controllers\Admin\Reviews\ProductReviewController;
+use App\Http\Controllers\Admin\SalesReportController;
+use App\Http\Controllers\Admin\SalesReportExportController;
 use App\Http\Controllers\Admin\ShipmentController;
 use App\Http\Controllers\Admin\Shipping\ShippingProviderAccountController;
 use App\Http\Controllers\Admin\Shipping\ShippingRateController;
@@ -280,6 +284,11 @@ Route::middleware([
     Route::get('reviews', [ProductReviewController::class, 'index'])->name('reviews.index');
     Route::post('reviews/{review}/approve', [ProductReviewController::class, 'approve'])->whereNumber('review')->name('reviews.approve');
     Route::post('reviews/{review}/reject', [ProductReviewController::class, 'reject'])->whereNumber('review')->name('reviews.reject');
+
+    Route::get('reports/sales', SalesReportController::class)->name('reports.sales.index');
+    Route::get('reports/products', ProductPerformanceReportController::class)->name('reports.products.index');
+    Route::get('/reports/sales/export', SalesReportExportController::class)->name('reports.sales.export');
+    Route::get('/reports/products/export', ProductPerformanceReportExportController::class)->name('reports.products.export');
 
 });
 

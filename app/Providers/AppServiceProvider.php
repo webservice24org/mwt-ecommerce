@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Domain\Reporting\Contracts\ReportExportWriter;
+use App\Domain\Reporting\Export\CsvReportExportWriter;
+use App\Domain\Reporting\Export\ReportExportWriterRegistry;
 use App\Domain\Shipping\Providers\ManualShippingProvider;
 use App\Domain\Shipping\Providers\PathaoShippingProvider;
 use App\Domain\Shipping\Providers\ShippingProviderRegistry;
@@ -22,6 +25,22 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+
+        $this->app->tag(
+            [
+                CsvReportExportWriter::class,
+            ],
+            ReportExportWriter::class,
+        );
+
+        $this->app->when(
+            ReportExportWriterRegistry::class,
+        )->needs(
+            '$writers',
+        )->giveTagged(
+            ReportExportWriter::class,
+        );
+
         $this->app->singleton(
             ShippingProviderRegistry::class,
             static function (Application $app): ShippingProviderRegistry {
