@@ -1,0 +1,168 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domain\Reporting\Data;
+
+use App\Domain\Orders\Enums\FulfilmentStatus;
+use App\Domain\Orders\Enums\OrderStatus;
+use App\Domain\Orders\Enums\PaymentMethod;
+use App\Domain\Orders\Enums\PaymentStatus;
+
+final readonly class OperationalOrdersReportFiltersData
+{
+    /**
+     * @param  array<int, OrderStatus|string>  $statuses
+     * @param  array<int, FulfilmentStatus|string>  $fulfilmentStatuses
+     * @param  array<int, PaymentStatus|string>  $paymentStatuses
+     * @param  array<int, PaymentMethod|string>  $paymentMethods
+     */
+    public function __construct(
+        public ReportDateRangeData $range,
+        public array $statuses = [],
+        public array $fulfilmentStatuses = [],
+        public array $paymentStatuses = [],
+        public array $paymentMethods = [],
+        public ?string $search = null,
+        public int $perPage = 25,
+        public ?string $attention = null,
+    ) {}
+
+    /**
+     * @return array<int, string>
+     */
+    public function statusValues(): array
+    {
+        return $this->enumValues(
+            $this->statuses,
+        );
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function fulfilmentStatusValues(): array
+    {
+        return $this->enumValues(
+            $this->fulfilmentStatuses,
+        );
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function paymentStatusValues(): array
+    {
+        return $this->enumValues(
+            $this->paymentStatuses,
+        );
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function paymentMethodValues(): array
+    {
+        return $this->enumValues(
+            $this->paymentMethods,
+        );
+    }
+
+    public function normalizedSearch(): ?string
+    {
+        $search =
+            trim(
+                (string) $this->search,
+            );
+
+        return $search !== ''
+            ? $search
+            : null;
+    }
+
+    public function normalizedPerPage(): int
+    {
+        return in_array(
+            $this->perPage,
+            [
+                10,
+                25,
+                50,
+                100,
+            ],
+            true,
+        )
+            ? $this->perPage
+            : 25;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toArray(): array
+    {
+        return [
+            'range' => $this->range->toArray(),
+
+            'statuses' => $this->statusValues(),
+
+            'fulfilment_statuses' => $this->fulfilmentStatusValues(),
+
+            'payment_statuses' => $this->paymentStatusValues(),
+
+            'payment_methods' => $this->paymentMethodValues(),
+
+            'search' => $this->normalizedSearch(),
+
+            'per_page' => $this->normalizedPerPage(),
+            'attention' => $this->normalizedAttention(),
+        ];
+    }
+
+    /**
+     * @param  array<int, object|string>  $values
+     * @return array<int, string>
+     */
+    private function enumValues(
+        array $values,
+    ): array {
+        /** @var array<int, string> $normalized */
+        $normalized = [];
+
+        foreach ($values as $value) {
+            $normalizedValue =
+                $value instanceof \BackedEnum
+                ? (string) $value->value
+                : (string) $value;
+
+            if (
+                ! in_array(
+                    $normalizedValue,
+                    $normalized,
+                    true,
+                )
+            ) {
+                $normalized[] =
+                    $normalizedValue;
+            }
+        }
+
+        return $normalized;
+    }
+
+    public function normalizedAttention(): string
+    {
+        return in_array(
+            $this->attention,
+            [
+                'all',
+                'required',
+                'critical',
+                'normal',
+            ],
+            true,
+        )
+            ? (string) $this->attention
+            : 'all';
+    }
+}

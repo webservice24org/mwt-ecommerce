@@ -22,7 +22,7 @@ import {
     Tag,
     Tags,
     Ticket,
-    X, BarChart3,
+    X, BarChart3, Summary,
     type LucideIcon,
 } from 'lucide-react'
 import { useState } from 'react'
@@ -254,6 +254,12 @@ export default function AdminSidebar({
         ) ||
         url.startsWith(
             '/admin/reports/products',
+        ) ||
+        url.startsWith(
+            '/admin/reports/operations/orders',
+        ) ||
+        url.startsWith(
+            '/admin/reports/operations/cod',
         )
 
     /*
@@ -999,6 +1005,29 @@ export default function AdminSidebar({
                                             },
                                             true,
                                         )}
+                                        {renderNavigationItem(
+                                            {
+                                                label: 'Operational Orders',
+                                                href: route(
+                                                    'admin.reports.operations.orders',
+                                                ),
+                                                match:
+                                                    '/admin/reports/operations/orders',
+                                                icon: BarChart3,
+                                            },
+                                            true,
+                                        )}
+
+                                        {renderNavigationItem(
+                                            {
+                                                label: 'COD Operations',
+                                                href: route('admin.reports.operations.cod'),
+                                                match: '/admin/reports/operations/cod',
+                                                icon: Summary,
+                                            },
+                                            true,
+                                        )}
+                                       
                                     </div>
                                 </div>
                             </div>

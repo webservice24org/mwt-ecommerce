@@ -33,6 +33,10 @@ use App\Http\Controllers\Admin\ProductPerformanceReportController;
 use App\Http\Controllers\Admin\ProductPerformanceReportExportController;
 use App\Http\Controllers\Admin\Promotion\PromoCodeController;
 use App\Http\Controllers\Admin\Promotion\PromotionController;
+use App\Http\Controllers\Admin\Reports\CodOperationsCsvExportController;
+use App\Http\Controllers\Admin\Reports\CodOperationsReportController;
+use App\Http\Controllers\Admin\Reports\OperationalOrdersCsvExportController;
+use App\Http\Controllers\Admin\Reports\OperationalOrdersReportController;
 use App\Http\Controllers\Admin\Reports\ProductAnalyticsPdfExportController;
 use App\Http\Controllers\Admin\Reports\ProductAnalyticsReportController;
 use App\Http\Controllers\Admin\Reports\SalesAnalyticsPdfExportController;
@@ -297,6 +301,10 @@ Route::middleware([
     Route::get('reports/sales-analytics/pdf', SalesAnalyticsPdfExportController::class)->name('reports.sales.analytics.pdf');
     Route::get('reports/product-analytics', ProductAnalyticsReportController::class)->name('reports.products.analytics');
     Route::get('reports/product-analytics/pdf', ProductAnalyticsPdfExportController::class)->name('reports.products.analytics.pdf');
+    Route::get('reports/operations/orders', OperationalOrdersReportController::class)->name('reports.operations.orders');
+    Route::get('reports/operations/orders/export.csv', OperationalOrdersCsvExportController::class)->name('reports.operations.orders.csv');
+    Route::get('reports/operations/cod', CodOperationsReportController::class)->name('reports.operations.cod');
+    Route::get('reports/operations/cod/export.csv', CodOperationsCsvExportController::class)->name('reports.operations.cod.csv');
 
 });
 

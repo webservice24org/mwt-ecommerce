@@ -1,9 +1,25 @@
 import { Link, router } from '@inertiajs/react'
 import {
     FormEvent,
-    useState,
     ReactNode,
+    useState,
 } from 'react'
+
+import {
+    Bar,
+    BarChart,
+    CartesianGrid,
+    Cell,
+    Legend,
+    Line,
+    LineChart,
+    Pie,
+    PieChart,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
+} from 'recharts'
 
 import AdminLayout from '@/Layouts/Admin/AdminLayout'
 
@@ -104,6 +120,13 @@ interface OperationalSummary {
     unpaid_payment_orders_count: number
     unpaid_payment_total: number
 }
+
+type DashboardView =
+    | 'classic'
+    | 'graphical'
+
+const DASHBOARD_VIEW_STORAGE_KEY =
+    'mwt-admin-dashboard-view'
 
 interface DashboardProps {
     filters: DashboardFilters
@@ -243,6 +266,41 @@ export default function Dashboard({
         filters.range.preset,
     )
 
+    const [
+        dashboardView,
+        setDashboardView,
+    ] = useState<DashboardView>(
+        () => {
+            // Keep the initializer safe when the page is server-rendered.
+            if (typeof window === 'undefined') {
+                return 'classic'
+            }
+
+            const storedView =
+                window.localStorage.getItem(
+                    DASHBOARD_VIEW_STORAGE_KEY,
+                )
+
+            return storedView === 'classic' ||
+                storedView === 'graphical'
+                ? storedView
+                : 'classic'
+        },
+    )
+
+    const changeDashboardView = (
+        view: DashboardView,
+    ) => {
+        setDashboardView(
+            view,
+        )
+
+        window.localStorage.setItem(
+            DASHBOARD_VIEW_STORAGE_KEY,
+            view,
+        )
+    }
+
     const submitFilters = (
         event:
             FormEvent<HTMLFormElement>,
@@ -316,6 +374,15 @@ export default function Dashboard({
             description="Store performance and operational overview."
         >
             <div className="space-y-6">
+                <DashboardViewSwitch
+                    value={
+                        dashboardView
+                    }
+                    onChange={
+                        changeDashboardView
+                    }
+                />
+
                 <section className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-5">
                     <form
                         onSubmit={
@@ -460,6 +527,13 @@ export default function Dashboard({
                     </div>
                 </section>
 
+                <div
+                    id="dashboard-view-panel"
+                    aria-live="polite"
+                >
+                    {dashboardView ===
+                    'classic' ? (
+                    <>
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <MetricCard
                         label="Orders"
@@ -872,8 +946,1236 @@ export default function Dashboard({
                         </>
                     )}
                 </section>
+                    </>
+                ) : (
+                    <GraphicalDashboardShell
+                        metrics={
+                            metrics
+                        }
+                        trend={
+                            trend
+                        }
+                        breakdowns={
+                            breakdowns
+                        }
+                        operationalSummary={
+                            operationalSummary
+                        }
+                        topProducts={
+                            topProducts
+                        }
+                        inventorySummary={
+                            inventorySummary
+                        }
+                    />
+                    )}
+                </div>
             </div>
         </AdminLayout>
+    )
+}
+
+function DashboardViewSwitch({
+    value,
+    onChange,
+}: {
+    value: DashboardView
+    onChange: (
+        view: DashboardView,
+    ) => void
+}) {
+    const options: Array<{
+        value: DashboardView
+        label: string
+        description: string
+    }> = [
+        {
+            value: 'classic',
+            label: 'Classic',
+            description:
+                'Detailed operational view',
+        },
+        {
+            value: 'graphical',
+            label: 'Graphical',
+            description:
+                'Visual analytics view',
+        },
+    ]
+
+    return (
+        <section className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5">
+            <div>
+                <h2 className="text-sm font-semibold text-neutral-900">
+                    Dashboard view
+                </h2>
+
+                <p className="mt-1 text-xs text-neutral-500">
+                    Switch between the detailed
+                    dashboard and the visual
+                    analytics dashboard.
+                </p>
+            </div>
+
+            <div
+                className="inline-flex self-start rounded-lg border border-neutral-200 bg-neutral-50 p-1 sm:self-auto"
+                role="group"
+                aria-label="Dashboard view"
+                aria-controls="dashboard-view-panel"
+            >
+                {options.map(
+                    (
+                        option,
+                    ) => {
+                        const active =
+                            value ===
+                            option.value
+
+                        return (
+                            <button
+                                key={
+                                    option.value
+                                }
+                                type="button"
+                                onClick={() =>
+                                    onChange(
+                                        option.value,
+                                    )
+                                }
+                                aria-pressed={
+                                    active
+                                }
+                                title={
+                                    option.description
+                                }
+                                className={[
+                                    'rounded-md px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2',
+
+                                    active
+                                        ? 'bg-neutral-900 text-white shadow-sm'
+                                        : 'text-neutral-600 hover:bg-white hover:text-neutral-950',
+                                ].join(
+                                    ' ',
+                                )}
+                            >
+                                {
+                                    option.label
+                                }
+                            </button>
+                        )
+                    },
+                )}
+            </div>
+        </section>
+    )
+}
+
+function GraphicalDashboardShell({
+    metrics,
+    trend,
+    breakdowns,
+    operationalSummary,
+    topProducts,
+    inventorySummary,
+}: {
+    metrics: DashboardMetrics
+    trend: TrendPoint[]
+    breakdowns: DashboardBreakdowns
+    operationalSummary: OperationalSummary
+    topProducts: TopProduct[]
+    inventorySummary: InventorySummary
+}) {
+    return (
+        <div className="space-y-6">
+            <section className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-5">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <h2 className="text-base font-semibold text-neutral-900">
+                            Graphical overview
+                        </h2>
+
+                        <p className="mt-1 text-sm text-neutral-500">
+                            Visual summary of the same authoritative dashboard data and selected reporting range.
+                        </p>
+                    </div>
+
+                    <span className="text-xs text-neutral-500">
+                        {formatNumber(
+                            trend.length,
+                        )}{' '}
+                        trend points
+                    </span>
+                </div>
+            </section>
+
+            <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <MetricCard
+                    label="Net sales"
+                    value={formatMoney(
+                        metrics.net_sales,
+                    )}
+                    helper={`${formatNumber(
+                        metrics.orders_count,
+                    )} orders`}
+                />
+
+                <MetricCard
+                    label="Customers"
+                    value={formatNumber(
+                        metrics.customers_count,
+                    )}
+                    helper="Distinct customers"
+                />
+
+                <MetricCard
+                    label="Products sold"
+                    value={formatNumber(
+                        metrics.products_sold,
+                    )}
+                    helper="Units sold in range"
+                />
+
+                <MetricCard
+                    label="Average order value"
+                    value={formatMoney(
+                        metrics.average_order_value,
+                    )}
+                    helper="Non-cancelled orders"
+                />
+            </section>
+
+            <section className="grid gap-6 xl:grid-cols-2">
+                <DashboardChartCard
+                    title="Net revenue trend"
+                    description="Daily net sales across the selected reporting range."
+                >
+                    <RevenueTrendChart
+                        trend={
+                            trend
+                        }
+                    />
+                </DashboardChartCard>
+
+                <DashboardChartCard
+                    title="Orders trend"
+                    description="Daily order volume across the selected reporting range."
+                >
+                    <OrdersTrendChart
+                        trend={
+                            trend
+                        }
+                    />
+                </DashboardChartCard>
+            </section>
+
+            <section className="grid gap-6 xl:grid-cols-2">
+                <DashboardChartCard
+                    title="Payment breakdown"
+                    description="Order count and revenue grouped by payment status."
+                >
+                    <PaymentBreakdownChart
+                        items={
+                            breakdowns.payment
+                        }
+                    />
+                </DashboardChartCard>
+
+                <DashboardChartCard
+                    title="Fulfilment breakdown"
+                    description="Order count grouped by fulfilment state."
+                >
+                    <FulfilmentBreakdownChart
+                        items={
+                            breakdowns.fulfilment
+                        }
+                    />
+                </DashboardChartCard>
+
+                <DashboardChartCard
+                    title="Inventory health"
+                    description="Current stock health across tracked products."
+                >
+                    <InventoryHealthChart
+                        summary={
+                            inventorySummary
+                        }
+                    />
+                </DashboardChartCard>
+
+                <DashboardChartCard
+                    title="Top products by revenue"
+                    description="Best-performing products ranked by gross sales."
+                >
+                    <TopProductsRevenueChart
+                        products={
+                            topProducts
+                        }
+                    />
+                </DashboardChartCard>
+            </section>
+
+            <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <GraphicalDataStatus
+                    label="Trend points"
+                    value={
+                        trend.length
+                    }
+                />
+
+                <GraphicalDataStatus
+                    label="Payment groups"
+                    value={
+                        breakdowns
+                            .payment
+                            .length
+                    }
+                />
+
+                <GraphicalDataStatus
+                    label="Fulfilment groups"
+                    value={
+                        breakdowns
+                            .fulfilment
+                            .length
+                    }
+                />
+
+                <GraphicalDataStatus
+                    label="Top products"
+                    value={
+                        topProducts.length
+                    }
+                />
+
+                <GraphicalDataStatus
+                    label="Tracked products"
+                    value={
+                        inventorySummary
+                            .tracked_products_count
+                    }
+                />
+
+                <GraphicalDataStatus
+                    label="Open operations"
+                    value={
+                        operationalSummary
+                            .pending_orders_count +
+                        operationalSummary
+                            .processing_orders_count
+                    }
+                />
+            </section>
+        </div>
+    )
+}
+
+function DashboardChartCard({
+    title,
+    description,
+    children,
+}: {
+    title: string
+    description: string
+    children: ReactNode
+}) {
+    return (
+        <section className="min-w-0 overflow-hidden rounded-xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-5">
+            <div>
+                <h2 className="text-base font-semibold text-neutral-900">
+                    {title}
+                </h2>
+
+                <p className="mt-1 text-sm text-neutral-500">
+                    {description}
+                </p>
+            </div>
+
+            <div className="mt-5 h-64 min-w-0 sm:h-72 lg:h-80">
+                {children}
+            </div>
+        </section>
+    )
+}
+
+function RevenueTrendChart({
+    trend,
+}: {
+    trend: TrendPoint[]
+}) {
+    if (trend.length === 0) {
+        return (
+            <ChartEmptyState />
+        )
+    }
+
+    const data =
+        trend.map(
+            (
+                point,
+            ) => ({
+                ...point,
+                label:
+                    formatTrendDate(
+                        point.date,
+                    ),
+            }),
+        )
+
+    return (
+        <div
+            className="h-full w-full"
+            role="img"
+            aria-label="Net revenue trend chart"
+        >
+            <ResponsiveContainer
+                width="100%"
+                height="100%"
+            >
+            <LineChart
+                data={
+                    data
+                }
+                margin={{
+                    top: 8,
+                    right: 12,
+                    bottom: 0,
+                    left: 0,
+                }}
+            >
+                <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={
+                        false
+                    }
+                />
+
+                <XAxis
+                    dataKey="label"
+                    tickLine={
+                        false
+                    }
+                    axisLine={
+                        false
+                    }
+                    minTickGap={
+                        24
+                    }
+                    tick={{
+                        fontSize: 11,
+                    }}
+                />
+
+                <YAxis
+                    tickLine={
+                        false
+                    }
+                    axisLine={
+                        false
+                    }
+                    width={
+                        58
+                    }
+                    tick={{
+                        fontSize: 11,
+                    }}
+                    tickFormatter={
+                        formatCompactMoney
+                    }
+                />
+
+                <Tooltip
+                    formatter={(
+                        value,
+                    ) => [
+                        formatMoney(
+                            Number(
+                                value ?? 0,
+                            ),
+                        ),
+                        'Net sales',
+                    ]}
+                />
+
+                <Line
+                    type="monotone"
+                    dataKey="net_sales"
+                    name="Net sales"
+                    stroke="currentColor"
+                    strokeWidth={
+                        2.5
+                    }
+                    dot={
+                        false
+                    }
+                    activeDot={{
+                        r: 4,
+                    }}
+                />
+            </LineChart>
+            </ResponsiveContainer>
+        </div>
+    )
+}
+
+function OrdersTrendChart({
+    trend,
+}: {
+    trend: TrendPoint[]
+}) {
+    if (trend.length === 0) {
+        return (
+            <ChartEmptyState />
+        )
+    }
+
+    const data =
+        trend.map(
+            (
+                point,
+            ) => ({
+                ...point,
+                label:
+                    formatTrendDate(
+                        point.date,
+                    ),
+            }),
+        )
+
+    return (
+        <div
+            className="h-full w-full"
+            role="img"
+            aria-label="Orders trend chart"
+        >
+            <ResponsiveContainer
+                width="100%"
+                height="100%"
+            >
+            <BarChart
+                data={
+                    data
+                }
+                margin={{
+                    top: 8,
+                    right: 12,
+                    bottom: 0,
+                    left: 0,
+                }}
+            >
+                <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={
+                        false
+                    }
+                />
+
+                <XAxis
+                    dataKey="label"
+                    tickLine={
+                        false
+                    }
+                    axisLine={
+                        false
+                    }
+                    minTickGap={
+                        24
+                    }
+                    tick={{
+                        fontSize: 11,
+                    }}
+                />
+
+                <YAxis
+                    allowDecimals={
+                        false
+                    }
+                    tickLine={
+                        false
+                    }
+                    axisLine={
+                        false
+                    }
+                    width={
+                        42
+                    }
+                    tick={{
+                        fontSize: 11,
+                    }}
+                    tickFormatter={(
+                        value,
+                    ) =>
+                        formatNumber(
+                            Number(
+                                value,
+                            ),
+                        )
+                    }
+                />
+
+                <Tooltip
+                    formatter={(
+                        value,
+                    ) => [
+                        formatNumber(
+                            Number(
+                                value ?? 0,
+                            ),
+                        ),
+                        'Orders',
+                    ]}
+                    labelFormatter={(
+                        label,
+                    ) =>
+                        `Date: ${String(
+                            label,
+                        )}`
+                    }
+                />
+
+                <Bar
+                    dataKey="orders_count"
+                    name="Orders"
+                    fill="currentColor"
+                    radius={[
+                        4,
+                        4,
+                        0,
+                        0,
+                    ]}
+                />
+            </BarChart>
+            </ResponsiveContainer>
+        </div>
+    )
+}
+
+function ChartEmptyState() {
+    return (
+        <div
+            role="status"
+            aria-live="polite"
+            className="flex h-full items-center justify-center rounded-lg border border-dashed border-neutral-200 bg-neutral-50 px-4 text-center text-sm text-neutral-500"
+        >
+            No trend data for the
+            selected range.
+        </div>
+    )
+}
+
+function formatTrendDate(
+    value: string,
+): string {
+    const date =
+        new Date(
+            `${value}T00:00:00`,
+        )
+
+    if (
+        Number.isNaN(
+            date.getTime(),
+        )
+    ) {
+        return value
+    }
+
+    return new Intl.DateTimeFormat(
+        'en-BD',
+        {
+            month: 'short',
+            day: 'numeric',
+        },
+    ).format(
+        date,
+    )
+}
+
+function formatChartLabel(
+    value: string,
+    maxLength = 18,
+): string {
+    if (
+        value.length <=
+        maxLength
+    ) {
+        return value
+    }
+
+    return `${value.slice(
+        0,
+        Math.max(
+            1,
+            maxLength - 1,
+        ),
+    )}…`
+}
+
+function formatCompactMoney(
+    value: number,
+): string {
+    const amount =
+        value / 100
+
+    if (
+        Math.abs(
+            amount,
+        ) >= 1_000_000
+    ) {
+        return `৳${(
+            amount /
+            1_000_000
+        ).toFixed(
+            amount %
+                1_000_000 ===
+                0
+                ? 0
+                : 1,
+        )}M`
+    }
+
+    if (
+        Math.abs(
+            amount,
+        ) >= 1_000
+    ) {
+        return `৳${(
+            amount /
+            1_000
+        ).toFixed(
+            amount %
+                1_000 ===
+                0
+                ? 0
+                : 1,
+        )}K`
+    }
+
+    return `৳${new Intl.NumberFormat(
+        'en-BD',
+        {
+            maximumFractionDigits:
+                0,
+        },
+    ).format(
+        amount,
+    )}`
+}
+
+function PaymentBreakdownChart({
+    items,
+}: {
+    items: BreakdownItem[]
+}) {
+    if (items.length === 0) {
+        return (
+            <ChartEmptyState />
+        )
+    }
+
+    const data =
+        items.map(
+            (
+                item,
+            ) => ({
+                label:
+                    item.label,
+                orders:
+                    item.orders_count,
+                total:
+                    item.total,
+            }),
+        )
+
+    return (
+        <div
+            className="h-full w-full"
+            role="img"
+            aria-label="Payment breakdown chart"
+        >
+            <ResponsiveContainer
+                width="100%"
+                height="100%"
+            >
+            <BarChart
+                data={
+                    data
+                }
+                layout="vertical"
+                margin={{
+                    top: 8,
+                    right: 16,
+                    bottom: 0,
+                    left: 16,
+                }}
+            >
+                <CartesianGrid
+                    strokeDasharray="3 3"
+                    horizontal={
+                        false
+                    }
+                />
+
+                <XAxis
+                    type="number"
+                    tickLine={
+                        false
+                    }
+                    axisLine={
+                        false
+                    }
+                    tick={{
+                        fontSize: 11,
+                    }}
+                    tickFormatter={
+                        formatCompactMoney
+                    }
+                />
+
+                <YAxis
+                    type="category"
+                    dataKey="label"
+                    width={
+                        104
+                    }
+                    tickFormatter={
+                        formatChartLabel
+                    }
+                    tickLine={
+                        false
+                    }
+                    axisLine={
+                        false
+                    }
+                    tick={{
+                        fontSize: 11,
+                    }}
+                />
+
+                <Tooltip
+                    formatter={(
+                        value,
+                    ) => [
+                        formatMoney(
+                            Number(
+                                value ?? 0,
+                            ),
+                        ),
+                        'Revenue',
+                    ]}
+                />
+
+                <Legend />
+
+                <Bar
+                    dataKey="total"
+                    name="Revenue"
+                    fill="currentColor"
+                    radius={[
+                        0,
+                        4,
+                        4,
+                        0,
+                    ]}
+                />
+            </BarChart>
+            </ResponsiveContainer>
+        </div>
+    )
+}
+
+function FulfilmentBreakdownChart({
+    items,
+}: {
+    items: BreakdownItem[]
+}) {
+    if (items.length === 0) {
+        return (
+            <ChartEmptyState />
+        )
+    }
+
+    const data =
+        items.map(
+            (
+                item,
+            ) => ({
+                label:
+                    item.label,
+                orders:
+                    item.orders_count,
+            }),
+        )
+
+    return (
+        <div
+            className="h-full w-full"
+            role="img"
+            aria-label="Fulfilment breakdown chart"
+        >
+            <ResponsiveContainer
+                width="100%"
+                height="100%"
+            >
+            <BarChart
+                data={
+                    data
+                }
+                layout="vertical"
+                margin={{
+                    top: 8,
+                    right: 16,
+                    bottom: 0,
+                    left: 16,
+                }}
+            >
+                <CartesianGrid
+                    strokeDasharray="3 3"
+                    horizontal={
+                        false
+                    }
+                />
+
+                <XAxis
+                    type="number"
+                    allowDecimals={
+                        false
+                    }
+                    tickLine={
+                        false
+                    }
+                    axisLine={
+                        false
+                    }
+                    tick={{
+                        fontSize: 11,
+                    }}
+                    tickFormatter={(
+                        value,
+                    ) =>
+                        formatNumber(
+                            Number(
+                                value,
+                            ),
+                        )
+                    }
+                />
+
+                <YAxis
+                    type="category"
+                    dataKey="label"
+                    width={
+                        116
+                    }
+                    tickFormatter={
+                        formatChartLabel
+                    }
+                    tickLine={
+                        false
+                    }
+                    axisLine={
+                        false
+                    }
+                    tick={{
+                        fontSize: 11,
+                    }}
+                />
+
+                <Tooltip
+                    formatter={(
+                        value,
+                    ) => [
+                        formatNumber(
+                            Number(
+                                value ?? 0,
+                            ),
+                        ),
+                        'Orders',
+                    ]}
+                />
+
+                <Bar
+                    dataKey="orders"
+                    name="Orders"
+                    fill="currentColor"
+                    radius={[
+                        0,
+                        4,
+                        4,
+                        0,
+                    ]}
+                />
+            </BarChart>
+            </ResponsiveContainer>
+        </div>
+    )
+}
+
+function InventoryHealthChart({
+    summary,
+}: {
+    summary: InventorySummary
+}) {
+    const data = [
+        {
+            label:
+                'Healthy stock',
+            value:
+                summary
+                    .in_stock_products_count,
+        },
+        {
+            label:
+                'Low stock',
+            value:
+                summary
+                    .low_stock_products_count,
+        },
+        {
+            label:
+                'Out of stock',
+            value:
+                summary
+                    .out_of_stock_products_count,
+        },
+        {
+            label:
+                'Untracked',
+            value:
+                summary
+                    .untracked_products_count,
+        },
+    ].filter(
+        (
+            item,
+        ) =>
+            item.value >
+            0,
+    )
+
+    if (data.length === 0) {
+        return (
+            <ChartEmptyState />
+        )
+    }
+
+    return (
+        <div
+            className="h-full w-full"
+            role="img"
+            aria-label="Inventory health chart"
+        >
+            <ResponsiveContainer
+                width="100%"
+                height="100%"
+            >
+            <PieChart>
+                <Tooltip
+                    formatter={(
+                        value,
+                    ) => [
+                        formatNumber(
+                            Number(
+                                value ?? 0,
+                            ),
+                        ),
+                        'Products',
+                    ]}
+                />
+
+                <Legend />
+
+                <Pie
+                    data={
+                        data
+                    }
+                    dataKey="value"
+                    nameKey="label"
+                    innerRadius="50%"
+                    outerRadius="78%"
+                    paddingAngle={
+                        2
+                    }
+                >
+                    {data.map(
+                        (
+                            item,
+                            index,
+                        ) => (
+                            <Cell
+                                key={`${item.label}-${index}`}
+                                fill={
+                                    INVENTORY_CHART_COLORS[
+                                        index %
+                                            INVENTORY_CHART_COLORS.length
+                                    ]
+                                }
+                            />
+                        ),
+                    )}
+                </Pie>
+            </PieChart>
+            </ResponsiveContainer>
+        </div>
+    )
+}
+
+function TopProductsRevenueChart({
+    products,
+}: {
+    products: TopProduct[]
+}) {
+    if (products.length === 0) {
+        return (
+            <ChartEmptyState />
+        )
+    }
+
+    const data =
+        products
+            .slice(
+                0,
+                8,
+            )
+            .map(
+                (
+                    product,
+                ) => ({
+                    label:
+                        product.sku
+                            ? `${product.product_name} (${product.sku})`
+                            : product.product_name,
+                    revenue:
+                        product.gross_sales,
+                }),
+            )
+
+    return (
+        <div
+            className="h-full w-full"
+            role="img"
+            aria-label="Top products by revenue chart"
+        >
+            <ResponsiveContainer
+                width="100%"
+                height="100%"
+            >
+            <BarChart
+                data={
+                    data
+                }
+                layout="vertical"
+                margin={{
+                    top: 8,
+                    right: 16,
+                    bottom: 0,
+                    left: 16,
+                }}
+            >
+                <CartesianGrid
+                    strokeDasharray="3 3"
+                    horizontal={
+                        false
+                    }
+                />
+
+                <XAxis
+                    type="number"
+                    tickLine={
+                        false
+                    }
+                    axisLine={
+                        false
+                    }
+                    tick={{
+                        fontSize: 11,
+                    }}
+                    tickFormatter={
+                        formatCompactMoney
+                    }
+                />
+
+                <YAxis
+                    type="category"
+                    dataKey="label"
+                    width={
+                        132
+                    }
+                    tickFormatter={(
+                        value,
+                    ) =>
+                        formatChartLabel(
+                            String(
+                                value,
+                            ),
+                            24,
+                        )
+                    }
+                    tickLine={
+                        false
+                    }
+                    axisLine={
+                        false
+                    }
+                    tick={{
+                        fontSize: 10,
+                    }}
+                />
+
+                <Tooltip
+                    formatter={(
+                        value,
+                    ) => [
+                        formatMoney(
+                            Number(
+                                value ?? 0,
+                            ),
+                        ),
+                        'Gross sales',
+                    ]}
+                />
+
+                <Bar
+                    dataKey="revenue"
+                    name="Gross sales"
+                    fill="currentColor"
+                    radius={[
+                        0,
+                        4,
+                        4,
+                        0,
+                    ]}
+                />
+            </BarChart>
+            </ResponsiveContainer>
+        </div>
+    )
+}
+
+const INVENTORY_CHART_COLORS = [
+    '#16a34a',
+    '#d97706',
+    '#dc2626',
+    '#737373',
+]
+
+function GraphicalDataStatus({
+    label,
+    value,
+}: {
+    label: string
+    value: number
+}) {
+    return (
+        <div className="min-w-0 rounded-lg border border-neutral-200 bg-white px-4 py-3">
+            <p className="text-xs font-medium text-neutral-500">
+                {label}
+            </p>
+
+            <p className="mt-1 text-lg font-bold text-neutral-900">
+                {formatNumber(
+                    value,
+                )}
+            </p>
+        </div>
     )
 }
 
