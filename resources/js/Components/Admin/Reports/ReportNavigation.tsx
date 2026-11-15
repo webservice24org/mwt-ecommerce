@@ -2,7 +2,9 @@ import { Link } from '@inertiajs/react'
 
 type ReportKey =
     | 'sales'
+    | 'sales-analytics'
     | 'products'
+    | 'product-analytics'
 
 interface ReportNavigationProps {
     active: ReportKey
@@ -18,24 +20,39 @@ export default function ReportNavigation({
     active,
 }: ReportNavigationProps) {
     const items:
-        ReportNavigationItem[] = [
-            {
-                key: 'sales',
-                label:
-                    'Sales Report',
-                href: route(
-                    'admin.reports.sales.index',
+    ReportNavigationItem[] = [
+        {
+            key: 'sales',
+            label: 'Sales Report',
+            href: route(
+                'admin.reports.sales.index',
+            ),
+        },
+        {
+            key: 'sales-analytics',
+            label: 'Sales Analytics',
+            href: route(
+                'admin.reports.sales.analytics',
+            ),
+        },
+        {
+            key: 'products',
+            label: 'Product Performance',
+            href: route(
+                'admin.reports.products.index',
+            ),
+        },
+        {
+            key:
+                'product-analytics',
+            label:
+                'Product Analytics',
+            href:
+                route(
+                    'admin.reports.products.analytics',
                 ),
-            },
-            {
-                key: 'products',
-                label:
-                    'Product Performance',
-                href: route(
-                    'admin.reports.products.index',
-                ),
-            },
-        ]
+        },
+    ]
 
     return (
         <nav

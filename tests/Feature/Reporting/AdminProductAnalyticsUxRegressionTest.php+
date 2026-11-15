@@ -1,0 +1,308 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Feature\Reporting;
+
+use Tests\TestCase;
+
+final class AdminProductAnalyticsUxRegressionTest extends TestCase
+{
+    public function test_product_analytics_page_uses_dedicated_report_navigation_state(): void
+    {
+        $source =
+            $this->pageSource();
+
+        $this->assertStringContainsString(
+            'activeReport="product-analytics"',
+            $source,
+        );
+    }
+
+    public function test_product_analytics_page_contains_active_filter_summary_contracts(): void
+    {
+        $source =
+            $this->pageSource();
+
+        $this->assertStringContainsString(
+            'Active filters',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            '<FilterChip',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'Date:',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'Status:',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'Payment:',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'Search:',
+            $source,
+        );
+    }
+
+    public function test_product_analytics_page_contains_accessible_empty_state(): void
+    {
+        $source =
+            $this->pageSource();
+
+        $this->assertStringContainsString(
+            'role="status"',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'aria-live="polite"',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'No product analytics',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'Reset analytics filters',
+            $source,
+        );
+    }
+
+    public function test_product_analytics_page_contains_all_chart_ux_contracts(): void
+    {
+        $source =
+            $this->pageSource();
+
+        $this->assertStringContainsString(
+            'charts.sales_trend',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'charts.top_products_by_revenue',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'charts.top_products_by_quantity',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'charts.current_vs_historical_revenue',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'charts.sku_performance',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'charts.revenue_share_by_product',
+            $source,
+        );
+    }
+
+    public function test_product_analytics_kpi_layout_remains_responsive(): void
+    {
+        $source =
+            $this->pageSource();
+
+        $this->assertStringContainsString(
+            'sm:grid-cols-2',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'lg:grid-cols-3',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            '2xl:grid-cols-4',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'min-w-0',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'break-words',
+            $source,
+        );
+    }
+
+    public function test_product_analytics_page_keeps_historical_product_revenue_visible(): void
+    {
+        $source =
+            $this->pageSource();
+
+        $this->assertStringContainsString(
+            'Current Product Revenue',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'Historical Product Revenue',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            '.current_product_revenue',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            '.historical_product_revenue',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'Deleted/unlinked product snapshots',
+            $source,
+        );
+    }
+
+    public function test_shared_report_navigation_contains_product_analytics_entry(): void
+    {
+        $source =
+            $this->reportNavigationSource();
+
+        $this->assertStringContainsString(
+            "'product-analytics'",
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'Product Analytics',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            "'admin.reports.products.analytics'",
+            $source,
+        );
+    }
+
+    public function test_shared_report_header_accepts_product_analytics_as_report_key(): void
+    {
+        $source =
+            $this->reportHeaderSource();
+
+        $this->assertStringContainsString(
+            "'product-analytics'",
+            $source,
+        );
+    }
+
+    public function test_shared_analytics_chart_keeps_responsive_horizontal_bar_support(): void
+    {
+        $source =
+            $this->analyticsChartSource();
+
+        $this->assertStringContainsString(
+            'useHorizontalBars',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            "layout={useHorizontalBars ? 'vertical' : 'horizontal'}",
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'type="category"',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'type="number"',
+            $source,
+        );
+
+        $this->assertStringContainsString(
+            'formatAxisValue',
+            $source,
+        );
+    }
+
+    private function pageSource(): string
+    {
+        $source =
+            file_get_contents(
+                resource_path(
+                    'js/Pages/Admin/Reports/ProductAnalytics/Index.tsx',
+                ),
+            );
+
+        $this->assertIsString(
+            $source,
+        );
+
+        return $source;
+    }
+
+    private function reportNavigationSource(): string
+    {
+        $source =
+            file_get_contents(
+                resource_path(
+                    'js/Components/Admin/Reports/ReportNavigation.tsx',
+                ),
+            );
+
+        $this->assertIsString(
+            $source,
+        );
+
+        return $source;
+    }
+
+    private function reportHeaderSource(): string
+    {
+        $source =
+            file_get_contents(
+                resource_path(
+                    'js/Components/Admin/Reports/ReportHeader.tsx',
+                ),
+            );
+
+        $this->assertIsString(
+            $source,
+        );
+
+        return $source;
+    }
+
+    private function analyticsChartSource(): string
+    {
+        $source =
+            file_get_contents(
+                resource_path(
+                    'js/Components/Admin/Reports/AnalyticsChart.tsx',
+                ),
+            );
+
+        $this->assertIsString(
+            $source,
+        );
+
+        return $source;
+    }
+}

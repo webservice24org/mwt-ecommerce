@@ -9,7 +9,9 @@ import ReportNavigation from '@/Components/Admin/Reports/ReportNavigation'
 
 type ReportKey =
     | 'sales'
+    | 'sales-analytics'
     | 'products'
+    | 'product-analytics'
 
 interface ReportHeaderProps {
     title: string

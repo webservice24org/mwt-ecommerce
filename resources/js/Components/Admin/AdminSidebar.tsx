@@ -239,13 +239,21 @@ export default function AdminSidebar({
             '/admin/customers',
         ) ||
         url.startsWith(
+            '/admin/reviews',
+        )
+
+    const reportsSectionActive =
+        url.startsWith(
+            '/admin/reports/sales-analytics',
+        ) ||
+        url.startsWith(
             '/admin/reports/sales',
         ) ||
         url.startsWith(
-            '/admin/reports/products',
+            '/admin/reports/product-analytics',
         ) ||
         url.startsWith(
-            '/admin/reviews',
+            '/admin/reports/products',
         )
 
     /*
@@ -275,6 +283,13 @@ export default function AdminSidebar({
         storeSectionActive,
     )
 
+    const [
+        reportsOpen,
+        setReportsOpen,
+    ] = useState(
+        reportsSectionActive,
+    )
+
     /*
      * Active sections stay expanded automatically.
      */
@@ -289,6 +304,10 @@ export default function AdminSidebar({
     const showStore =
         storeSectionActive ||
         storeOpen
+
+    const showReports =
+        reportsSectionActive ||
+        reportsOpen
 
     /*
      * ==================================================
@@ -832,6 +851,115 @@ export default function AdminSidebar({
                                             },
                                             true,
                                         )}
+                                        {renderNavigationItem(
+                                            {
+                                                label: 'Reviews',
+                                                href: route(
+                                                    'admin.reviews.index',
+                                                ),
+                                                match:
+                                                    '/admin/reviews',
+                                                icon: ReceiptText,
+                                            },
+                                            true,
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Reports */}
+                    <div className="mt-7">
+                        <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-neutral-400">
+                            Reports
+                        </p>
+
+                        <div className="space-y-1">
+                            <button
+                                type="button"
+                                aria-expanded={
+                                    showReports
+                                }
+                                aria-controls="admin-reports-navigation"
+                                onClick={() =>
+                                    setReportsOpen(
+                                        (
+                                            current,
+                                        ) =>
+                                            !current,
+                                    )
+                                }
+                                className={[
+                                    'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
+
+                                    reportsSectionActive
+                                        ? 'bg-neutral-100 text-neutral-950'
+                                        : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950',
+                                ].join(
+                                    ' ',
+                                )}
+                            >
+                                <BarChart3
+                                    className={[
+                                        'h-4 w-4 shrink-0',
+
+                                        reportsSectionActive
+                                            ? 'text-neutral-900'
+                                            : 'text-neutral-400',
+                                    ].join(
+                                        ' ',
+                                    )}
+                                    strokeWidth={
+                                        1.9
+                                    }
+                                    aria-hidden="true"
+                                />
+
+                                <span className="flex-1 text-left">
+                                    Reports
+                                </span>
+
+                                <ChevronDown
+                                    className={[
+                                        'h-4 w-4 text-neutral-400 transition-transform duration-200',
+
+                                        showReports
+                                            ? 'rotate-180'
+                                            : '',
+                                    ].join(
+                                        ' ',
+                                    )}
+                                    aria-hidden="true"
+                                />
+                            </button>
+
+                            <div
+                                id="admin-reports-navigation"
+                                className={[
+                                    'grid transition-all duration-200',
+
+                                    showReports
+                                        ? 'grid-rows-[1fr]'
+                                        : 'grid-rows-[0fr]',
+                                ].join(
+                                    ' ',
+                                )}
+                            >
+                                <div className="overflow-hidden">
+                                    <div className="relative ml-5 mt-1 space-y-1 border-l border-neutral-200 pl-3">
+                                        {renderNavigationItem(
+                                            {
+                                                label: 'Sales Analytics',
+                                                href: route(
+                                                    'admin.reports.sales.analytics',
+                                                ),
+                                                match:
+                                                    '/admin/reports/sales-analytics',
+                                                icon: BarChart3,
+                                            },
+                                            true,
+                                        )}
 
                                         {renderNavigationItem(
                                             {
@@ -845,6 +973,20 @@ export default function AdminSidebar({
                                             },
                                             true,
                                         )}
+
+                                        {renderNavigationItem(
+                                            {
+                                                label: 'Product Analytics',
+                                                href: route(
+                                                    'admin.reports.products.analytics',
+                                                ),
+                                                match:
+                                                    '/admin/reports/product-analytics',
+                                                icon: BarChart3,
+                                            },
+                                            true,
+                                        )}
+
                                         {renderNavigationItem(
                                             {
                                                 label: 'Product Performance',
@@ -854,19 +996,6 @@ export default function AdminSidebar({
                                                 match:
                                                     '/admin/reports/products',
                                                 icon: BarChart3,
-                                            },
-                                            true,
-                                        )}
-
-                                        {renderNavigationItem(
-                                            {
-                                                label: 'Reviews',
-                                                href: route(
-                                                    'admin.reviews.index',
-                                                ),
-                                                match:
-                                                    '/admin/reviews',
-                                                icon: ReceiptText,
                                             },
                                             true,
                                         )}

@@ -33,6 +33,10 @@ use App\Http\Controllers\Admin\ProductPerformanceReportController;
 use App\Http\Controllers\Admin\ProductPerformanceReportExportController;
 use App\Http\Controllers\Admin\Promotion\PromoCodeController;
 use App\Http\Controllers\Admin\Promotion\PromotionController;
+use App\Http\Controllers\Admin\Reports\ProductAnalyticsPdfExportController;
+use App\Http\Controllers\Admin\Reports\ProductAnalyticsReportController;
+use App\Http\Controllers\Admin\Reports\SalesAnalyticsPdfExportController;
+use App\Http\Controllers\Admin\Reports\SalesAnalyticsReportController;
 use App\Http\Controllers\Admin\Reviews\ProductReviewController;
 use App\Http\Controllers\Admin\SalesReportController;
 use App\Http\Controllers\Admin\SalesReportExportController;
@@ -287,8 +291,12 @@ Route::middleware([
 
     Route::get('reports/sales', SalesReportController::class)->name('reports.sales.index');
     Route::get('reports/products', ProductPerformanceReportController::class)->name('reports.products.index');
-    Route::get('/reports/sales/export', SalesReportExportController::class)->name('reports.sales.export');
-    Route::get('/reports/products/export', ProductPerformanceReportExportController::class)->name('reports.products.export');
+    Route::get('reports/sales/export', SalesReportExportController::class)->name('reports.sales.export');
+    Route::get('reports/products/export', ProductPerformanceReportExportController::class)->name('reports.products.export');
+    Route::get('reports/sales-analytics', SalesAnalyticsReportController::class)->name('reports.sales.analytics');
+    Route::get('reports/sales-analytics/pdf', SalesAnalyticsPdfExportController::class)->name('reports.sales.analytics.pdf');
+    Route::get('reports/product-analytics', ProductAnalyticsReportController::class)->name('reports.products.analytics');
+    Route::get('reports/product-analytics/pdf', ProductAnalyticsPdfExportController::class)->name('reports.products.analytics.pdf');
 
 });
 

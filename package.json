@@ -42,6 +42,8 @@
     "dependencies": {
         "@microweb/laravel-tiptap-editor": "file:../laravel-tiptap-editor/microweb-laravel-tiptap-editor-1.0.0.tgz",
         "lucide-react": "^1.45.0",
-        "react-hot-toast": "^2.6.0"
+        "puppeteer": "^25.17.0",
+        "react-hot-toast": "^2.6.0",
+        "recharts": "^3.10.1"
     }
 }
