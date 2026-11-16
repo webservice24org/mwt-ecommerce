@@ -24,4 +24,10 @@ return [
 
         'due_grace_hours' => 24,
     ],
+
+    'inventory_operations' => [
+        'low_stock_threshold' => 5,
+
+        'critical_stock_threshold' => 2,
+    ],
 ];

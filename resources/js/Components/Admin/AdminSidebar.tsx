@@ -260,6 +260,9 @@ export default function AdminSidebar({
         ) ||
         url.startsWith(
             '/admin/reports/operations/cod',
+        ) ||
+        url.startsWith(
+            '/admin/reports/operations/inventory',
         )
 
     /*
@@ -1024,6 +1027,24 @@ export default function AdminSidebar({
                                                 href: route('admin.reports.operations.cod'),
                                                 match: '/admin/reports/operations/cod',
                                                 icon: Summary,
+                                            },
+                                            true,
+                                        )}
+
+                                        {renderNavigationItem(
+                                            {
+                                                label:
+                                                    'Inventory Operations',
+
+                                                href: route(
+                                                    'admin.reports.operations.inventory',
+                                                ),
+
+                                                match:
+                                                    '/admin/reports/operations/inventory',
+
+                                                icon:
+                                                    Package,
                                             },
                                             true,
                                         )}
