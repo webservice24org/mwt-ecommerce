@@ -8,7 +8,10 @@ use App\Domain\Orders\Enums\FulfilmentStatus;
 use App\Domain\Orders\Enums\OrderStatus;
 use App\Domain\Orders\Enums\PaymentStatus;
 use App\Domain\Reporting\Data\CodOperationsReportFiltersData;
+use App\Domain\Reporting\Enums\OperationalExportType;
 use App\Domain\Reporting\Enums\ReportDatePreset;
+use App\Domain\Reporting\Operations\OperationalCsvFormatter;
+use App\Domain\Reporting\Operations\OperationalExportRegistry;
 use App\Domain\Reporting\Queries\GetAdminCodOperationsReportQuery;
 use App\Domain\Reporting\Services\ReportDateRangeFactory;
 use App\Http\Controllers\Controller;
@@ -17,12 +20,12 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class CodOperationsCsvExportController extends Controller
 {
-    private const MAX_EXPORT_ROWS = 10_000;
-
     public function __invoke(
         CodOperationsReportRequest $request,
         ReportDateRangeFactory $dateRangeFactory,
         GetAdminCodOperationsReportQuery $query,
+        OperationalExportRegistry $exports,
+        OperationalCsvFormatter $csv,
     ): StreamedResponse {
         $validated =
             $request->validated();
@@ -53,6 +56,11 @@ final class CodOperationsCsvExportController extends Controller
                 : null,
             );
 
+        $definition =
+            $exports->get(
+                OperationalExportType::CodOperations,
+            );
+
         $filters =
             new CodOperationsReportFiltersData(
                 range: $range,
@@ -81,27 +89,11 @@ final class CodOperationsCsvExportController extends Controller
                 ? (string) $validated['search']
                 : null,
 
-                /*
-                 * Export in larger pages while retaining the
-                 * same authoritative paginated query.
-                 */
                 perPage: 100,
             );
 
-        $filename =
-            'cod-operations-'.
-            $range
-                ->fromInclusive
-                ->toDateString().
-            '-'.
-            $range
-                ->toExclusive
-                ->subDay()
-                ->toDateString().
-            '.csv';
-
         return response()->streamDownload(
-            function () use ($query, $filters): void {
+            function () use ($definition, $filters, $query, $csv): void {
                 $handle =
                     fopen(
                         'php://output',
@@ -114,37 +106,21 @@ final class CodOperationsCsvExportController extends Controller
                     return;
                 }
 
-                /*
-                 * UTF-8 BOM improves compatibility with Excel,
-                 * especially for Bengali/customer text.
-                 */
-                fwrite(
-                    $handle,
-                    "\xEF\xBB\xBF",
-                );
+                $bom =
+                    $csv->bom();
+
+                if (
+                    $bom !== ''
+                ) {
+                    fwrite(
+                        $handle,
+                        $bom,
+                    );
+                }
 
                 fputcsv(
                     $handle,
-                    [
-                        'Order Number',
-                        'Customer',
-                        'Order Status',
-                        'Fulfilment Status',
-                        'Payment Method',
-                        'Payment Status',
-                        'Grand Total',
-                        'Amount Due',
-                        'Currency',
-                        'Age Hours',
-                        'Age Days',
-                        'Collection Risk',
-                        'Risk Severity',
-                        'Risk Priority',
-                        'Follow-up Required',
-                        'Payment Due At',
-                        'Paid At',
-                        'Placed At',
-                    ],
+                    $definition->headers,
                 );
 
                 $page =
@@ -166,71 +142,52 @@ final class CodOperationsCsvExportController extends Controller
                     ) {
                         if (
                             $exported >=
-                            self::MAX_EXPORT_ROWS
+                            $definition->maxRows
                         ) {
                             break 2;
                         }
 
                         fputcsv(
                             $handle,
-                            [
-                                $this->csvSafe(
+                            $csv->safeRow(
+                                [
                                     $row->orderNumber,
-                                ),
-
-                                $this->csvSafe(
                                     $row->customerName,
-                                ),
-
-                                $row->status,
-
-                                $row->fulfilmentStatus,
-
-                                $row->paymentMethod,
-
-                                $row->paymentStatus,
-
-                                $this->moneyForCsv(
+                                    $row->status,
+                                    $row->paymentStatus,
+                                    $row->paymentMethod,
                                     $row->grandTotal,
-                                ),
-
-                                $this->moneyForCsv(
                                     $row->amountDue,
-                                ),
+                                    $row->currencyCode,
+                                    $row->ageHours,
+                                    $row->ageDays,
 
-                                $row->currencyCode,
+                                    $row
+                                        ->collectionRisk
+                                        ->state
+                                        ->value,
 
-                                $row->ageHours,
+                                    $row
+                                        ->collectionRisk
+                                        ->state
+                                        ->severity(),
 
-                                $row->ageDays,
+                                    $row
+                                        ->collectionRisk
+                                        ->state
+                                        ->priority(),
 
-                                $row
-                                    ->collectionRisk
-                                    ->state
-                                    ->value,
+                                    $row
+                                        ->collectionRisk
+                                        ->requiresFollowUp()
+                                    ? 'Yes'
+                                    : 'No',
 
-                                $row
-                                    ->collectionRisk
-                                    ->state
-                                    ->severity(),
-
-                                $row
-                                    ->collectionRisk
-                                    ->state
-                                    ->priority(),
-
-                                $row
-                                    ->collectionRisk
-                                    ->requiresFollowUp()
-                                ? 'Yes'
-                                : 'No',
-
-                                $row->paymentDueAt,
-
-                                $row->paidAt,
-
-                                $row->placedAt,
-                            ],
+                                    $row->paymentDueAt,
+                                    $row->paidAt,
+                                    $row->placedAt,
+                                ],
+                            ),
                         );
 
                         $exported++;
@@ -248,56 +205,13 @@ final class CodOperationsCsvExportController extends Controller
                     $handle,
                 );
             },
-            $filename,
+            $definition->filename(),
             [
                 'Content-Type' => 'text/csv; charset=UTF-8',
 
                 'Cache-Control' => 'no-store, no-cache, must-revalidate',
             ],
         );
-    }
-
-    private function moneyForCsv(
-        int $minorUnits,
-    ): string {
-        return number_format(
-            $minorUnits / 100,
-            2,
-            '.',
-            '',
-        );
-    }
-
-    private function csvSafe(
-        string $value,
-    ): string {
-        $trimmed =
-            ltrim(
-                $value,
-            );
-
-        if (
-            $trimmed === ''
-        ) {
-            return $value;
-        }
-
-        if (
-            in_array(
-                $trimmed[0],
-                [
-                    '=',
-                    '+',
-                    '-',
-                    '@',
-                ],
-                true,
-            )
-        ) {
-            return "'".$value;
-        }
-
-        return $value;
     }
 
     /**
@@ -318,7 +232,8 @@ final class CodOperationsCsvExportController extends Controller
             return [];
         }
 
-        $result = [];
+        $result =
+            [];
 
         foreach (
             $values as $value

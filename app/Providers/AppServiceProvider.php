@@ -8,6 +8,8 @@ use App\Domain\Reporting\Export\ReportExportWriterRegistry;
 use App\Domain\Reporting\Operations\ActionQueueProviderRegistry;
 use App\Domain\Reporting\Operations\CodOperationsActionQueueProvider;
 use App\Domain\Reporting\Operations\InventoryOperationsActionQueueProvider;
+use App\Domain\Reporting\Operations\OperationalExportRegistry;
+use App\Domain\Reporting\Operations\OperationalExportRegistryFactory;
 use App\Domain\Reporting\Operations\OperationalOrdersActionQueueProvider;
 use App\Domain\Shipping\Providers\ManualShippingProvider;
 use App\Domain\Shipping\Providers\PathaoShippingProvider;
@@ -125,6 +127,16 @@ class AppServiceProvider extends ServiceProvider
 
                 return $registry;
             },
+        );
+        $this->app->singleton(
+            OperationalExportRegistry::class,
+            static fn (
+                $app,
+            ): OperationalExportRegistry => $app
+                ->make(
+                    OperationalExportRegistryFactory::class,
+                )
+                ->make(),
         );
     }
 

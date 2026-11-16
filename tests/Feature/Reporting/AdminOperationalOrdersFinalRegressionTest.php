@@ -499,7 +499,7 @@ final class AdminOperationalOrdersFinalRegressionTest extends TestCase
         );
 
         $this->assertStringContainsString(
-            '125.00',
+            ',12500,12500,BDT,',
             $csv,
         );
 

@@ -8,6 +8,9 @@ use App\Domain\Orders\Enums\FulfilmentStatus;
 use App\Domain\Orders\Enums\OrderStatus;
 use App\Domain\Orders\Enums\PaymentMethod;
 use App\Domain\Orders\Enums\PaymentStatus;
+use App\Domain\Reporting\Enums\OperationalExportType;
+use App\Domain\Reporting\Operations\OperationalExportRegistry;
+use App\Domain\Reporting\Operations\OperationalExportRegistryFactory;
 use App\Models\Admin;
 use App\Models\Order;
 use App\Models\User;
@@ -111,7 +114,7 @@ final class AdminCodOperationsCsvExportTest extends TestCase
         );
 
         $this->assertStringContainsString(
-            '250.00',
+            ',25000,25000,BDT,',
             $csv,
         );
 
@@ -312,12 +315,7 @@ final class AdminCodOperationsCsvExportTest extends TestCase
                 ->streamedContent();
 
         $this->assertStringContainsString(
-            '300.00',
-            $csv,
-        );
-
-        $this->assertStringContainsString(
-            ',0.00,',
+            ',30000,0,BDT,',
             $csv,
         );
 
@@ -415,8 +413,65 @@ final class AdminCodOperationsCsvExportTest extends TestCase
         );
 
         $this->assertStringContainsString(
-            'Follow-up Required',
+            'Requires Follow Up',
             $csv,
+        );
+    }
+
+    public function test_cod_export_uses_registered_header_contract(): void
+    {
+        $definition =
+            app(
+                OperationalExportRegistry::class,
+            )->get(
+                OperationalExportType::CodOperations,
+            );
+
+        $this->assertSame(
+            'admin.reports.operations.cod.csv',
+            $definition->routeName,
+        );
+
+        $this->assertContains(
+            'Collection Risk',
+            $definition->headers,
+        );
+
+        $this->assertContains(
+            'Risk Severity',
+            $definition->headers,
+        );
+
+        $this->assertContains(
+            'Risk Priority',
+            $definition->headers,
+        );
+
+        $this->assertContains(
+            'Requires Follow Up',
+            $definition->headers,
+        );
+    }
+
+    public function test_cod_export_definition_uses_global_row_limit(): void
+    {
+        config([
+            'reporting.operational_exports.max_rows' => 4321,
+        ]);
+
+        $registry =
+            app(
+                OperationalExportRegistryFactory::class,
+            )->make();
+
+        $definition =
+            $registry->get(
+                OperationalExportType::CodOperations,
+            );
+
+        $this->assertSame(
+            4321,
+            $definition->maxRows,
         );
     }
 

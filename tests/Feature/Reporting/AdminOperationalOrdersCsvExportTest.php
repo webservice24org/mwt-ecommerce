@@ -8,6 +8,9 @@ use App\Domain\Orders\Enums\FulfilmentStatus;
 use App\Domain\Orders\Enums\OrderStatus;
 use App\Domain\Orders\Enums\PaymentMethod;
 use App\Domain\Orders\Enums\PaymentStatus;
+use App\Domain\Reporting\Enums\OperationalExportType;
+use App\Domain\Reporting\Operations\OperationalExportRegistry;
+use App\Domain\Reporting\Operations\OperationalExportRegistryFactory;
 use App\Models\Admin;
 use App\Models\Order;
 use App\Models\User;
@@ -128,7 +131,7 @@ final class AdminOperationalOrdersCsvExportTest extends TestCase
         );
 
         $this->assertStringContainsString(
-            '250.00',
+            ',25000,25000,BDT,',
             $content,
         );
 
@@ -306,6 +309,58 @@ final class AdminOperationalOrdersCsvExportTest extends TestCase
         $this->assertStringContainsString(
             '\'=HYPERLINK',
             $content,
+        );
+    }
+
+    public function test_operational_orders_export_uses_registered_header_contract(): void
+    {
+        $definition =
+            app(
+                OperationalExportRegistry::class,
+            )->get(
+                OperationalExportType::OperationalOrders,
+            );
+
+        $this->assertSame(
+            'admin.reports.operations.orders.csv',
+            $definition->routeName,
+        );
+
+        $this->assertContains(
+            'Attention State',
+            $definition->headers,
+        );
+
+        $this->assertContains(
+            'Attention Severity',
+            $definition->headers,
+        );
+
+        $this->assertContains(
+            'Attention Priority',
+            $definition->headers,
+        );
+    }
+
+    public function test_operational_orders_export_definition_uses_global_row_limit(): void
+    {
+        config([
+            'reporting.operational_exports.max_rows' => 4321,
+        ]);
+
+        $registry =
+            app(
+                OperationalExportRegistryFactory::class,
+            )->make();
+
+        $definition =
+            $registry->get(
+                OperationalExportType::OperationalOrders,
+            );
+
+        $this->assertSame(
+            4321,
+            $definition->maxRows,
         );
     }
 }

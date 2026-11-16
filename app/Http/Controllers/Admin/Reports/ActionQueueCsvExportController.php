@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin\Reports;
 
 use App\Domain\Reporting\Data\ActionQueueFiltersData;
+use App\Domain\Reporting\Enums\OperationalExportType;
+use App\Domain\Reporting\Operations\OperationalCsvFormatter;
+use App\Domain\Reporting\Operations\OperationalExportRegistry;
 use App\Domain\Reporting\Queries\GetAdminActionQueueQuery;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Reports\ActionQueueReportRequest;
@@ -12,14 +15,19 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class ActionQueueCsvExportController extends Controller
 {
-    private const MAX_EXPORT_ROWS = 10_000;
-
     public function __invoke(
         ActionQueueReportRequest $request,
         GetAdminActionQueueQuery $query,
+        OperationalExportRegistry $exports,
+        OperationalCsvFormatter $csv,
     ): StreamedResponse {
         $validated =
             $request->validated();
+
+        $definition =
+            $exports->get(
+                OperationalExportType::ActionQueue,
+            );
 
         $filters =
             new ActionQueueFiltersData(
@@ -37,12 +45,7 @@ final class ActionQueueCsvExportController extends Controller
                     'requires_action',
                     $validated,
                 )
-                ? filter_var(
-                    $validated[
-                        'requires_action'
-                    ],
-                    FILTER_VALIDATE_BOOLEAN,
-                )
+                ? (bool) $validated['requires_action']
                 : null,
 
                 search: isset(
@@ -54,15 +57,8 @@ final class ActionQueueCsvExportController extends Controller
                 perPage: 100,
             );
 
-        $filename =
-            'admin-action-queue-'.
-            now()->format(
-                'Y-m-d-His',
-            ).
-            '.csv';
-
         return response()->streamDownload(
-            function () use ($query, $filters): void {
+            function () use ($definition, $filters, $query, $csv): void {
                 $handle =
                     fopen(
                         'php://output',
@@ -75,28 +71,21 @@ final class ActionQueueCsvExportController extends Controller
                     return;
                 }
 
-                fwrite(
-                    $handle,
-                    "\xEF\xBB\xBF",
-                );
+                $bom =
+                    $csv->bom();
+
+                if (
+                    $bom !== ''
+                ) {
+                    fwrite(
+                        $handle,
+                        $bom,
+                    );
+                }
 
                 fputcsv(
                     $handle,
-                    [
-                        'Source',
-                        'Entity Type',
-                        'Entity ID',
-                        'Reference',
-                        'Title',
-                        'Priority',
-                        'Severity',
-                        'Reason',
-                        'Requires Action',
-                        'Age Hours',
-                        'Age Days',
-                        'Action Label',
-                        'Action URL',
-                    ],
+                    $definition->headers,
                 );
 
                 $page =
@@ -118,60 +107,41 @@ final class ActionQueueCsvExportController extends Controller
                     ) {
                         if (
                             $exported >=
-                            self::MAX_EXPORT_ROWS
+                            $definition->maxRows
                         ) {
                             break 2;
                         }
 
                         fputcsv(
                             $handle,
-                            [
-                                $this->csvSafe(
+                            $csv->safeRow(
+                                [
                                     $item
                                         ->source
                                         ->label(),
-                                ),
 
-                                $this->csvSafe(
                                     $item->entityType,
-                                ),
-
-                                $item->entityId,
-
-                                $this->csvSafe(
+                                    $item->entityId,
                                     $item->reference,
-                                ),
-
-                                $this->csvSafe(
                                     $item->title,
-                                ),
+                                    $item->priority,
 
-                                $item->priority,
+                                    $item
+                                        ->severity
+                                        ->value,
 
-                                $item
-                                    ->severity
-                                    ->value,
-
-                                $this->csvSafe(
                                     $item->reason,
-                                ),
 
-                                $item->requiresAction
-                                ? 'Yes'
-                                : 'No',
+                                    $item->requiresAction
+                                    ? 'Yes'
+                                    : 'No',
 
-                                $item->ageHours,
-
-                                $item->ageDays,
-
-                                $this->csvSafe(
+                                    $item->ageHours,
+                                    $item->ageDays,
                                     $item->actionLabel,
-                                ),
-
-                                $this->csvSafe(
                                     $item->actionUrl,
-                                ),
-                            ],
+                                ],
+                            ),
                         );
 
                         $exported++;
@@ -189,7 +159,7 @@ final class ActionQueueCsvExportController extends Controller
                     $handle,
                 );
             },
-            $filename,
+            $definition->filename(),
             [
                 'Content-Type' => 'text/csv; charset=UTF-8',
 
@@ -230,37 +200,5 @@ final class ActionQueueCsvExportController extends Controller
                 ): bool => $value !== '',
             ),
         );
-    }
-
-    private function csvSafe(
-        string $value,
-    ): string {
-        $trimmed =
-            ltrim(
-                $value,
-            );
-
-        if (
-            $trimmed === ''
-        ) {
-            return $value;
-        }
-
-        if (
-            in_array(
-                $trimmed[0],
-                [
-                    '=',
-                    '+',
-                    '-',
-                    '@',
-                ],
-                true,
-            )
-        ) {
-            return "'".$value;
-        }
-
-        return $value;
     }
 }

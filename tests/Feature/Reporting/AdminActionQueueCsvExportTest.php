@@ -8,8 +8,11 @@ use App\Domain\Reporting\Data\ActionQueueFiltersData;
 use App\Domain\Reporting\Data\ActionQueueItemData;
 use App\Domain\Reporting\Enums\ActionQueueSeverity;
 use App\Domain\Reporting\Enums\ActionQueueSource;
+use App\Domain\Reporting\Enums\OperationalExportType;
 use App\Domain\Reporting\Operations\ActionQueueProvider;
 use App\Domain\Reporting\Operations\ActionQueueProviderRegistry;
+use App\Domain\Reporting\Operations\OperationalExportRegistry;
+use App\Domain\Reporting\Operations\OperationalExportRegistryFactory;
 use App\Models\Admin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -621,6 +624,68 @@ final class AdminActionQueueCsvExportTest extends TestCase
             actionUrl: $actionUrl,
 
             actionLabel: $actionLabel,
+        );
+    }
+
+    public function test_action_queue_export_uses_registered_header_contract(): void
+    {
+        $definition =
+            app(
+                OperationalExportRegistry::class,
+            )->get(
+                OperationalExportType::ActionQueue,
+            );
+
+        $this->assertSame(
+            'admin.reports.operations.action-queue.csv',
+            $definition->routeName,
+        );
+
+        $this->assertContains(
+            'Source',
+            $definition->headers,
+        );
+
+        $this->assertContains(
+            'Priority',
+            $definition->headers,
+        );
+
+        $this->assertContains(
+            'Severity',
+            $definition->headers,
+        );
+
+        $this->assertContains(
+            'Reason',
+            $definition->headers,
+        );
+
+        $this->assertContains(
+            'Requires Action',
+            $definition->headers,
+        );
+    }
+
+    public function test_action_queue_export_definition_uses_global_row_limit(): void
+    {
+        config([
+            'reporting.operational_exports.max_rows' => 4321,
+        ]);
+
+        $registry =
+            app(
+                OperationalExportRegistryFactory::class,
+            )->make();
+
+        $definition =
+            $registry->get(
+                OperationalExportType::ActionQueue,
+            );
+
+        $this->assertSame(
+            4321,
+            $definition->maxRows,
         );
     }
 }

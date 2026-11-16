@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin\Reports;
 
 use App\Domain\Reporting\Data\InventoryOperationsReportFiltersData;
+use App\Domain\Reporting\Enums\OperationalExportType;
+use App\Domain\Reporting\Operations\OperationalCsvFormatter;
+use App\Domain\Reporting\Operations\OperationalExportRegistry;
 use App\Domain\Reporting\Queries\GetAdminInventoryOperationsReportQuery;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Reports\InventoryOperationsReportRequest;
@@ -12,14 +15,19 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class InventoryOperationsCsvExportController extends Controller
 {
-    private const MAX_EXPORT_ROWS = 10_000;
-
     public function __invoke(
         InventoryOperationsReportRequest $request,
         GetAdminInventoryOperationsReportQuery $query,
+        OperationalExportRegistry $exports,
+        OperationalCsvFormatter $csv,
     ): StreamedResponse {
         $validated =
             $request->validated();
+
+        $definition =
+            $exports->get(
+                OperationalExportType::InventoryOperations,
+            );
 
         $filters =
             new InventoryOperationsReportFiltersData(
@@ -39,22 +47,11 @@ final class InventoryOperationsCsvExportController extends Controller
                 ? (string) $validated['search']
                 : null,
 
-                /*
-                 * The query remains paginated internally.
-                 * Export simply walks its pages.
-                 */
                 perPage: 100,
             );
 
-        $filename =
-            'inventory-operations-'.
-            now()->format(
-                'Y-m-d-His',
-            ).
-            '.csv';
-
         return response()->streamDownload(
-            function () use ($query, $filters): void {
+            function () use ($definition, $filters, $query, $csv): void {
                 $handle =
                     fopen(
                         'php://output',
@@ -67,34 +64,21 @@ final class InventoryOperationsCsvExportController extends Controller
                     return;
                 }
 
-                /*
-                 * UTF-8 BOM helps Excel render Bengali and
-                 * other UTF-8 product/customer data properly.
-                 */
-                fwrite(
-                    $handle,
-                    "\xEF\xBB\xBF",
-                );
+                $bom =
+                    $csv->bom();
+
+                if (
+                    $bom !== ''
+                ) {
+                    fwrite(
+                        $handle,
+                        $bom,
+                    );
+                }
 
                 fputcsv(
                     $handle,
-                    [
-                        'Product ID',
-                        'Product Name',
-                        'SKU',
-                        'Slug',
-                        'Product Status',
-                        'Inventory Tracked',
-                        'Stock Quantity',
-                        'Low Stock Threshold',
-                        'Stock State',
-                        'Alert State',
-                        'Alert Label',
-                        'Alert Severity',
-                        'Alert Priority',
-                        'Requires Attention',
-                        'Updated At',
-                    ],
+                    $definition->headers,
                 );
 
                 $page =
@@ -116,71 +100,58 @@ final class InventoryOperationsCsvExportController extends Controller
                     ) {
                         if (
                             $exported >=
-                            self::MAX_EXPORT_ROWS
+                            $definition->maxRows
                         ) {
                             break 2;
                         }
 
                         fputcsv(
                             $handle,
-                            [
-                                $row->productId,
-
-                                $this->csvSafe(
+                            $csv->safeRow(
+                                [
+                                    $row->productId,
                                     $row->name,
-                                ),
-
-                                $this->csvSafe(
-                                    $row->sku ??
-                                    '',
-                                ),
-
-                                $this->csvSafe(
+                                    $row->sku,
                                     $row->slug,
-                                ),
+                                    $row->status,
 
-                                $row->status,
+                                    $row->trackInventory
+                                    ? 'Yes'
+                                    : 'No',
 
-                                $row->trackInventory
-                                ? 'Yes'
-                                : 'No',
+                                    $row->stockQuantity,
+                                    $row->lowStockThreshold,
+                                    $row->stockState,
 
-                                $row->stockQuantity,
+                                    $row
+                                        ->alert
+                                        ->state
+                                        ->value,
 
-                                $row->lowStockThreshold,
-
-                                $row->stockState,
-
-                                $row
-                                    ->alert
-                                    ->state
-                                    ->value,
-
-                                $this->csvSafe(
                                     $row
                                         ->alert
                                         ->state
                                         ->label(),
-                                ),
 
-                                $row
-                                    ->alert
-                                    ->state
-                                    ->severity(),
+                                    $row
+                                        ->alert
+                                        ->state
+                                        ->severity(),
 
-                                $row
-                                    ->alert
-                                    ->state
-                                    ->priority(),
+                                    $row
+                                        ->alert
+                                        ->state
+                                        ->priority(),
 
-                                $row
-                                    ->alert
-                                    ->requiresAttention()
-                                ? 'Yes'
-                                : 'No',
+                                    $row
+                                        ->alert
+                                        ->requiresAttention()
+                                    ? 'Yes'
+                                    : 'No',
 
-                                $row->updatedAt,
-                            ],
+                                    $row->updatedAt,
+                                ],
+                            ),
                         );
 
                         $exported++;
@@ -198,7 +169,7 @@ final class InventoryOperationsCsvExportController extends Controller
                     $handle,
                 );
             },
-            $filename,
+            $definition->filename(),
             [
                 'Content-Type' => 'text/csv; charset=UTF-8',
 
@@ -239,37 +210,5 @@ final class InventoryOperationsCsvExportController extends Controller
                 ): bool => $value !== '',
             ),
         );
-    }
-
-    private function csvSafe(
-        string $value,
-    ): string {
-        $trimmed =
-            ltrim(
-                $value,
-            );
-
-        if (
-            $trimmed === ''
-        ) {
-            return $value;
-        }
-
-        if (
-            in_array(
-                $trimmed[0],
-                [
-                    '=',
-                    '+',
-                    '-',
-                    '@',
-                ],
-                true,
-            )
-        ) {
-            return "'".$value;
-        }
-
-        return $value;
     }
 }

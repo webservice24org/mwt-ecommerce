@@ -9,7 +9,10 @@ use App\Domain\Orders\Enums\OrderStatus;
 use App\Domain\Orders\Enums\PaymentMethod;
 use App\Domain\Orders\Enums\PaymentStatus;
 use App\Domain\Reporting\Data\OperationalOrdersReportFiltersData;
+use App\Domain\Reporting\Enums\OperationalExportType;
 use App\Domain\Reporting\Enums\ReportDatePreset;
+use App\Domain\Reporting\Operations\OperationalCsvFormatter;
+use App\Domain\Reporting\Operations\OperationalExportRegistry;
 use App\Domain\Reporting\Queries\GetAdminOperationalOrdersReportQuery;
 use App\Domain\Reporting\Services\ReportDateRangeFactory;
 use App\Http\Controllers\Controller;
@@ -18,34 +21,28 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class OperationalOrdersCsvExportController extends Controller
 {
-    private const MAX_EXPORT_ROWS =
-        10_000;
-
     public function __invoke(
         OperationalOrdersReportRequest $request,
+        ReportDateRangeFactory $dateRangeFactory,
         GetAdminOperationalOrdersReportQuery $query,
+        OperationalExportRegistry $exports,
+        OperationalCsvFormatter $csv,
     ): StreamedResponse {
         $validated =
             $request->validated();
 
-        /*
-         * Use the exact same date-range construction mechanism
-         * already used by OperationalOrdersReportController.
-         *
-         * Copy the existing working date-range code from that
-         * controller here rather than creating a second policy.
-         */
+        $preset =
+            ReportDatePreset::tryFrom(
+                (string) (
+                    $validated['preset'] ??
+                    ReportDatePreset::Last30Days->value
+                ),
+            ) ??
+            ReportDatePreset::Last30Days;
+
         $range =
-            app(
-                ReportDateRangeFactory::class,
-            )->make(
-                preset: ReportDatePreset::tryFrom(
-                    (string) (
-                        $validated['preset'] ??
-                        ReportDatePreset::Last30Days->value
-                    ),
-                ) ??
-                ReportDatePreset::Last30Days,
+            $dateRangeFactory->make(
+                preset: $preset,
 
                 from: isset(
                     $validated['from'],
@@ -58,6 +55,11 @@ final class OperationalOrdersCsvExportController extends Controller
                 )
                 ? (string) $validated['to']
                 : null,
+            );
+
+        $definition =
+            $exports->get(
+                OperationalExportType::OperationalOrders,
             );
 
         $filters =
@@ -98,7 +100,7 @@ final class OperationalOrdersCsvExportController extends Controller
             );
 
         return response()->streamDownload(
-            function () use ($query, $filters): void {
+            function () use ($definition, $filters, $query, $csv): void {
                 $handle =
                     fopen(
                         'php://output',
@@ -106,49 +108,33 @@ final class OperationalOrdersCsvExportController extends Controller
                     );
 
                 if (
-                    $handle ===
-                    false
+                    $handle === false
                 ) {
                     return;
                 }
 
-                /*
-                 * UTF-8 BOM helps Excel display customer/order
-                 * text correctly.
-                 */
-                fwrite(
-                    $handle,
-                    "\xEF\xBB\xBF",
-                );
+                $bom =
+                    $csv->bom();
+
+                if (
+                    $bom !== ''
+                ) {
+                    fwrite(
+                        $handle,
+                        $bom,
+                    );
+                }
 
                 fputcsv(
                     $handle,
-                    [
-                        'Order Number',
-                        'Customer',
-                        'Order Status',
-                        'Fulfilment Status',
-                        'Payment Status',
-                        'Payment Method',
-                        'Grand Total',
-                        'Amount Due',
-                        'Currency',
-                        'Age Hours',
-                        'Age Days',
-                        'Attention State',
-                        'Attention Severity',
-                        'Attention Required',
-                        'Payment Due At',
-                        'Paid At',
-                        'Placed At',
-                    ],
+                    $definition->headers,
                 );
-
-                $exported =
-                    0;
 
                 $page =
                     1;
+
+                $exported =
+                    0;
 
                 do {
                     $result =
@@ -163,80 +149,53 @@ final class OperationalOrdersCsvExportController extends Controller
                     ) {
                         if (
                             $exported >=
-                            self::MAX_EXPORT_ROWS
+                            $definition->maxRows
                         ) {
                             break 2;
                         }
 
                         fputcsv(
                             $handle,
-                            [
-                                $this->csvSafe(
+                            $csv->safeRow(
+                                [
+                                    $row->orderNumber,
+                                    $row->customerName,
+
+                                    $row->status,
+                                    $row->paymentStatus,
+                                    $row->fulfilmentStatus,
+
+                                    $row->grandTotal,
+                                    $row->amountDue,
+                                    $row->currencyCode,
+
+                                    $row->ageHours,
+                                    $row->ageDays,
+
                                     $row
-                                        ->orderNumber,
-                                ),
+                                        ->attention
+                                        ->state
+                                        ->value,
 
-                                $this->csvSafe(
                                     $row
-                                        ->customerName,
-                                ),
+                                        ->attention
+                                        ->state
+                                        ->severity(),
 
-                                $row
-                                    ->status,
-
-                                $row
-                                    ->fulfilmentStatus,
-
-                                $row
-                                    ->paymentStatus,
-
-                                $row
-                                    ->paymentMethod,
-
-                                $this->moneyForCsv(
                                     $row
-                                        ->grandTotal,
-                                ),
+                                        ->attention
+                                        ->state
+                                        ->priority(),
 
-                                $this->moneyForCsv(
                                     $row
-                                        ->amountDue,
-                                ),
+                                        ->attention
+                                        ->requiresAttention()
+                                    ? 'Yes'
+                                    : 'No',
 
-                                $row
-                                    ->currencyCode,
-
-                                $row
-                                    ->ageHours,
-
-                                $row
-                                    ->ageDays,
-
-                                $row
-                                    ->attention
-                                    ->state
-                                    ->value,
-
-                                $row
-                                    ->attention
-                                    ->state
-                                    ->severity(),
-
-                                $row
-                                    ->attention
-                                    ->requiresAttention()
-                                ? 'Yes'
-                                : 'No',
-
-                                $row
-                                    ->paymentDueAt,
-
-                                $row
-                                    ->paidAt,
-
-                                $row
-                                    ->placedAt,
-                            ],
+                                    $row->placedAt,
+                                ],
+                            ),
                         );
 
                         $exported++;
@@ -254,66 +213,13 @@ final class OperationalOrdersCsvExportController extends Controller
                     $handle,
                 );
             },
-            'operational-orders-'.$range
-                ->fromInclusive
-                ->format(
-                    'Y-m-d',
-                ).'-'.$range
-                ->toExclusive
-                ->subDay()
-                ->format(
-                    'Y-m-d',
-                ).'.csv',
+            $definition->filename(),
             [
                 'Content-Type' => 'text/csv; charset=UTF-8',
 
                 'Cache-Control' => 'no-store, no-cache, must-revalidate',
             ],
         );
-    }
-
-    private function moneyForCsv(
-        int $minorUnits,
-    ): string {
-        return number_format(
-            $minorUnits / 100,
-            2,
-            '.',
-            '',
-        );
-    }
-
-    private function csvSafe(
-        string $value,
-    ): string {
-        $trimmed =
-            ltrim(
-                $value,
-            );
-
-        if (
-            $trimmed ===
-            ''
-        ) {
-            return $value;
-        }
-
-        if (
-            in_array(
-                $trimmed[0],
-                [
-                    '=',
-                    '+',
-                    '-',
-                    '@',
-                ],
-                true,
-            )
-        ) {
-            return "'".$value;
-        }
-
-        return $value;
     }
 
     /**
@@ -334,7 +240,8 @@ final class OperationalOrdersCsvExportController extends Controller
             return [];
         }
 
-        $result = [];
+        $result =
+            [];
 
         foreach (
             $values as $value

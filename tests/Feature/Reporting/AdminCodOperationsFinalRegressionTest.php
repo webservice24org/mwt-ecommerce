@@ -530,12 +530,7 @@ final class AdminCodOperationsFinalRegressionTest extends TestCase
                 ->streamedContent();
 
         $this->assertStringContainsString(
-            '300.00',
-            $csv,
-        );
-
-        $this->assertStringContainsString(
-            ',0.00,',
+            ',30000,0,BDT,',
             $csv,
         );
 
@@ -602,7 +597,7 @@ final class AdminCodOperationsFinalRegressionTest extends TestCase
         );
 
         $this->assertStringContainsString(
-            '125.00',
+            ',12500,12500,BDT,',
             $csv,
         );
 

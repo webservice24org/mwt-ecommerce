@@ -41,4 +41,9 @@ return [
 
         'provider_max_rows' => 10_000,
     ],
+    'operational_exports' => [
+        'max_rows' => 10_000,
+
+        'utf8_bom' => true,
+    ],
 ];

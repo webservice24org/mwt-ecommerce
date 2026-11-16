@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Reporting;
 
+use App\Domain\Reporting\Enums\OperationalExportType;
+use App\Domain\Reporting\Operations\OperationalExportRegistry;
+use App\Domain\Reporting\Operations\OperationalExportRegistryFactory;
 use App\Models\Admin;
 use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -89,6 +92,7 @@ final class AdminInventoryOperationsCsvExportTest extends TestCase
             'Yes',
             $csv,
         );
+
     }
 
     public function test_csv_respects_stock_state_filter(): void
@@ -441,5 +445,67 @@ final class AdminInventoryOperationsCsvExportTest extends TestCase
 
                 'stock_quantity' => $stockQuantity,
             ]);
+    }
+
+    public function test_inventory_export_uses_registered_header_contract(): void
+    {
+        $definition =
+            app(
+                OperationalExportRegistry::class,
+            )->get(
+                OperationalExportType::InventoryOperations,
+            );
+
+        $this->assertSame(
+            'admin.reports.operations.inventory.csv',
+            $definition->routeName,
+        );
+
+        $this->assertContains(
+            'Stock State',
+            $definition->headers,
+        );
+
+        $this->assertContains(
+            'Alert State',
+            $definition->headers,
+        );
+
+        $this->assertContains(
+            'Alert Severity',
+            $definition->headers,
+        );
+
+        $this->assertContains(
+            'Alert Priority',
+            $definition->headers,
+        );
+
+        $this->assertContains(
+            'Requires Attention',
+            $definition->headers,
+        );
+    }
+
+    public function test_inventory_export_definition_uses_global_row_limit(): void
+    {
+        config([
+            'reporting.operational_exports.max_rows' => 4321,
+        ]);
+
+        $registry =
+            app(
+                OperationalExportRegistryFactory::class,
+            )->make();
+
+        $definition =
+            $registry->get(
+                OperationalExportType::InventoryOperations,
+            );
+
+        $this->assertSame(
+            4321,
+            $definition->maxRows,
+        );
     }
 }
