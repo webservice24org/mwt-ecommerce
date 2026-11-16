@@ -30,4 +30,15 @@ return [
 
         'critical_stock_threshold' => 2,
     ],
+    'action_queue' => [
+        /*
+         * Orders/COD need a date range because their existing
+         * authoritative queries are date-range based.
+         */
+        'lookback_days' => 90,
+
+        'provider_page_size' => 100,
+
+        'provider_max_rows' => 10_000,
+    ],
 ];

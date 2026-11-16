@@ -5,6 +5,10 @@ namespace App\Providers;
 use App\Domain\Reporting\Contracts\ReportExportWriter;
 use App\Domain\Reporting\Export\CsvReportExportWriter;
 use App\Domain\Reporting\Export\ReportExportWriterRegistry;
+use App\Domain\Reporting\Operations\ActionQueueProviderRegistry;
+use App\Domain\Reporting\Operations\CodOperationsActionQueueProvider;
+use App\Domain\Reporting\Operations\InventoryOperationsActionQueueProvider;
+use App\Domain\Reporting\Operations\OperationalOrdersActionQueueProvider;
 use App\Domain\Shipping\Providers\ManualShippingProvider;
 use App\Domain\Shipping\Providers\PathaoShippingProvider;
 use App\Domain\Shipping\Providers\ShippingProviderRegistry;
@@ -90,6 +94,34 @@ class AppServiceProvider extends ServiceProvider
                         $steadfast,
                     );
                 }
+
+                return $registry;
+            },
+        );
+
+        $this->app->singleton(
+            ActionQueueProviderRegistry::class,
+            static function ($app): ActionQueueProviderRegistry {
+                $registry =
+                    new ActionQueueProviderRegistry;
+
+                $registry->register(
+                    $app->make(
+                        OperationalOrdersActionQueueProvider::class,
+                    ),
+                );
+
+                $registry->register(
+                    $app->make(
+                        CodOperationsActionQueueProvider::class,
+                    ),
+                );
+
+                $registry->register(
+                    $app->make(
+                        InventoryOperationsActionQueueProvider::class,
+                    ),
+                );
 
                 return $registry;
             },

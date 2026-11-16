@@ -33,6 +33,8 @@ use App\Http\Controllers\Admin\ProductPerformanceReportController;
 use App\Http\Controllers\Admin\ProductPerformanceReportExportController;
 use App\Http\Controllers\Admin\Promotion\PromoCodeController;
 use App\Http\Controllers\Admin\Promotion\PromotionController;
+use App\Http\Controllers\Admin\Reports\ActionQueueCsvExportController;
+use App\Http\Controllers\Admin\Reports\ActionQueueReportController;
 use App\Http\Controllers\Admin\Reports\CodOperationsCsvExportController;
 use App\Http\Controllers\Admin\Reports\CodOperationsReportController;
 use App\Http\Controllers\Admin\Reports\InventoryOperationsCsvExportController;
@@ -309,7 +311,8 @@ Route::middleware([
     Route::get('reports/operations/cod/export.csv', CodOperationsCsvExportController::class)->name('reports.operations.cod.csv');
     Route::get('reports/operations/inventory', InventoryOperationsReportController::class)->name('reports.operations.inventory');
     Route::get('reports/operations/inventory/export.csv', InventoryOperationsCsvExportController::class)->name('reports.operations.inventory.csv');
-
+    Route::get('reports/operations/action-queue', ActionQueueReportController::class)->name('reports.operations.action-queue');
+    Route::get('reports/operations/action-queue/export.csv', ActionQueueCsvExportController::class)->name('reports.operations.action-queue.csv');
 });
 
 Route::middleware([

@@ -263,6 +263,9 @@ export default function AdminSidebar({
         ) ||
         url.startsWith(
             '/admin/reports/operations/inventory',
+        ) ||
+        url.startsWith(
+            '/admin/reports/operations/action-queue'
         )
 
     /*
@@ -1045,6 +1048,24 @@ export default function AdminSidebar({
 
                                                 icon:
                                                     Package,
+                                            },
+                                            true,
+                                        )}
+
+                                        {renderNavigationItem(
+                                            {
+                                                label:
+                                                    'Action Queue',
+
+                                                href: route(
+                                                    'admin.reports.operations.action-queue',
+                                                ),
+
+                                                match:
+                                                    '/admin/reports/operations/action-queue',
+
+                                                icon:
+                                                    ListTree,
                                             },
                                             true,
                                         )}
