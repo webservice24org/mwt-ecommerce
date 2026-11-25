@@ -16,6 +16,7 @@ final readonly class StorefrontVariantData
         public bool $isDefault,
         public StorefrontPricingData $pricing,
         public array $attributeValues,
+        public int $stockQuantity,
     ) {}
 
     /**

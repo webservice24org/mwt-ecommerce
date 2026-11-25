@@ -1,5 +1,4 @@
 import MoneyInput from '@/Components/Admin/Catalog/MoneyInput'
-import SeoFields from '@/Components/Admin/SeoFields'
 import type {
     ProductBrandOption,
     ProductCategoryOption,
@@ -11,6 +10,8 @@ import { TiptapEditor } from '@microweb/laravel-tiptap-editor'
 import '@microweb/laravel-tiptap-editor/editor.css'
 import type { InertiaFormProps } from '@inertiajs/react'
 import type { FormEvent } from 'react'
+import SeoFormSection from '@/Components/Admin/Seo/SeoFormSection'
+import type { EntitySeoFormData } from '@/types/seo'
 
 export type ProductFormData = {
     brand_id: number | null
@@ -29,6 +30,7 @@ export type ProductFormData = {
     published_at: string
     meta_title: string
     meta_description: string
+    seo: EntitySeoFormData
     category_ids: number[]
 }
 
@@ -49,6 +51,8 @@ export default function ProductForm({
     submitLabel,
     onSubmit,
 }: Props) {
+    const seoErrors = form.errors as Record<string, string | undefined>
+
     const toggleCategory = (categoryId: number) => {
         if (form.data.category_ids.includes(categoryId)) {
             form.setData(
@@ -66,15 +70,7 @@ export default function ProductForm({
         <form onSubmit={onSubmit} className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
             <div className="min-w-0 space-y-6">
                 <section className="min-w-0 rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
-                    <div className="mb-6">
-                        <h2 className="text-base font-semibold text-neutral-900">
-                            Product information
-                        </h2>
-
-                        <p className="mt-1 text-sm text-neutral-500">
-                            Add the main information used throughout the catalog.
-                        </p>
-                    </div>
+                    
 
                     <div className="min-w-0 space-y-5">
                         <div>
@@ -337,13 +333,33 @@ export default function ProductForm({
                     )}
                 </section>
 
-                <SeoFields
+                <SeoFormSection
                     metaTitle={form.data.meta_title}
                     metaDescription={form.data.meta_description}
-                    titleError={form.errors.meta_title}
-                    descriptionError={form.errors.meta_description}
-                    onTitleChange={(value) => form.setData('meta_title', value)}
-                    onDescriptionChange={(value) => form.setData('meta_description', value)}
+                    seo={form.data.seo}
+                    errors={{
+                        meta_title: form.errors.meta_title,
+                        meta_description: form.errors.meta_description,
+                        canonical_url: seoErrors['seo.canonical_url'],
+                        robots_index: seoErrors['seo.robots_index'],
+                        robots_follow: seoErrors['seo.robots_follow'],
+                        og_title: seoErrors['seo.og_title'],
+                        og_description: seoErrors['seo.og_description'],
+                        og_image: seoErrors['seo.og_image'],
+                        twitter_title: seoErrors['seo.twitter_title'],
+                        twitter_description: seoErrors['seo.twitter_description'],
+                        twitter_image: seoErrors['seo.twitter_image'],
+                    }}
+                    onMetaTitleChange={(value) => form.setData('meta_title', value)}
+                    onMetaDescriptionChange={(value) => form.setData('meta_description', value)}
+                    onSeoChange={(key, value) =>
+                        form.setData('seo', {
+                            ...form.data.seo,
+                            [key]: value,
+                        })
+                    }
+                    titleMaxLength={180}
+                    descriptionMaxLength={320}
                 />
             </div>
 

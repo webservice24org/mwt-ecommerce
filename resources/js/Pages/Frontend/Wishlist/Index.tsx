@@ -26,14 +26,15 @@ import {
     dispatchWishlistProductChanged,
     dispatchWishlistReset,
 } from '@/lib/storefrontWishlist'
-import {
-    buildBreadcrumbJsonLd,
-} from '@/lib/storefrontSeo'
 import type {
     StorefrontBreadcrumbItem,
     StorefrontCart,
     StorefrontProductCard,
 } from '@/types/storefront'
+
+import type {
+    StructuredDataDocument,
+} from '@/types/structured-data'
 
 type WishlistAvailability =
     | 'available'
@@ -49,10 +50,14 @@ interface WishlistItem {
 
 interface WishlistIndexProps {
     items: WishlistItem[]
+    breadcrumbStructuredData:
+        | StructuredDataDocument
+        | null
 }
 
 export default function Index({
     items,
+    breadcrumbStructuredData,
 }: WishlistIndexProps) {
     const [
         processingProductId,
@@ -99,11 +104,6 @@ export default function Index({
                     'Wishlist',
             },
         ]
-
-    const breadcrumbJsonLd =
-        buildBreadcrumbJsonLd(
-            breadcrumbs,
-        )
 
     const removeItem = (
         item: WishlistItem,
@@ -297,8 +297,12 @@ export default function Index({
                 title="Wishlist"
                 description="View products saved to your wishlist."
                 canonicalPath="/wishlist"
+                robots={{
+                    index: false,
+                    follow: true,
+                }}
                 jsonLd={
-                    breadcrumbJsonLd
+                    breadcrumbStructuredData
                 }
             />
 

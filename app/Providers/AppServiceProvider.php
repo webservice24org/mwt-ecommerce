@@ -11,12 +11,25 @@ use App\Domain\Reporting\Operations\InventoryOperationsActionQueueProvider;
 use App\Domain\Reporting\Operations\OperationalExportRegistry;
 use App\Domain\Reporting\Operations\OperationalExportRegistryFactory;
 use App\Domain\Reporting\Operations\OperationalOrdersActionQueueProvider;
+use App\Domain\Seo\Sitemap\Data\SitemapSplitPolicy;
+use App\Domain\Seo\Sitemap\Services\SitemapRegistry;
+use App\Domain\Seo\Sitemap\Sources\BrandSitemapSource;
+use App\Domain\Seo\Sitemap\Sources\CategorySitemapSource;
+use App\Domain\Seo\Sitemap\Sources\PageSitemapSource;
+use App\Domain\Seo\Sitemap\Sources\ProductSitemapSource;
 use App\Domain\Shipping\Providers\ManualShippingProvider;
 use App\Domain\Shipping\Providers\PathaoShippingProvider;
 use App\Domain\Shipping\Providers\ShippingProviderRegistry;
 use App\Domain\Shipping\Providers\SteadfastShippingProvider;
 use App\Domain\Shipping\Services\PathaoShippingProviderFactory;
 use App\Domain\Shipping\Services\SteadfastShippingProviderFactory;
+use App\Models\Brand;
+use App\Models\Category;
+use App\Models\Page;
+use App\Models\Product;
+use App\Models\SeoMeta;
+use App\Observers\SitemapEntityObserver;
+use App\Observers\SitemapSeoMetaObserver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Http\Request;
@@ -138,6 +151,62 @@ class AppServiceProvider extends ServiceProvider
                 )
                 ->make(),
         );
+
+        $this->app->singleton(
+            SitemapRegistry::class,
+            static function (Application $app): SitemapRegistry {
+                $registry =
+                    new SitemapRegistry;
+
+                $registry->register(
+                    $app->make(
+                        ProductSitemapSource::class,
+                    ),
+                );
+
+                return $registry;
+            },
+        );
+
+        $this->app->singleton(
+            SitemapRegistry::class,
+            static function (Application $app): SitemapRegistry {
+                $registry =
+                    new SitemapRegistry;
+
+                $registry->register(
+                    $app->make(
+                        ProductSitemapSource::class,
+                    ),
+                );
+
+                $registry->register(
+                    $app->make(
+                        CategorySitemapSource::class,
+                    ),
+                );
+
+                $registry->register(
+                    $app->make(
+                        PageSitemapSource::class,
+                    ),
+                );
+                $registry->register(
+                    $app->make(
+                        BrandSitemapSource::class,
+                    ),
+                );
+
+                return $registry;
+            },
+        );
+        $this->app->singleton(
+            SitemapSplitPolicy::class,
+            static fn (): SitemapSplitPolicy => new SitemapSplitPolicy(
+                maxUrlsPerFile: 45_000,
+            ),
+        );
+
     }
 
     /**
@@ -145,6 +214,24 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Product::observe(
+            SitemapEntityObserver::class,
+        );
+
+        Category::observe(
+            SitemapEntityObserver::class,
+        );
+
+        Brand::observe(
+            SitemapEntityObserver::class,
+        );
+
+        Page::observe(
+            SitemapEntityObserver::class,
+        );
+        SeoMeta::observe(
+            SitemapSeoMetaObserver::class,
+        );
         RateLimiter::for(
             'admin-login',
             function (Request $request): Limit {

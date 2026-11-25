@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Domain\Catalog\Actions;
 
 use App\Domain\Catalog\Data\UpdateBrandData;
+use App\Domain\Seo\Data\EntitySeoData;
+use App\Domain\Seo\Redirects\Services\SeoSlugRedirectHistory;
+use App\Domain\Seo\Repositories\EntitySeoRepository;
 use App\Models\Brand;
 use App\Support\Cache\StorefrontCatalogCache;
 use App\Support\Media\ImageStorageService;
@@ -19,6 +22,8 @@ final readonly class UpdateBrandAction
         private UniqueSlugGenerator $slugGenerator,
         private ImageStorageService $imageStorage,
         private StorefrontCatalogCache $storefrontCache,
+        private ?EntitySeoRepository $seoRepository = null,
+        private ?SeoSlugRedirectHistory $slugRedirects = null,
     ) {}
 
     public function execute(
@@ -26,19 +31,18 @@ final readonly class UpdateBrandAction
         UpdateBrandData $data,
         ?UploadedFile $logo = null,
         bool $removeLogo = false,
+        ?EntitySeoData $seo = null,
     ): Brand {
         $oldLogoPath = $brand->logo_path;
         $newLogoPath = null;
-
         $finalLogoPath = $oldLogoPath;
 
         try {
             if ($logo !== null) {
-                $newLogoPath =
-                    $this->imageStorage->store(
-                        $logo,
-                        'catalog/brands',
-                    );
+                $newLogoPath = $this->imageStorage->store(
+                    $logo,
+                    'catalog/brands',
+                );
 
                 $finalLogoPath = $newLogoPath;
             } elseif ($removeLogo) {
@@ -50,15 +54,23 @@ final readonly class UpdateBrandAction
                     $brand,
                     $data,
                     $finalLogoPath,
+                    $seo,
                 ): Brand {
+                    $lockedBrand = Brand::query()
+                        ->whereKey($brand->id)
+                        ->lockForUpdate()
+                        ->firstOrFail();
+
+                    $oldSlug = $lockedBrand->slug;
+
                     $slug = $this->slugGenerator->generate(
                         table: 'brands',
                         column: 'slug',
                         value: $data->slug ?? $data->name,
-                        ignoreId: $brand->id,
+                        ignoreId: $lockedBrand->id,
                     );
 
-                    $brand->update([
+                    $lockedBrand->update([
                         'name' => $data->name,
                         'slug' => $slug,
                         'description' => $data->description,
@@ -69,7 +81,25 @@ final readonly class UpdateBrandAction
                         'meta_description' => $data->metaDescription,
                     ]);
 
-                    return $brand->refresh();
+                    if ($seo !== null) {
+                        ($this->seoRepository
+                            ?? app(EntitySeoRepository::class))
+                            ->save(
+                                $lockedBrand,
+                                $seo,
+                            );
+                    }
+
+                    ($this->slugRedirects
+                        ?? app(SeoSlugRedirectHistory::class))
+                        ->record(
+                            entityType: SeoSlugRedirectHistory::BRAND,
+                            entityId: $lockedBrand->id,
+                            oldSlug: $oldSlug,
+                            newSlug: $slug,
+                        );
+
+                    return $lockedBrand->refresh();
                 },
             );
         } catch (Throwable $exception) {
@@ -82,13 +112,6 @@ final readonly class UpdateBrandAction
             throw $exception;
         }
 
-        /*
-         * The database mutation has successfully committed.
-         * Invalidate storefront caches before performing
-         * best-effort cleanup of the previous logo.
-         */
-        $this->storefrontCache->invalidate();
-
         if (
             $oldLogoPath !== null
             && $oldLogoPath !== $updatedBrand->logo_path
@@ -97,6 +120,8 @@ final readonly class UpdateBrandAction
                 $oldLogoPath,
             );
         }
+
+        $this->storefrontCache->invalidate();
 
         return $updatedBrand;
     }

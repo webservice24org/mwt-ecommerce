@@ -4,19 +4,35 @@ import type { ReactNode } from 'react'
 interface StorefrontFilterPanelProps {
     filters: StorefrontProductFilters
     options: StorefrontFilterOptions
-    showCategories?: boolean
-    onBrandChange: (slug: string | null) => void
-    onCategoryChange: (slug: string | null) => void
-    onPriceChange: (minPrice: number | null, maxPrice: number | null) => void
-    onAttributeChange: (attributeSlug: string, valueSlug: string | null) => void
-}
 
+    showBrands?: boolean
+    showCategories?: boolean
+
+    onBrandChange: (
+        slug: string | null,
+    ) => void
+
+    onCategoryChange: (
+        slug: string | null,
+    ) => void
+
+    onPriceChange: (
+        minPrice: number | null,
+        maxPrice: number | null,
+    ) => void
+
+    onAttributeChange: (
+        attributeSlug: string,
+        valueSlug: string | null,
+    ) => void
+}
 const selectClassName =
     'min-h-11 w-full min-w-0 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 transition focus-visible:border-neutral-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2'
 
 export default function StorefrontFilterPanel({
     filters,
     options,
+    showBrands = true,
     showCategories = true,
     onBrandChange,
     onCategoryChange,
@@ -25,8 +41,9 @@ export default function StorefrontFilterPanel({
 }: StorefrontFilterPanelProps) {
     return (
         <div className="min-w-0 space-y-7">
-            {options.brands.length > 0 && (
-                <FilterSection title="Brand">
+            {showBrands &&
+                options.brands.length > 0 && (
+                    <FilterSection title="Brand">
                     <select
                         value={filters.brand ?? ''}
                         onChange={(event) => onBrandChange(event.target.value || null)}

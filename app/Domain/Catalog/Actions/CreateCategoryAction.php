@@ -6,6 +6,8 @@ namespace App\Domain\Catalog\Actions;
 
 use App\Domain\Catalog\Data\CreateCategoryData;
 use App\Domain\Catalog\Services\CategoryHierarchyService;
+use App\Domain\Seo\Data\EntitySeoData;
+use App\Domain\Seo\Repositories\EntitySeoRepository;
 use App\Models\Category;
 use App\Support\Cache\StorefrontCatalogCache;
 use App\Support\Media\ImageStorageService;
@@ -21,11 +23,13 @@ final readonly class CreateCategoryAction
         private CategoryHierarchyService $hierarchyService,
         private ImageStorageService $imageStorage,
         private StorefrontCatalogCache $storefrontCache,
+        private EntitySeoRepository $seoRepository,
     ) {}
 
     public function execute(
         CreateCategoryData $data,
         ?UploadedFile $image = null,
+        ?EntitySeoData $seo = null,
     ): Category {
         $imagePath = null;
 
@@ -38,10 +42,7 @@ final readonly class CreateCategoryAction
             }
 
             $category = DB::transaction(
-                function () use (
-                    $data,
-                    $imagePath,
-                ): Category {
+                function () use ($data, $imagePath, $seo): Category {
                     $this->hierarchyService
                         ->ensureParentExists(
                             $data->parentId,
@@ -56,7 +57,7 @@ final readonly class CreateCategoryAction
                             value: $slugSource,
                         );
 
-                    return Category::query()->create([
+                    $category = Category::query()->create([
                         'parent_id' => $data->parentId,
                         'name' => $data->name,
                         'slug' => $slug,
@@ -67,6 +68,23 @@ final readonly class CreateCategoryAction
                         'meta_title' => $data->metaTitle,
                         'meta_description' => $data->metaDescription,
                     ]);
+
+                    if (
+                        $seo !== null
+                    ) {
+                        $this
+                            ->seoRepository
+                            ->save(
+                                $category,
+                                $seo,
+                            );
+                    }
+
+                    return $category
+                        ->refresh()
+                        ->load([
+                            'seoMeta',
+                        ]);
                 },
             );
         } catch (Throwable $exception) {

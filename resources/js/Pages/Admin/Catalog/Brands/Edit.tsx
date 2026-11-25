@@ -2,6 +2,7 @@ import BrandForm, { type BrandFormData } from '@/Components/Admin/Catalog/BrandF
 import AdminLayout from '@/Layouts/Admin/AdminLayout'
 import type { Brand } from '@/types/catalog'
 import { Link, useForm } from '@inertiajs/react'
+import { entitySeoDataToFormData } from '@/types/seo'
 
 type Props = {
     brand: Brand
@@ -18,6 +19,7 @@ export default function Edit({ brand }: Props) {
         is_active: brand.is_active,
         meta_title: brand.meta_title ?? '',
         meta_description: brand.meta_description ?? '',
+        seo: entitySeoDataToFormData(brand.seo),
     })
 
     return (

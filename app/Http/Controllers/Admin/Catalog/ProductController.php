@@ -65,8 +65,8 @@ final class ProductController extends Controller
 
         $products = $query->paginate(
             search: $search === ''
-                ? null
-                : $search,
+            ? null
+            : $search,
             status: $status,
             brandId: $brandId,
             isFeatured: $featured,
@@ -90,15 +90,15 @@ final class ProductController extends Controller
                             ?->toIso8601String(),
 
                         'brand' => $product->brand === null
-                                ? null
-                                : [
-                                    'id' => $product
-                                        ->brand
-                                        ->id,
-                                    'name' => $product
-                                        ->brand
-                                        ->name,
-                                ],
+                            ? null
+                            : [
+                                'id' => $product
+                                    ->brand
+                                    ->id,
+                                'name' => $product
+                                    ->brand
+                                    ->name,
+                            ],
 
                         'categories_count' => $product
                             ->categories_count,
@@ -151,9 +151,14 @@ final class ProductController extends Controller
             Product::class,
         );
 
-        $product = $action->execute(
-            $request->toData(),
-        );
+        $product =
+            $action->execute(
+                $request->toData(),
+
+                $request->hasSeoPayload()
+                ? $request->toSeoData()
+                : null,
+            );
 
         return redirect()
             ->route(
@@ -179,6 +184,7 @@ final class ProductController extends Controller
         $product->load([
             'brand:id,name',
             'categories:id,name',
+            'seoMeta',
 
             'images' => static function ($query): void {
                 $query
@@ -225,6 +231,43 @@ final class ProductController extends Controller
                         ),
                     'meta_title' => $product->meta_title,
                     'meta_description' => $product->meta_description,
+                    'seo' => [
+                        'canonical_url' => $product
+                            ->seoMeta
+                            ?->canonical_url,
+
+                        'robots_index' => $product
+                            ->seoMeta
+                            ?->robots_index,
+
+                        'robots_follow' => $product
+                            ->seoMeta
+                            ?->robots_follow,
+
+                        'og_title' => $product
+                            ->seoMeta
+                            ?->og_title,
+
+                        'og_description' => $product
+                            ->seoMeta
+                            ?->og_description,
+
+                        'og_image' => $product
+                            ->seoMeta
+                            ?->og_image,
+
+                        'twitter_title' => $product
+                            ->seoMeta
+                            ?->twitter_title,
+
+                        'twitter_description' => $product
+                            ->seoMeta
+                            ?->twitter_description,
+
+                        'twitter_image' => $product
+                            ->seoMeta
+                            ?->twitter_image,
+                    ],
 
                     'category_ids' => $product
                         ->categories
@@ -273,50 +316,50 @@ final class ProductController extends Controller
                     ->all(),
 
                 'video' => $product->video === null
-                        ? null
-                        : [
-                            'id' => $product->video->id,
+                    ? null
+                    : [
+                        'id' => $product->video->id,
 
-                            'type' => $product
-                                ->video
-                                ->type
-                                ->value,
+                        'type' => $product
+                            ->video
+                            ->type
+                            ->value,
 
-                            'path' => $product
-                                ->video
-                                ->path,
+                        'path' => $product
+                            ->video
+                            ->path,
 
-                            'url' => $product
-                                ->video
-                                ->url,
+                        'url' => $product
+                            ->video
+                            ->url,
 
-                            'file_url' => $product
-                                ->video
-                                ->path !== null
-                                    ? asset(
-                                        'storage/'
-                                        .$product
-                                            ->video
-                                            ->path,
-                                    )
-                                    : null,
+                        'file_url' => $product
+                            ->video
+                            ->path !== null
+                            ? asset(
+                                'storage/'
+                                .$product
+                                    ->video
+                                    ->path,
+                            )
+                            : null,
 
-                            'title' => $product
-                                ->video
-                                ->title,
+                        'title' => $product
+                            ->video
+                            ->title,
 
-                            'original_name' => $product
-                                ->video
-                                ->original_name,
+                        'original_name' => $product
+                            ->video
+                            ->original_name,
 
-                            'mime_type' => $product
-                                ->video
-                                ->mime_type,
+                        'mime_type' => $product
+                            ->video
+                            ->mime_type,
 
-                            'file_size' => $product
-                                ->video
-                                ->file_size,
-                        ],
+                        'file_size' => $product
+                            ->video
+                            ->file_size,
+                    ],
 
                 'variants' => $product
                     ->variants
@@ -429,6 +472,10 @@ final class ProductController extends Controller
         $action->execute(
             $product,
             $request->toData(),
+
+            $request->hasSeoPayload()
+            ? $request->toSeoData()
+            : null,
         );
 
         return redirect()

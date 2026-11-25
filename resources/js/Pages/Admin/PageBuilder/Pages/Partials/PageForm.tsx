@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react'
 import type { FormEvent, ReactNode } from 'react'
+import SeoFormSection from '@/Components/Admin/Seo/SeoFormSection'
 
 import type {
     PageContentMode,
@@ -11,7 +12,7 @@ import type {
 interface Props {
     data: PageFormValues
     options: PageFormOptions
-    errors: Partial<Record<keyof PageFormValues, string>>
+    errors: Partial<Record<string, string>>
     processing: boolean
     submitLabel: string
     pageId: number | null
@@ -162,35 +163,90 @@ export default function PageForm({
                         <PageBuilderPanel pageId={pageId} />
                     )}
 
-                    <section className={sectionClass}>
-                        <h2 className="mb-5 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-                            SEO
-                        </h2>
+                    <SeoFormSection
+                        metaTitle={
+                            data.meta_title
+                        }
+                        metaDescription={
+                            data.meta_description
+                        }
+                        seo={
+                            data.seo_meta
+                        }
+                        errors={{
+                            meta_title:
+                                errors.meta_title,
 
-                        <div className="space-y-5">
-                            <Field label="Meta Title" error={errors.meta_title}>
-                                <input
-                                    type="text"
-                                    value={data.meta_title}
-                                    onChange={(event) => onChange('meta_title', event.target.value)}
-                                    className={inputClass}
-                                    maxLength={255}
-                                />
-                            </Field>
+                            meta_description:
+                                errors.meta_description,
 
-                            <Field label="Meta Description" error={errors.meta_description}>
-                                <textarea
-                                    value={data.meta_description}
-                                    onChange={(event) =>
-                                        onChange('meta_description', event.target.value)
-                                    }
-                                    rows={5}
-                                    className={inputClass}
-                                    maxLength={500}
-                                />
-                            </Field>
-                        </div>
-                    </section>
+                            canonical_url:
+                                errors[
+                                    'seo_meta.canonical_url'
+                                ],
+
+                            robots_index:
+                                errors[
+                                    'seo_meta.robots_index'
+                                ],
+
+                            robots_follow:
+                                errors[
+                                    'seo_meta.robots_follow'
+                                ],
+
+                            og_title:
+                                errors[
+                                    'seo_meta.og_title'
+                                ],
+
+                            og_description:
+                                errors[
+                                    'seo_meta.og_description'
+                                ],
+
+                            og_image:
+                                errors[
+                                    'seo_meta.og_image'
+                                ],
+
+                            twitter_title:
+                                errors[
+                                    'seo_meta.twitter_title'
+                                ],
+
+                            twitter_description:
+                                errors[
+                                    'seo_meta.twitter_description'
+                                ],
+
+                            twitter_image:
+                                errors[
+                                    'seo_meta.twitter_image'
+                                ],
+                        }}
+                        onMetaTitleChange={(value) =>
+                            onChange(
+                                'meta_title',
+                                value,
+                            )
+                        }
+                        onMetaDescriptionChange={(value) =>
+                            onChange(
+                                'meta_description',
+                                value,
+                            )
+                        }
+                        onSeoChange={(key, value) =>
+                            onChange(
+                                'seo_meta',
+                                {
+                                    ...data.seo_meta,
+                                    [key]: value,
+                                },
+                            )
+                        }
+                    />
                 </div>
 
                 <div className="space-y-6">

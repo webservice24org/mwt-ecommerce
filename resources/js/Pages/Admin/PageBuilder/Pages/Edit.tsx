@@ -23,6 +23,34 @@ export default function Edit({ page, options }: Props) {
         content: page.content ?? '',
         meta_title: page.seo.meta_title ?? '',
         meta_description: page.seo.meta_description ?? '',
+        seo_meta: {
+            canonical_url:
+                page.seo.canonical_url ?? '',
+
+            robots_index:
+                page.seo.robots_index ?? null,
+
+            robots_follow:
+                page.seo.robots_follow ?? null,
+
+            og_title:
+                page.seo.og_title ?? '',
+
+            og_description:
+                page.seo.og_description ?? '',
+
+            og_image:
+                page.seo.og_image ?? '',
+
+            twitter_title:
+                page.seo.twitter_title ?? '',
+
+            twitter_description:
+                page.seo.twitter_description ?? '',
+
+            twitter_image:
+                page.seo.twitter_image ?? '',
+        },
         published_at: toDateTimeLocal(page.published_at),
     })
 

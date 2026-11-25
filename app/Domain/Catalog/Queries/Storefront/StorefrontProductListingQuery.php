@@ -6,6 +6,7 @@ namespace App\Domain\Catalog\Queries\Storefront;
 
 use App\Domain\Catalog\Data\Storefront\StorefrontProductFiltersData;
 use App\Domain\Catalog\Enums\StorefrontProductSort;
+use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -19,6 +20,7 @@ final readonly class StorefrontProductListingQuery
     public function build(
         StorefrontProductFiltersData $filters,
         ?Category $category = null,
+        ?Brand $brand = null,
     ): Builder {
         $query = Product::query()
             ->published()
@@ -39,14 +41,23 @@ final readonly class StorefrontProductListingQuery
                     ]),
             ]);
 
+        /*
+         * Route-level Category boundary wins over
+         * request-level category filtering.
+         */
         $this->applyCategory(
             $query,
             $category,
             $filters->category,
         );
 
+        /*
+         * Route-level Brand boundary wins over
+         * request-level brand filtering.
+         */
         $this->applyBrand(
             $query,
+            $brand,
             $filters->brand,
         );
 
@@ -112,17 +123,33 @@ final readonly class StorefrontProductListingQuery
      */
     private function applyBrand(
         Builder $query,
+        ?Brand $brand,
         ?string $brandSlug,
     ): void {
-        if ($brandSlug === null) {
+        if ($brand instanceof Brand) {
+            $query->where(
+                'brand_id',
+                $brand->id,
+            );
+
+            return;
+        }
+
+        if (
+            $brandSlug === null
+            || trim($brandSlug) === ''
+        ) {
             return;
         }
 
         $query->whereHas(
             'brand',
-            static fn (Builder $brandQuery) => $brandQuery
-                ->where('brands.slug', $brandSlug)
-                ->where('brands.is_active', true),
+            static function (Builder $query) use ($brandSlug): void {
+                $query->where(
+                    'slug',
+                    $brandSlug,
+                )->where('is_active', true);
+            },
         );
     }
 
@@ -221,10 +248,7 @@ final readonly class StorefrontProductListingQuery
                 foreach ($attributes as $attributeSlug => $valueSlug) {
                     $variantQuery->whereHas(
                         'attributeValues',
-                        static function (Builder $valueQuery) use (
-                            $attributeSlug,
-                            $valueSlug,
-                        ): void {
+                        static function (Builder $valueQuery) use ($attributeSlug, $valueSlug): void {
                             $valueQuery
                                 ->where(
                                     'attribute_values.slug',

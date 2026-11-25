@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Support\Slugs;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 final class UniqueSlugGenerator
@@ -24,17 +25,48 @@ final class UniqueSlugGenerator
         $slug = $baseSlug;
         $suffix = 2;
 
-        while ($this->exists(
-            table: $table,
-            column: $column,
-            slug: $slug,
-            ignoreId: $ignoreId,
-        )) {
+        while (
+            $this->exists(
+                table: $table,
+                column: $column,
+                slug: $slug,
+                ignoreId: $ignoreId,
+            )
+            || $this->isReservedHistoricalSlug(
+                table: $table,
+                slug: $slug,
+            )
+        ) {
             $slug = $baseSlug.'-'.$suffix;
             $suffix++;
         }
 
         return $slug;
+    }
+
+    private function isReservedHistoricalSlug(
+        string $table,
+        string $slug,
+    ): bool {
+        if (! Schema::hasTable('seo_slug_redirects')) {
+            return false;
+        }
+
+        $entityType = match ($table) {
+            'products' => 'product',
+            'categories' => 'category',
+            'brands' => 'brand',
+            default => null,
+        };
+
+        if ($entityType === null) {
+            return false;
+        }
+
+        return DB::table('seo_slug_redirects')
+            ->where('entity_type', $entityType)
+            ->where('old_slug', $slug)
+            ->exists();
     }
 
     private function exists(

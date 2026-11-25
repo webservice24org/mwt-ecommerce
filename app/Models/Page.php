@@ -8,6 +8,8 @@ use App\Domain\PageBuilder\Enums\PageContentMode;
 use App\Domain\PageBuilder\Enums\PageLayout;
 use App\Domain\PageBuilder\Enums\PageStatus;
 use App\Domain\PageBuilder\Enums\PageType;
+use App\Domain\Seo\Concerns\HasSeoMeta;
+use App\Domain\Seo\Contracts\Seoable;
 use Database\Factories\PageFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -30,10 +32,10 @@ use Illuminate\Support\Carbon;
  * @property string|null $meta_description
  * @property Carbon|null $published_at
  */
-final class Page extends Model
+final class Page extends Model implements Seoable
 {
     /** @use HasFactory<PageFactory> */
-    use HasFactory;
+    use HasFactory, HasSeoMeta;
 
     protected $fillable = [
         'type',

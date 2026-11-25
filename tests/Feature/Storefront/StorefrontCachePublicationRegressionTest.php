@@ -387,7 +387,8 @@ final class StorefrontCachePublicationRegressionTest extends TestCase
 
         $this->get(
             '/products/'.$oldSlug,
-        )->assertNotFound();
+        )->assertStatus(301)
+            ->assertRedirect('/products/'.$updated->slug);
 
         $this->get(
             '/products/'.$updated->slug,

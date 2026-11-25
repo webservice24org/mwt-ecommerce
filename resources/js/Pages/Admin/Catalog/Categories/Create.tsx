@@ -2,6 +2,7 @@ import CategoryForm, { type CategoryFormData } from '@/Components/Admin/Catalog/
 import AdminLayout from '@/Layouts/Admin/AdminLayout'
 import type { CategoryParentOption } from '@/types/catalog'
 import { Link, useForm } from '@inertiajs/react'
+import { emptyEntitySeoFormData } from '@/types/seo'
 
 type Props = {
     parentCategories: CategoryParentOption[]
@@ -19,6 +20,7 @@ export default function Create({ parentCategories }: Props) {
         is_active: true,
         meta_title: '',
         meta_description: '',
+        seo: emptyEntitySeoFormData(),
     })
 
     return (

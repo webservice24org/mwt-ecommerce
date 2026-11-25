@@ -48,6 +48,35 @@ use App\Http\Controllers\Admin\Reports\SalesAnalyticsReportController;
 use App\Http\Controllers\Admin\Reviews\ProductReviewController;
 use App\Http\Controllers\Admin\SalesReportController;
 use App\Http\Controllers\Admin\SalesReportExportController;
+use App\Http\Controllers\Admin\Seo\AiCrawlerPolicyController;
+use App\Http\Controllers\Admin\Seo\AiSeoBulkApplicationController;
+use App\Http\Controllers\Admin\Seo\AiSeoBulkApplicationWorkspaceController;
+use App\Http\Controllers\Admin\Seo\AiSeoBulkExecutionController;
+use App\Http\Controllers\Admin\Seo\AiSeoBulkPlanController;
+use App\Http\Controllers\Admin\Seo\AiSeoBulkPlanShowController;
+use App\Http\Controllers\Admin\Seo\AiSeoBulkReviewController;
+use App\Http\Controllers\Admin\Seo\AiSeoBulkReviewWorkspaceController;
+use App\Http\Controllers\Admin\Seo\AiSeoBulkWorkspaceController;
+use App\Http\Controllers\Admin\Seo\AiSeoEntityWorkspaceActionController;
+use App\Http\Controllers\Admin\Seo\AiSeoEntityWorkspaceController;
+use App\Http\Controllers\Admin\Seo\AiSeoSuggestionReviewController;
+use App\Http\Controllers\Admin\Seo\AiSeoSuggestionsInboxController;
+use App\Http\Controllers\Admin\Seo\GenerativeSearchReadinessWorkspaceController;
+use App\Http\Controllers\Admin\Seo\GoogleAnalyticsPerformanceReportController;
+use App\Http\Controllers\Admin\Seo\MerchantFeedExportController;
+use App\Http\Controllers\Admin\Seo\MerchantReadinessController;
+use App\Http\Controllers\Admin\Seo\MerchantStructuredDataPolicyController;
+use App\Http\Controllers\Admin\Seo\SearchConsolePerformanceReportController;
+use App\Http\Controllers\Admin\Seo\SeoAiGovernanceAuditController;
+use App\Http\Controllers\Admin\Seo\SeoAuditInternalLinkReviewController;
+use App\Http\Controllers\Admin\Seo\SeoAuditInternalLinkWorkspaceController;
+use App\Http\Controllers\Admin\Seo\SeoAuditRunController;
+use App\Http\Controllers\Admin\Seo\SeoAuditWorkspaceController;
+use App\Http\Controllers\Admin\Seo\SeoMediaController;
+use App\Http\Controllers\Admin\Seo\SeoOverviewController;
+use App\Http\Controllers\Admin\Seo\SeoSettingsController;
+use App\Http\Controllers\Admin\Seo\SeoTechnicalHealthController;
+use App\Http\Controllers\Admin\Seo\UnifiedSeoPerformanceDashboardController;
 use App\Http\Controllers\Admin\ShipmentController;
 use App\Http\Controllers\Admin\Shipping\ShippingProviderAccountController;
 use App\Http\Controllers\Admin\Shipping\ShippingRateController;
@@ -127,6 +156,7 @@ Route::middleware([
     Route::delete('products/{product}/video', [ProductVideoController::class, 'destroy'])->name('products.video.destroy');
 
     Route::post('products/description-media', ProductDescriptionMediaController::class)->name('products.description-media.store');
+    Route::post('seo/media', SeoMediaController::class)->name('seo.media.store');
 
     Route::resource('pages', PageController::class)->except(['show']);
 
@@ -313,6 +343,61 @@ Route::middleware([
     Route::get('reports/operations/inventory/export.csv', InventoryOperationsCsvExportController::class)->name('reports.operations.inventory.csv');
     Route::get('reports/operations/action-queue', ActionQueueReportController::class)->name('reports.operations.action-queue');
     Route::get('reports/operations/action-queue/export.csv', ActionQueueCsvExportController::class)->name('reports.operations.action-queue.csv');
+
+    /*
+    |--------------------------------------------------------------------------
+    | SEO Management
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('seo/')->name('seo.')->group(function (): void {
+        Route::get('settings', [SeoSettingsController::class, 'edit'])->name('settings.edit');
+        Route::put('settings', [SeoSettingsController::class, 'update'])->name('settings.update');
+        Route::get('overview', SeoOverviewController::class)->name('overview');
+        Route::get('suggestions', AiSeoSuggestionsInboxController::class)->name('suggestions.index');
+        Route::post('suggestions/{suggestionId}/approve', [AiSeoSuggestionReviewController::class, 'approve'])->name('suggestions.approve');
+        Route::post('suggestions/{suggestionId}/reject', [AiSeoSuggestionReviewController::class, 'reject'])->name('suggestions.reject');
+
+        Route::get('entities/{entityType}/{entityId}', AiSeoEntityWorkspaceController::class)->name('entities.show');
+        Route::post('entities/{entityType}/{entityId}/analyze', [AiSeoEntityWorkspaceActionController::class, 'analyze'])->name('entities.analyze');
+        Route::post('entities/{entityType}/{entityId}/suggestions/generate', [AiSeoEntityWorkspaceActionController::class, 'generateSuggestions'])->name('entities.suggestions.generate');
+        Route::post('entities/{entityType}/{entityId}/analyses/{analysisId}/enrich', [AiSeoEntityWorkspaceActionController::class, 'enrichAnalysis'])->name('entities.analyses.enrich');
+
+        Route::get('technical-health', SeoTechnicalHealthController::class)->name('technical-health');
+        Route::get('bulk-ai', AiSeoBulkWorkspaceController::class)->name('bulk.index');
+        Route::post('bulk-ai/plans', [AiSeoBulkPlanController::class, 'store'])->name('bulk.plans.store');
+
+        Route::get('bulk-ai/plans/{bulkJobId}', AiSeoBulkPlanShowController::class)->name('bulk.plans.show');
+        Route::post('bulk-ai/plans/{bulkJobId}/execute', [AiSeoBulkExecutionController::class, 'execute'])->name('bulk.plans.execute');
+        Route::post('bulk-ai/plans/{bulkJobId}/retry-failed', [AiSeoBulkExecutionController::class, 'retryFailed'])->name('bulk.plans.retry-failed');
+
+        Route::get('bulk-ai/plans/{bulkJobId}/review', AiSeoBulkReviewWorkspaceController::class)->name('bulk.plans.review');
+        Route::post('bulk-ai/plans/{bulkJobId}/review', [AiSeoBulkReviewController::class, 'store'])->name('bulk.plans.review.store');
+        Route::get('bulk-ai/plans/{bulkJobId}/apply', AiSeoBulkApplicationWorkspaceController::class)->name('bulk.plans.apply');
+        Route::post('bulk-ai/plans/{bulkJobId}/apply', [AiSeoBulkApplicationController::class, 'store'])->name('bulk.plans.apply.store');
+
+        Route::get('generative-search/crawlers', [AiCrawlerPolicyController::class, 'index'])->name('generative-search.crawlers.index');
+        Route::put('generative-search/crawlers', [AiCrawlerPolicyController::class, 'update'])->name('generative-search.crawlers.update');
+
+        Route::get('generative-search/readiness', GenerativeSearchReadinessWorkspaceController::class)->name('generative-search.readiness');
+        Route::get('merchant/policies', [MerchantStructuredDataPolicyController::class, 'index'])->name('merchant.policies.index');
+        Route::put('merchant/policies', [MerchantStructuredDataPolicyController::class, 'update'])->name('merchant.policies.update');
+
+        Route::get('merchant/readiness', MerchantReadinessController::class)->name('merchant.readiness.index');
+        Route::post('merchant/exports', [MerchantFeedExportController::class, 'store'])->name('merchant.exports.store');
+        Route::post('merchant/exports/{export:public_id}/retry', [MerchantFeedExportController::class, 'retry'])->name('merchant.exports.retry');
+        Route::get('merchant/exports/{export:public_id}/download', [MerchantFeedExportController::class, 'download'])->middleware('throttle:30,1')->name('merchant.exports.download');
+
+        Route::get('audits', SeoAuditWorkspaceController::class)->name('audits.index');
+        Route::post('audits/runs', [SeoAuditRunController::class, 'store'])->middleware('throttle:3,1')->name('audits.runs.store');
+        Route::get('internal-links', SeoAuditInternalLinkWorkspaceController::class)->name('internal-links.index');
+        Route::patch('internal-links/{run:public_id}/{fingerprint}', [SeoAuditInternalLinkReviewController::class, 'update'])->where('fingerprint', '[a-f0-9]{64}')->middleware('throttle:30,1')->name('internal-links.review');
+        Route::get('performance/search-console', SearchConsolePerformanceReportController::class)->name('performance.search-console.index');
+        Route::get('performance/google-analytics', GoogleAnalyticsPerformanceReportController::class)->name('performance.google-analytics.index');
+        Route::get('performance', UnifiedSeoPerformanceDashboardController::class)->name('performance.index');
+        Route::get('ai-governance', SeoAiGovernanceAuditController::class)->name('ai-governance.index');
+
+    });
+
 });
 
 Route::middleware([

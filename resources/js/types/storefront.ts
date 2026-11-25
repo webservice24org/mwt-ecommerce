@@ -76,12 +76,15 @@ export interface StorefrontProductDetail {
     sku: string | null
     short_description: string | null
     description: string | null
+
     pricing: StorefrontPricing
+
     brand: StorefrontBrand | null
     categories: StorefrontCategory[]
     images: StorefrontImage[]
     video: StorefrontVideo | null
     variants: StorefrontVariant[]
+
     meta_title: string | null
     meta_description: string | null
 }
@@ -238,4 +241,14 @@ export interface StorefrontAuthUser {
 
 export interface StorefrontAuth {
     user: StorefrontAuthUser | null
+}
+
+export interface StorefrontBrandDetail {
+    id: number
+    name: string
+    slug: string
+    description: string | null
+    logo_url: string | null
+    meta_title: string | null
+    meta_description: string | null
 }

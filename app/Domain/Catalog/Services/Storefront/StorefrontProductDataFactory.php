@@ -51,11 +51,11 @@ final readonly class StorefrontProductDataFactory
             isFeatured: $product->is_featured,
             pricing: $pricing,
             image: $image instanceof ProductImage
-                ? $this->image($image)
-                : null,
+            ? $this->image($image)
+            : null,
             brand: $product->brand instanceof Brand
-                ? $this->brand($product->brand)
-                : null,
+            ? $this->brand($product->brand)
+            : null,
         );
     }
 
@@ -75,9 +75,11 @@ final readonly class StorefrontProductDataFactory
             shortDescription: $product->short_description,
             description: $product->description,
             pricing: $this->pricing($pricing),
+            trackInventory: $product->track_inventory,
+            stockQuantity: $product->stock_quantity,
             brand: $product->brand instanceof Brand
-                ? $this->brand($product->brand)
-                : null,
+            ? $this->brand($product->brand)
+            : null,
 
             categories: $product->categories
                 ->map(
@@ -171,6 +173,7 @@ final readonly class StorefrontProductDataFactory
             sku: $variant->sku,
             name: $variant->name,
             isDefault: $variant->is_default,
+            stockQuantity: $variant->stock_quantity,
             pricing: $this->pricing($pricing),
 
             attributeValues: $variant

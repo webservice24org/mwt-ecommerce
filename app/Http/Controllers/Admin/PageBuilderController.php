@@ -40,6 +40,8 @@ final class PageBuilderController extends Controller
             $page->id,
         );
 
+        $page->load('seoMeta');
+
         $pageData = $dataFactory->fromModel(
             $page,
         );

@@ -35,31 +35,53 @@ final class PageController extends Controller
             Page::class,
         );
 
-        $search = $request->string('search')
-            ->trim()
-            ->toString();
+        $search =
+            $request
+                ->string(
+                    'search',
+                )
+                ->trim()
+                ->toString();
 
-        $status = PageStatus::tryFrom(
-            $request->string('status')->toString(),
-        );
+        $status =
+            PageStatus::tryFrom(
+                $request
+                    ->string(
+                        'status',
+                    )
+                    ->toString(),
+            );
 
-        $type = PageType::tryFrom(
-            $request->string('type')->toString(),
-        );
+        $type =
+            PageType::tryFrom(
+                $request
+                    ->string(
+                        'type',
+                    )
+                    ->toString(),
+            );
 
-        $pages = $query->paginate(
-            search: $search,
-            status: $status,
-            type: $type,
-        );
+        $pages =
+            $query->paginate(
+                search: $search,
+
+                status: $status,
+
+                type: $type,
+            );
 
         $pages->through(
-            static fn (Page $page): array => PageIndexItemData::fromModel(
+            static fn (
+                Page $page,
+            ): array => PageIndexItemData::fromModel(
                 $page,
             )->toArray(),
         );
 
-        $admin = $request->user('admin');
+        $admin =
+            $request->user(
+                'admin',
+            );
 
         return Inertia::render(
             'Admin/PageBuilder/Pages/Index',
@@ -68,7 +90,9 @@ final class PageController extends Controller
 
                 'filters' => [
                     'search' => $search,
+
                     'status' => $status?->value,
+
                     'type' => $type?->value,
                 ],
 
@@ -109,9 +133,14 @@ final class PageController extends Controller
         StorePageRequest $request,
         CreatePageAction $action,
     ): RedirectResponse {
-        $page = $action->execute(
-            $request->toData(),
-        );
+        $page =
+            $action->execute(
+                data: $request->toData(),
+
+                seo: $request->hasSeoPayload()
+                ? $request->toSeoData()
+                : null,
+            );
 
         return to_route(
             'admin.pages.edit',
@@ -133,15 +162,31 @@ final class PageController extends Controller
             $page,
         );
 
-        $page = $query->findOrFail(
-            $page->id,
+        $page =
+            $query->findOrFail(
+                $page->id,
+            );
+
+        /*
+         * PageDataFactory requires both:
+         *
+         * sections
+         * seoMeta
+         *
+         * PageEditQuery already provides sections, while
+         * this ensures extended SEO is loaded as well.
+         */
+        $page->loadMissing(
+            'seoMeta',
         );
 
         return Inertia::render(
             'Admin/PageBuilder/Pages/Edit',
             [
                 'page' => $dataFactory
-                    ->fromModel($page)
+                    ->fromModel(
+                        $page,
+                    )
                     ->toArray(),
 
                 'options' => $options->get(),
@@ -155,8 +200,13 @@ final class PageController extends Controller
         UpdatePageAction $action,
     ): RedirectResponse {
         $action->execute(
-            $page,
-            $request->toData(),
+            page: $page,
+
+            data: $request->toData(),
+
+            seo: $request->hasSeoPayload()
+            ? $request->toSeoData()
+            : null,
         );
 
         return back()->with(
@@ -174,7 +224,9 @@ final class PageController extends Controller
             $page,
         );
 
-        $action->execute($page);
+        $action->execute(
+            $page,
+        );
 
         return to_route(
             'admin.pages.index',

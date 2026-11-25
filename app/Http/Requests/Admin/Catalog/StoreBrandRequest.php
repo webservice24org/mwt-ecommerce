@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Http\Requests\Admin\Catalog;
 
 use App\Domain\Catalog\Data\CreateBrandData;
+use App\Http\Requests\Admin\Catalog\Concerns\InteractsWithBrandSeo;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\UploadedFile;
 
 final class StoreBrandRequest extends FormRequest
 {
+    use InteractsWithBrandSeo;
+
     public function authorize(): bool
     {
         return true;
@@ -67,6 +70,7 @@ final class StoreBrandRequest extends FormRequest
                 'string',
                 'max:320',
             ],
+            ...$this->brandSeoRules(),
         ];
     }
 
@@ -87,6 +91,7 @@ final class StoreBrandRequest extends FormRequest
                 $this->input('meta_description'),
             ),
         ]);
+        $this->prepareBrandSeoForValidation();
     }
 
     public function toData(): CreateBrandData

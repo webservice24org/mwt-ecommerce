@@ -6,6 +6,7 @@ import StorefrontFilterPanel from './StorefrontFilterPanel'
 interface StorefrontMobileFiltersProps {
     filters: StorefrontProductFilters
     options: StorefrontFilterOptions
+    showBrands?: boolean
     showCategories?: boolean
     onBrandChange: (slug: string | null) => void
     onCategoryChange: (slug: string | null) => void
@@ -16,6 +17,7 @@ interface StorefrontMobileFiltersProps {
 export default function StorefrontMobileFilters({
     filters,
     options,
+    showBrands=true,
     showCategories = true,
     onBrandChange,
     onCategoryChange,
@@ -164,6 +166,7 @@ export default function StorefrontMobileFilters({
                             <StorefrontFilterPanel
                                 filters={filters}
                                 options={options}
+                                showBrands={showBrands}
                                 showCategories={showCategories}
                                 onBrandChange={onBrandChange}
                                 onCategoryChange={onCategoryChange}

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Frontend\BrandController;
 use App\Http\Controllers\Frontend\CartController;
 use App\Http\Controllers\Frontend\CartPromoCodeController;
 use App\Http\Controllers\Frontend\CategoryController;
@@ -13,6 +14,8 @@ use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\PageController as StorefrontPageController;
 use App\Http\Controllers\Frontend\ProductController;
 use App\Http\Controllers\Frontend\ProductReviewController;
+use App\Http\Controllers\Frontend\RobotsTxtController;
+use App\Http\Controllers\Frontend\SitemapController;
 use App\Http\Controllers\Frontend\WishlistController;
 use App\Http\Controllers\NewsletterSubscriberController;
 use App\Http\Controllers\ProfileController;
@@ -50,6 +53,29 @@ Route::post('/cart/promo-code', [CartPromoCodeController::class, 'store'])->midd
 
 Route::delete('/cart/promo-code', [CartPromoCodeController::class, 'destroy'])->name('cart.promo-code.destroy');
 
+Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap.index');
+
+Route::get(
+    '/{type}-sitemap-{part}.xml',
+    [SitemapController::class, 'show'],
+)
+    ->whereIn(
+        'type',
+        [
+            'products',
+            'categories',
+            'brands',
+            'pages',
+        ],
+    )
+    ->where(
+        'part',
+        '[1-9][0-9]*',
+    )
+    ->name(
+        'sitemap.part',
+    );
+
 /*
 |--------------------------------------------------------------------------
 | Checkout
@@ -82,6 +108,7 @@ Route::get('/products/{slug}', [ProductController::class, 'show'])->name('produc
 
 Route::get('/category/{slug}', [CategoryController::class, 'show'])->name('categories.show');
 
+Route::get('/brand/{slug}', [BrandController::class, 'show'])->name('brands.show');
 Route::get('/pages/{slug}', StorefrontPageController::class)->name('frontend.pages.show');
 
 /*
@@ -119,6 +146,8 @@ Route::middleware('auth')->group(function (): void {
 
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+Route::get('/robots.txt', RobotsTxtController::class)->name('robots.txt');
 
 /*
 |--------------------------------------------------------------------------

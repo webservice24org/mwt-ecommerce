@@ -6,6 +6,8 @@ namespace App\Models;
 
 use App\Domain\Catalog\Enums\ProductStatus;
 use App\Domain\Catalog\Enums\ProductType;
+use App\Domain\Seo\Concerns\HasSeoMeta;
+use App\Domain\Seo\Contracts\Seoable;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -37,10 +39,10 @@ use Illuminate\Support\Carbon;
  * @property bool $track_inventory
  * @property int $stock_quantity
  */
-final class Product extends Model
+final class Product extends Model implements Seoable
 {
     /** @use HasFactory<ProductFactory> */
-    use HasFactory;
+    use HasFactory, HasSeoMeta;
 
     protected $fillable = [
         'brand_id',

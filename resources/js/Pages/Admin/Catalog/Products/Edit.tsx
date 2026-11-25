@@ -10,6 +10,7 @@ import type {
 } from '@/types/catalog'
 import { Link, useForm } from '@inertiajs/react'
 import type { FormEvent } from 'react'
+import { entitySeoDataToFormData } from '@/types/seo'
 import type {
     ProductVariant,
     VariantAttributeOption,
@@ -55,6 +56,7 @@ export default function Edit({
         published_at: product.published_at ?? '',
         meta_title: product.meta_title ?? '',
         meta_description: product.meta_description ?? '',
+        seo: entitySeoDataToFormData(product.seo),
         category_ids: product.category_ids ?? [],
     })
 

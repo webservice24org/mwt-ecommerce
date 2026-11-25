@@ -2,56 +2,63 @@ import ProductDescription from '@/Components/Frontend/Catalog/ProductDetails/Pro
 import ProductDetailsLayout from '@/Components/Frontend/Catalog/ProductDetails/ProductDetailsLayout'
 import ProductGallery from '@/Components/Frontend/Catalog/ProductDetails/ProductGallery'
 import ProductReviewForm from '@/Components/Frontend/Catalog/ProductDetails/ProductReviewForm'
+import ProductReviewsSection from '@/Components/Frontend/Catalog/ProductDetails/ProductReviewsSection'
 import ProductSummary from '@/Components/Frontend/Catalog/ProductDetails/ProductSummary'
-import WishlistToggleButton from '@/Components/Frontend/Wishlist/WishlistToggleButton'
 import StorefrontBreadcrumbs from '@/Components/Frontend/Navigation/StorefrontBreadcrumbs'
 import StorefrontSeo from '@/Components/Frontend/Seo/StorefrontSeo'
+import ProductEntityFacts from '@/Components/Frontend/Seo/ProductEntityFacts'
+import WishlistToggleButton from '@/Components/Frontend/Wishlist/WishlistToggleButton'
 import FrontendLayout from '@/Layouts/Frontend/FrontendLayout'
-import { buildBreadcrumbJsonLd } from '@/lib/storefrontSeo'
-import ProductReviewsSection from '@/Components/Frontend/Catalog/ProductDetails/ProductReviewsSection'
+
 import type {
     StorefrontProductReviews,
     StorefrontProductReviewState,
 } from '@/types/product-review'
 
 import type {
+    ResolvedSeo,
+} from '@/types/seo'
+
+import type {
+    StructuredDataDocument,
+} from '@/types/structured-data'
+
+import type {
     StorefrontBreadcrumbItem,
     StorefrontProductDetail,
 } from '@/types/storefront'
-
 
 interface Props {
     product: StorefrontProductDetail
     reviewState: StorefrontProductReviewState
     reviews: StorefrontProductReviews
+    seo: ResolvedSeo
+
+    structuredData:
+        | StructuredDataDocument
+        | null
+
+    selectedVariantId:
+        number | null
 }
 
 export default function Show({
     product,
     reviewState,
     reviews,
+    seo,
+    structuredData,
+    selectedVariantId,
 }: Props) {
-    const pageTitle =
-        product.meta_title?.trim() ||
-        product.name
-
-    const metaDescription =
-        product.meta_description?.trim() ||
-        product.short_description?.trim() ||
-        null
-
-    const canonicalPath =
-        `/products/${product.slug}`
-
-    const seoImage =
-        product.images[0]?.url ??
-        null
+    const preferredSocialImage =
+        product.images[0] ?? null
 
     const primaryCategory =
-        product.categories[0] ??
-        null
+        product.categories[0]
+        ?? null
 
-    const breadcrumbs: StorefrontBreadcrumbItem[] =
+    const breadcrumbs:
+        StorefrontBreadcrumbItem[] =
         [
             {
                 label:
@@ -87,29 +94,25 @@ export default function Show({
             },
         ]
 
-    const breadcrumbJsonLd =
-        buildBreadcrumbJsonLd(
-            breadcrumbs,
-        )
-
     return (
         <FrontendLayout>
+            {/*
+             * SEO and JSON-LD are authoritative Laravel
+             * payloads.
+             *
+             * ?variant= is a storefront selection deep link;
+             * it does not replace the base Product canonical.
+             */}
             <StorefrontSeo
-                title={
-                    pageTitle
-                }
-                description={
-                    metaDescription
-                }
-                canonicalPath={
-                    canonicalPath
-                }
-                image={
-                    seoImage
+                seo={
+                    seo
                 }
                 type="product"
+                imageMetadata={
+                    preferredSocialImage
+                }
                 jsonLd={
-                    breadcrumbJsonLd
+                    structuredData
                 }
             />
 
@@ -150,8 +153,17 @@ export default function Show({
                                 product={
                                     product
                                 }
+                                initialVariantId={
+                                    selectedVariantId
+                                }
                             />
                         </div>
+                    }
+                />
+
+                <ProductEntityFacts
+                    product={
+                        product
                     }
                 />
 
@@ -167,7 +179,9 @@ export default function Show({
 
                 <div className="mt-12 lg:mt-16">
                     <ProductReviewsSection
-                        reviews={reviews}
+                        reviews={
+                            reviews
+                        }
                     />
                 </div>
 

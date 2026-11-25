@@ -22,7 +22,7 @@ import {
     Tag,
     Tags,
     Ticket,
-    X, BarChart3, Summary,
+    X, BarChart3, Summary, Bot,Search,Settings2,Sparkles,Wrench, Database, CalendarSearch,ChartNoAxesCombined,
     type LucideIcon,
 } from 'lucide-react'
 import { useState } from 'react'
@@ -188,6 +188,70 @@ const websiteSettingsNavigation: NavigationGroup =
         ],
     }
 
+    const seoNavigation: NavigationGroup = {
+    label: 'SEO',
+    icon: Search,
+    match: '/admin/seo',
+
+    children: [
+        {
+            label: 'SEO Settings',
+            href: route(
+                'admin.seo.settings.edit',
+            ),
+            match:
+                '/admin/seo/settings',
+            icon: Settings2,
+        },
+
+        {
+            label: 'SEO Overview',
+            href: route('admin.seo.overview'),
+            match:'/admin/seo/overview',
+            icon: Search,
+        },
+
+        {
+            label: 'AI Suggestions',
+            href: route('admin.seo.suggestions.index'),
+            match: '/admin/seo/suggestions',
+            icon: Sparkles,
+        },
+
+        {
+            label: 'AI SEO',
+            href: route('admin.seo.bulk.index'),
+            match: '/admin/seo/bulk-ai',
+            icon: Bot,
+        },
+        {
+            label: 'Merchant Readiness',
+            href: route('admin.seo.merchant.readiness.index'),
+            match: 'admin/seo/merchant/readiness',
+            icon: Database,
+        },
+        {
+            label: 'Technical Health',
+            href: route('admin.seo.technical-health'),
+            match: 'admin/seo/technical-health',
+            icon: Wrench,
+        },
+        {
+            label: 'Search Performance',
+            href: route('admin.seo.performance.search-console.index'),
+            match: 'admin/seo/performance/search-console',
+            icon: CalendarSearch,
+        },
+        {
+            label: 'Google Analytics',
+            href: route('admin.seo.performance.google-analytics.index'),
+            match: 'admin/seo/performance/google-analytics',
+            icon: ChartNoAxesCombined,
+        },
+        
+    ],
+}
+
 export default function AdminSidebar({
     open,
     onClose,
@@ -222,6 +286,18 @@ export default function AdminSidebar({
             '/admin/website-settings',
         )
 
+    const seoSectionActive =
+        url.startsWith(
+            '/admin/seo',
+        ) || 
+        url.startsWith('/admin/seo/overview')||
+        url.startsWith('/admin/seo/suggestions')||
+        url.startsWith('/admin/seo/technical-health')||
+        url.startsWith('/merchant/readiness') ||
+        url.startsWith('/admin/seo/bulk-ai') ||
+        url.startsWith('/admin/seo/performance/search-console') ||
+        url.startsWith('/admin/seo/performance/google-analytics') 
+        
     const storeSectionActive =
         url.startsWith(
             '/admin/orders',
@@ -289,6 +365,13 @@ export default function AdminSidebar({
     )
 
     const [
+        seoOpen,
+        setSeoOpen,
+    ] = useState(
+        seoSectionActive,
+    )
+
+    const [
         storeOpen,
         setStoreOpen,
     ] = useState(
@@ -312,6 +395,10 @@ export default function AdminSidebar({
     const showWebsiteSettings =
         websiteSettingsActive ||
         websiteSettingsOpen
+
+    const showSeo =
+        seoSectionActive ||
+        seoOpen
 
     const showStore =
         storeSectionActive ||
@@ -732,6 +819,101 @@ export default function AdminSidebar({
                         </div>
                     </div>
 
+                    {/* SEO */}
+                    <div className="mt-7">
+                        <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-neutral-400">
+                            Search
+                        </p>
+
+                        <div className="space-y-1">
+                            <button
+                                type="button"
+                                aria-expanded={
+                                    showSeo
+                                }
+                                aria-controls="admin-seo-navigation"
+                                onClick={() =>
+                                    setSeoOpen(
+                                        (
+                                            current,
+                                        ) =>
+                                            !current,
+                                    )
+                                }
+                                className={[
+                                    'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
+
+                                    seoSectionActive
+                                        ? 'bg-neutral-100 text-neutral-950'
+                                        : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950',
+                                ].join(
+                                    ' ',
+                                )}
+                            >
+                                <seoNavigation.icon
+                                    className={[
+                                        'h-4 w-4 shrink-0',
+
+                                        seoSectionActive
+                                            ? 'text-neutral-900'
+                                            : 'text-neutral-400',
+                                    ].join(
+                                        ' ',
+                                    )}
+                                    strokeWidth={
+                                        1.9
+                                    }
+                                    aria-hidden="true"
+                                />
+
+                                <span className="flex-1 text-left">
+                                    {
+                                        seoNavigation.label
+                                    }
+                                </span>
+
+                                <ChevronDown
+                                    className={[
+                                        'h-4 w-4 text-neutral-400 transition-transform duration-200',
+
+                                        showSeo
+                                            ? 'rotate-180'
+                                            : '',
+                                    ].join(
+                                        ' ',
+                                    )}
+                                    aria-hidden="true"
+                                />
+                            </button>
+
+                            <div
+                                id="admin-seo-navigation"
+                                className={[
+                                    'grid transition-all duration-200',
+
+                                    showSeo
+                                        ? 'grid-rows-[1fr]'
+                                        : 'grid-rows-[0fr]',
+                                ].join(
+                                    ' ',
+                                )}
+                            >
+                                <div className="overflow-hidden">
+                                    <div className="relative ml-5 mt-1 space-y-1 border-l border-neutral-200 pl-3">
+                                        {seoNavigation.children.map(
+                                            (
+                                                item,
+                                            ) =>
+                                                renderNavigationItem(
+                                                    item,
+                                                    true,
+                                                ),
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     {/* Store */}
                     <div className="mt-7">
                         <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-neutral-400">

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\Catalog\Actions;
 
 use App\Domain\Catalog\Data\CreateBrandData;
+use App\Domain\Seo\Data\EntitySeoData;
+use App\Domain\Seo\Repositories\EntitySeoRepository;
 use App\Models\Brand;
 use App\Support\Cache\StorefrontCatalogCache;
 use App\Support\Media\ImageStorageService;
@@ -19,11 +21,13 @@ final readonly class CreateBrandAction
         private UniqueSlugGenerator $slugGenerator,
         private ImageStorageService $imageStorage,
         private StorefrontCatalogCache $storefrontCache,
+        private EntitySeoRepository $seoRepository,
     ) {}
 
     public function execute(
         CreateBrandData $data,
         ?UploadedFile $logo = null,
+        ?EntitySeoData $seo = null,
     ): Brand {
         $logoPath = null;
 
@@ -36,17 +40,14 @@ final readonly class CreateBrandAction
             }
 
             $brand = DB::transaction(
-                function () use (
-                    $data,
-                    $logoPath,
-                ): Brand {
+                function () use ($data, $logoPath, $seo): Brand {
                     $slug = $this->slugGenerator->generate(
                         table: 'brands',
                         column: 'slug',
                         value: $data->slug ?? $data->name,
                     );
 
-                    return Brand::query()->create([
+                    $brand = Brand::query()->create([
                         'name' => $data->name,
                         'slug' => $slug,
                         'description' => $data->description,
@@ -56,6 +57,23 @@ final readonly class CreateBrandAction
                         'meta_title' => $data->metaTitle,
                         'meta_description' => $data->metaDescription,
                     ]);
+
+                    if (
+                        $seo !== null
+                    ) {
+                        $this
+                            ->seoRepository
+                            ->save(
+                                $brand,
+                                $seo,
+                            );
+                    }
+
+                    return $brand
+                        ->refresh()
+                        ->load([
+                            'seoMeta',
+                        ]);
                 },
             );
         } catch (Throwable $exception) {

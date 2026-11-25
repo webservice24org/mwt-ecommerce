@@ -1,0 +1,114 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Seo\Audit;
+
+use PHPUnit\Framework\TestCase;
+
+final class SeoAuditQueuedOrchestrationContractTest extends TestCase
+{
+    public function test_n6_keeps_the_pipeline_bounded_queued_retry_safe_and_non_interactive(): void
+    {
+        $projectRoot = dirname(__DIR__, 4);
+
+        $job = file_get_contents(
+            $projectRoot.'/app/Jobs/Seo/Audit/ProcessSeoAuditRun.php',
+        );
+        $orchestrator = file_get_contents(
+            $projectRoot.'/app/Domain/Seo/Audit/Services/SeoAuditQueuedOrchestrator.php',
+        );
+        $crawler = file_get_contents(
+            $projectRoot.'/app/Domain/Seo/Audit/Services/SeoAuditBoundedCrawler.php',
+        );
+
+        self::assertIsString($job);
+        self::assertIsString($orchestrator);
+        self::assertIsString($crawler);
+
+        self::assertStringContainsString(
+            'ShouldBeUniqueUntilProcessing',
+            $job,
+        );
+        self::assertStringContainsString(
+            'WithoutOverlapping',
+            $job,
+        );
+        self::assertStringContainsString(
+            'public int $tries = 3;',
+            $job,
+        );
+        self::assertStringContainsString(
+            'audit_job_failed',
+            $job,
+        );
+
+        self::assertStringContainsString(
+            'CRAWL_FETCHES_PER_QUEUE_PASS = 50',
+            $orchestrator,
+        );
+        self::assertStringContainsString(
+            'MAX_QUEUE_PASSES = 125',
+            $orchestrator,
+        );
+        self::assertStringContainsString(
+            'IMAGE_HEALTH_CHECKS_PER_QUEUE_PASS = 50',
+            $orchestrator,
+        );
+        self::assertStringContainsString(
+            '$this->imageHealth->enrichChunk(',
+            $orchestrator,
+        );
+
+        $catalog = strpos(
+            $orchestrator,
+            '$this->catalog->seed(',
+        );
+        $crawl = strpos(
+            $orchestrator,
+            '$this->crawler->execute(',
+        );
+        $images = strpos(
+            $orchestrator,
+            '$this->imageHealth->enrich(',
+        );
+        $rules = strpos(
+            $orchestrator,
+            '$this->rules->evaluate(',
+        );
+        $complete = strpos(
+            $orchestrator,
+            '$this->lifecycle->complete(',
+        );
+
+        self::assertIsInt($catalog);
+        self::assertIsInt($crawl);
+        self::assertIsInt($images);
+        self::assertIsInt($rules);
+        self::assertIsInt($complete);
+
+        self::assertTrue(
+            $catalog < $crawl
+            && $crawl < $images
+            && $images < $rules
+            && $rules < $complete,
+        );
+
+        self::assertStringContainsString(
+            '?int $maxFetches = null',
+            $crawler,
+        );
+        self::assertStringContainsString(
+            '$fetches',
+            $crawler,
+        );
+        self::assertStringNotContainsString(
+            'OpenAI',
+            $orchestrator,
+        );
+        self::assertStringNotContainsString(
+            'router.',
+            $orchestrator,
+        );
+    }
+}

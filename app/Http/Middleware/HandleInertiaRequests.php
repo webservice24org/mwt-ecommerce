@@ -6,6 +6,8 @@ use App\Domain\Cart\Services\CartPromoPricingService;
 use App\Domain\Cart\Services\CartService;
 use App\Domain\Catalog\Queries\Storefront\StorefrontCategoryMenuQuery;
 use App\Domain\FooterBuilder\Storefront\FooterStorefrontResolver;
+use App\Domain\Seo\Services\SeoSettingsService;
+use App\Domain\Seo\StructuredData\Services\GlobalStructuredDataResolver;
 use App\Domain\Wishlist\Services\WishlistService;
 use App\Models\HeaderSetting;
 use App\Models\User;
@@ -191,9 +193,70 @@ class HandleInertiaRequests extends Middleware
                 ];
             },
 
+            'storefrontStructuredData' => function () use ($request): ?array {
+                /*
+                 * Global Organization/WebSite structured data
+                 * belongs only to the public storefront.
+                 */
+                if (
+                    $request->routeIs(
+                        'admin.*',
+                    )
+                ) {
+                    return null;
+                }
+
+                $settings =
+                    app(
+                        SeoSettingsService::class,
+                    )->get();
+
+                return app(
+                    GlobalStructuredDataResolver::class,
+                )
+                    ->resolve(
+                        $settings,
+                    )
+                    ?->toArray();
+            },
+
             'storefrontCategoryMenu' => fn (): array => app(
                 StorefrontCategoryMenuQuery::class,
             )->get(),
+
+            'storefrontSocialSeo' => static function () use ($request): ?array {
+                /*
+                 * Social metadata settings only belong to the
+                 * public storefront. Do not query/share them
+                 * for Admin Inertia pages.
+                 */
+                if (
+                    $request->routeIs(
+                        'admin.*',
+                    )
+                ) {
+                    return null;
+                }
+
+                $settings =
+                    app(
+                        SeoSettingsService::class,
+                    )->get();
+
+                return [
+
+                    'site_name' => $settings->siteName,
+                    'default_og_image' => $settings->defaultOgImage,
+
+                    'enable_open_graph' => $settings->enableOpenGraph,
+
+                    'enable_twitter_cards' => $settings->enableTwitterCards,
+
+                    'twitter_card' => $settings->twitterCard,
+
+                ];
+            },
+
         ];
     }
 }

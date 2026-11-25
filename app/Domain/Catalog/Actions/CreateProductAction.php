@@ -7,6 +7,8 @@ namespace App\Domain\Catalog\Actions;
 use App\Domain\Catalog\Data\CreateProductData;
 use App\Domain\Catalog\Services\ProductCommercialIntegrityService;
 use App\Domain\Catalog\Services\ProductDescriptionContentService;
+use App\Domain\Seo\Data\EntitySeoData;
+use App\Domain\Seo\Repositories\EntitySeoRepository;
 use App\Models\Product;
 use App\Support\Cache\StorefrontCatalogCache;
 use App\Support\Slugs\UniqueSlugGenerator;
@@ -19,10 +21,12 @@ final readonly class CreateProductAction
         private ProductCommercialIntegrityService $commercialIntegrity,
         private ProductDescriptionContentService $descriptionContent,
         private StorefrontCatalogCache $storefrontCache,
+        private EntitySeoRepository $seoRepository,
     ) {}
 
     public function execute(
         CreateProductData $data,
+        ?EntitySeoData $seo = null,
     ): Product {
         $this->commercialIntegrity
             ->assertProductDataIsValid(
@@ -33,7 +37,7 @@ final readonly class CreateProductAction
             );
 
         $product = DB::transaction(
-            function () use ($data): Product {
+            function () use ($data, $seo): Product {
                 $slug = $this->slugGenerator
                     ->generate(
                         table: 'products',
@@ -101,11 +105,23 @@ final readonly class CreateProductAction
                         $data->categoryIds,
                     );
 
+                if (
+                    $seo !== null
+                ) {
+                    $this
+                        ->seoRepository
+                        ->save(
+                            $product,
+                            $seo,
+                        );
+                }
+
                 return $product
                     ->refresh()
                     ->load([
                         'brand',
                         'categories',
+                        'seoMeta',
                     ]);
             },
         );

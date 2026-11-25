@@ -2,6 +2,7 @@ import CategoryForm, { type CategoryFormData } from '@/Components/Admin/Catalog/
 import AdminLayout from '@/Layouts/Admin/AdminLayout'
 import type { Category, CategoryParentOption } from '@/types/catalog'
 import { Link, useForm } from '@inertiajs/react'
+import { entitySeoDataToFormData } from '@/types/seo'
 
 type Props = {
     category: Category
@@ -20,6 +21,7 @@ export default function Edit({ category, parentCategories }: Props) {
         is_active: category.is_active,
         meta_title: category.meta_title ?? '',
         meta_description: category.meta_description ?? '',
+        seo: entitySeoDataToFormData(category.seo),
     })
 
     return (

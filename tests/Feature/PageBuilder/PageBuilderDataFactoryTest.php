@@ -37,7 +37,7 @@ final class PageBuilderDataFactoryTest extends TestCase
         ]);
 
         $page = Page::query()
-            ->with('sections')
+            ->with(['sections', 'seoMeta'])
             ->findOrFail($page->id);
 
         $data = app(PageDataFactory::class)

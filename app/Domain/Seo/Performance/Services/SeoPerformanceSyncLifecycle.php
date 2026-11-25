@@ -1,0 +1,187 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domain\Seo\Performance\Services;
+
+use App\Domain\Seo\Performance\Enums\SeoPerformanceConnectionStatus;
+use App\Domain\Seo\Performance\Enums\SeoPerformanceSyncMode;
+use App\Domain\Seo\Performance\Enums\SeoPerformanceSyncScope;
+use App\Domain\Seo\Performance\Enums\SeoPerformanceSyncStatus;
+use App\Models\Admin;
+use App\Models\SeoPerformanceConnection;
+use App\Models\SeoPerformanceSyncRun;
+use DateTimeInterface;
+use DomainException;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+
+final class SeoPerformanceSyncLifecycle
+{
+    public const MAX_DAYS_PER_SYNC = 90;
+
+    public function request(
+        SeoPerformanceConnection $connection,
+        SeoPerformanceSyncScope $scope,
+        SeoPerformanceSyncMode $mode,
+        DateTimeInterface $dateFrom,
+        DateTimeInterface $dateTo,
+        ?Admin $admin = null,
+    ): SeoPerformanceSyncRun {
+        $from = $dateFrom->format('Y-m-d');
+        $to = $dateTo->format('Y-m-d');
+        $fromTimestamp = strtotime($from.' 00:00:00 UTC');
+        $toTimestamp = strtotime($to.' 00:00:00 UTC');
+
+        if ($fromTimestamp === false || $toTimestamp === false || $fromTimestamp > $toTimestamp) {
+            throw new DomainException('A valid performance synchronization date range is required.');
+        }
+
+        $days = (int) floor(($toTimestamp - $fromTimestamp) / 86400) + 1;
+        if ($days > self::MAX_DAYS_PER_SYNC) {
+            throw new DomainException('Performance synchronization windows are limited to 90 days per run.');
+        }
+
+        return DB::transaction(function () use (
+            $connection,
+            $scope,
+            $mode,
+            $from,
+            $to,
+            $admin,
+        ): SeoPerformanceSyncRun {
+            $current = SeoPerformanceConnection::query()
+                ->lockForUpdate()
+                ->findOrFail($connection->getKey());
+
+            if ($current->status !== SeoPerformanceConnectionStatus::Active) {
+                throw new DomainException('Only active performance connections may be synchronized.');
+            }
+
+            $required = $scope->requiredCapability()->value;
+            if (! in_array($required, $current->capabilities, true)) {
+                throw new DomainException('The selected provider does not expose the requested performance capability.');
+            }
+
+            return SeoPerformanceSyncRun::query()->create([
+                'public_id' => Str::uuid()->toString(),
+                'seo_performance_connection_id' => $current->getKey(),
+                'scope' => $scope,
+                'mode' => $mode,
+                'status' => SeoPerformanceSyncStatus::Queued,
+                'date_from' => $from,
+                'date_to' => $to,
+                'requested_by_admin_id' => $admin?->getKey(),
+                'requested_by_name' => $admin?->name,
+                'requested_by_email' => $admin?->email,
+                'attempt_count' => 0,
+                'rows_received' => 0,
+                'rows_persisted' => 0,
+                'queued_at' => now(),
+            ]);
+        });
+    }
+
+    public function start(SeoPerformanceSyncRun $run): SeoPerformanceSyncRun
+    {
+        return DB::transaction(function () use ($run): SeoPerformanceSyncRun {
+            $current = SeoPerformanceSyncRun::query()
+                ->lockForUpdate()
+                ->findOrFail($run->getKey());
+
+            if ($current->status === SeoPerformanceSyncStatus::Running) {
+                return $current;
+            }
+            if ($current->status !== SeoPerformanceSyncStatus::Queued) {
+                throw new DomainException('Only queued performance synchronizations may be started.');
+            }
+
+            $current->forceFill([
+                'status' => SeoPerformanceSyncStatus::Running,
+                'attempt_count' => $current->attempt_count + 1,
+                'started_at' => $current->started_at ?? now(),
+                'failure_code' => null,
+                'failure_message' => null,
+                'failed_at' => null,
+            ])->save();
+
+            return $current->refresh();
+        });
+    }
+
+    public function complete(
+        SeoPerformanceSyncRun $run,
+        int $rowsReceived,
+        int $rowsPersisted,
+    ): SeoPerformanceSyncRun {
+        if ($rowsReceived < 0 || $rowsPersisted < 0 || $rowsPersisted > $rowsReceived) {
+            throw new DomainException('Performance synchronization row counts are invalid.');
+        }
+
+        return DB::transaction(function () use ($run, $rowsReceived, $rowsPersisted): SeoPerformanceSyncRun {
+            $current = SeoPerformanceSyncRun::query()
+                ->lockForUpdate()
+                ->findOrFail($run->getKey());
+
+            if ($current->status === SeoPerformanceSyncStatus::Completed) {
+                return $current;
+            }
+            if ($current->status !== SeoPerformanceSyncStatus::Running) {
+                throw new DomainException('Only running performance synchronizations may be completed.');
+            }
+
+            $current->forceFill([
+                'status' => SeoPerformanceSyncStatus::Completed,
+                'rows_received' => $rowsReceived,
+                'rows_persisted' => $rowsPersisted,
+                'completed_at' => now(),
+                'failure_code' => null,
+                'failure_message' => null,
+                'failed_at' => null,
+            ])->save();
+
+            return $current->refresh();
+        });
+    }
+
+    public function fail(
+        SeoPerformanceSyncRun $run,
+        string $code,
+        string $message,
+    ): SeoPerformanceSyncRun {
+        $code = Str::limit(trim($code), 80, '');
+        $message = Str::limit(trim($message), 500, '');
+
+        if ($code === '') {
+            $code = 'sync_failed';
+        }
+        if ($message === '') {
+            $message = 'Performance synchronization failed.';
+        }
+
+        return DB::transaction(function () use ($run, $code, $message): SeoPerformanceSyncRun {
+            $current = SeoPerformanceSyncRun::query()
+                ->lockForUpdate()
+                ->findOrFail($run->getKey());
+
+            if ($current->status === SeoPerformanceSyncStatus::Failed) {
+                return $current;
+            }
+            if (! in_array($current->status, [
+                SeoPerformanceSyncStatus::Queued,
+                SeoPerformanceSyncStatus::Running,
+            ], true)) {
+                throw new DomainException('This performance synchronization can no longer fail.');
+            }
+
+            $current->forceFill([
+                'status' => SeoPerformanceSyncStatus::Failed,
+                'failure_code' => $code,
+                'failure_message' => $message,
+                'failed_at' => now(),
+            ])->save();
+
+            return $current->refresh();
+        });
+    }
+}

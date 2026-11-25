@@ -1,5 +1,6 @@
 import { Link, useForm } from '@inertiajs/react'
 import type { FormEvent } from 'react'
+import {emptyEntitySeoFormData,} from '@/types/seo'
 
 import AdminLayout from '@/Layouts/Admin/AdminLayout'
 import type { PageFormOptions, PageFormValues } from '@/types/page-builder'
@@ -22,6 +23,8 @@ export default function Create({ options }: Props) {
         content: '',
         meta_title: '',
         meta_description: '',
+         seo_meta:
+            emptyEntitySeoFormData(),
         published_at: '',
     })
 

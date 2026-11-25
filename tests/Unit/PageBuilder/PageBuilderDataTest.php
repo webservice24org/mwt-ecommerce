@@ -139,6 +139,15 @@ final class PageBuilderDataTest extends TestCase
             [
                 'meta_title' => 'Store Home',
                 'meta_description' => 'Store homepage.',
+                'canonical_url' => null,
+                'robots_index' => null,
+                'robots_follow' => null,
+                'og_title' => null,
+                'og_description' => null,
+                'og_image' => null,
+                'twitter_title' => null,
+                'twitter_description' => null,
+                'twitter_image' => null,
             ],
             $payload['seo'],
         );

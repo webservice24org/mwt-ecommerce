@@ -7,12 +7,15 @@ namespace App\Http\Requests\Admin\Catalog;
 use App\Domain\Catalog\Data\UpdateProductData;
 use App\Domain\Catalog\Enums\ProductStatus;
 use App\Domain\Catalog\Enums\ProductType;
+use App\Http\Requests\Admin\Catalog\Concerns\InteractsWithProductSeo;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 final class UpdateProductRequest extends FormRequest
 {
+    use InteractsWithProductSeo;
+
     public function authorize(): bool
     {
         return true;
@@ -53,6 +56,7 @@ final class UpdateProductRequest extends FormRequest
                 $this->input('published_at'),
             ),
         ]);
+        $this->prepareProductSeoForValidation();
     }
 
     /**
@@ -162,6 +166,7 @@ final class UpdateProductRequest extends FormRequest
                 'distinct',
                 'exists:categories,id',
             ],
+            ...$this->productSeoRules(),
         ];
     }
 

@@ -1,4 +1,5 @@
 import ProductVideoViewer from '@/Components/Frontend/Catalog/ProductDetails/ProductVideoViewer'
+import type { StorefrontImage } from '@/types/storefront'
 import type { StorefrontMedia } from '@/types/storefront-media'
 import { useState } from 'react'
 
@@ -23,16 +24,20 @@ export default function ProductGalleryViewer({
         imagePosition !== undefined ? `${productName} — image ${imagePosition}` : productName
 
     return (
-        <GalleryImage key={media.image.id} src={media.image.url} alt={customAlt || fallbackAlt} />
+        <GalleryImage
+            key={media.image.id}
+            image={media.image}
+            alt={customAlt || fallbackAlt}
+        />
     )
 }
 
 interface GalleryImageProps {
-    src: string
+    image: StorefrontImage
     alt: string
 }
 
-function GalleryImage({ src, alt }: GalleryImageProps) {
+function GalleryImage({ image, alt }: GalleryImageProps) {
     const [failed, setFailed] = useState(false)
 
     if (failed) {
@@ -52,11 +57,14 @@ function GalleryImage({ src, alt }: GalleryImageProps) {
     return (
         <div className="aspect-square w-full min-w-0 overflow-hidden rounded-2xl bg-neutral-100">
             <img
-                src={src}
+                src={image.url}
                 alt={alt}
-                onError={() => setFailed(true)}
+                width={image.width ?? undefined}
+                height={image.height ?? undefined}
+                loading="eager"
                 decoding="async"
                 fetchPriority="high"
+                onError={() => setFailed(true)}
                 className="h-full w-full object-contain"
             />
         </div>

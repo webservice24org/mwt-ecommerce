@@ -7,6 +7,9 @@ namespace App\Domain\Catalog\Actions;
 use App\Domain\Catalog\Data\UpdateProductData;
 use App\Domain\Catalog\Services\ProductCommercialIntegrityService;
 use App\Domain\Catalog\Services\ProductDescriptionContentService;
+use App\Domain\Seo\Data\EntitySeoData;
+use App\Domain\Seo\Redirects\Services\SeoSlugRedirectHistory;
+use App\Domain\Seo\Repositories\EntitySeoRepository;
 use App\Models\Product;
 use App\Support\Cache\StorefrontCatalogCache;
 use App\Support\Slugs\UniqueSlugGenerator;
@@ -17,22 +20,29 @@ final readonly class UpdateProductAction
     public function __construct(
         private UniqueSlugGenerator $slugGenerator,
         private ProductCommercialIntegrityService $commercialIntegrity,
-        private ProductDescriptionContentService $descriptionContent,
         private StorefrontCatalogCache $storefrontCache,
+        private ProductDescriptionContentService $descriptionContent,
+        private ?EntitySeoRepository $seoRepository = null,
+        private ?SeoSlugRedirectHistory $slugRedirects = null,
     ) {}
 
     public function execute(
         Product $product,
         UpdateProductData $data,
+        ?EntitySeoData $seo = null,
     ): Product {
         $updatedProduct = DB::transaction(
-            function () use ($product, $data): Product {
+            function () use (
+                $product,
+                $data,
+                $seo,
+            ): Product {
                 $lockedProduct = Product::query()
-                    ->whereKey(
-                        $product->id,
-                    )
+                    ->whereKey($product->id)
                     ->lockForUpdate()
                     ->firstOrFail();
+
+                $oldSlug = $lockedProduct->slug;
 
                 $this->commercialIntegrity
                     ->assertProductDataIsValid(
@@ -56,65 +66,55 @@ final readonly class UpdateProductAction
                         proposedCompareAtPrice: $data->compareAtPrice,
                     );
 
-                $slug = $this->slugGenerator
-                    ->generate(
-                        table: 'products',
-                        column: 'slug',
-                        value: $data->slug
-                        ?? $data->name,
-                        ignoreId: $lockedProduct->id,
-                    );
-
-                /*
-                 * Sanitize the submitted HTML and move
-                 * any referenced temporary editor media
-                 * before persisting the description.
-                 */
-                $description = $this
-                    ->descriptionContent
-                    ->prepare(
-                        html: $data->description,
-                        productId: $lockedProduct->id,
-                    );
+                $slug = $this->slugGenerator->generate(
+                    table: 'products',
+                    column: 'slug',
+                    value: $data->slug ?? $data->name,
+                    ignoreId: $lockedProduct->id,
+                );
 
                 $lockedProduct->update([
                     'brand_id' => $data->brandId,
-
                     'type' => $data->type,
-
                     'sku' => $data->sku,
-
                     'price' => $data->price,
-
                     'compare_at_price' => $data->compareAtPrice,
-
                     'cost_price' => $data->costPrice,
-
                     'name' => $data->name,
-
                     'slug' => $slug,
-
                     'short_description' => $data->shortDescription,
-
-                    'description' => $description,
-
+                    'description' => $this->descriptionContent->prepare(
+                        html: $data->description,
+                        productId: $lockedProduct->id,
+                    ),
                     'status' => $data->status,
-
                     'is_featured' => $data->isFeatured,
-
                     'position' => $data->position,
-
                     'published_at' => $data->publishedAt,
-
                     'meta_title' => $data->metaTitle,
-
                     'meta_description' => $data->metaDescription,
                 ]);
 
-                $lockedProduct
-                    ->categories()
-                    ->sync(
-                        $data->categoryIds,
+                $lockedProduct->categories()->sync(
+                    $data->categoryIds,
+                );
+
+                if ($seo !== null) {
+                    ($this->seoRepository
+                        ?? app(EntitySeoRepository::class))
+                        ->save(
+                            $lockedProduct,
+                            $seo,
+                        );
+                }
+
+                ($this->slugRedirects
+                    ?? app(SeoSlugRedirectHistory::class))
+                    ->record(
+                        entityType: SeoSlugRedirectHistory::PRODUCT,
+                        entityId: $lockedProduct->id,
+                        oldSlug: $oldSlug,
+                        newSlug: $slug,
                     );
 
                 return $lockedProduct
@@ -122,12 +122,12 @@ final readonly class UpdateProductAction
                     ->load([
                         'brand',
                         'categories',
+                        'seoMeta',
                     ]);
             },
         );
 
-        $this->storefrontCache
-            ->invalidate();
+        $this->storefrontCache->invalidate();
 
         return $updatedProduct;
     }

@@ -27,30 +27,48 @@ final readonly class StorefrontFilterOptionsQuery
 
     public function get(
         ?Category $category = null,
+        ?Brand $brand = null,
         bool $includeCategories = true,
+        bool $includeBrands = true,
     ): StorefrontFilterOptionsData {
         return $this->cache->remember(
             StorefrontCatalogCacheKey::filterOptions(
                 categorySlug: $category?->slug,
+
+                brandSlug: $brand?->slug,
+
                 includeCategories: $includeCategories,
+
+                includeBrands: $includeBrands,
             ),
+
             fn (): StorefrontFilterOptionsData => $this->build(
                 category: $category,
+
+                brand: $brand,
+
                 includeCategories: $includeCategories,
+
+                includeBrands: $includeBrands,
             ),
-            $this->cacheTtl->seconds(),
+
+            $this
+                ->cacheTtl
+                ->seconds(),
         );
     }
 
     private function build(
-        ?Category $category,
-        bool $includeCategories,
+        ?Category $category = null,
+        ?Brand $brand = null,
+        bool $includeCategories = true,
+        bool $includeBrands = true,
     ): StorefrontFilterOptionsData {
         return new StorefrontFilterOptionsData(
             brands: $this->brands($category),
             categories: $includeCategories
-                ? $this->categories()
-                : [],
+            ? $this->categories()
+            : [],
             attributes: $this->attributes($category),
             minPrice: $this->minimumPrice($category),
             maxPrice: $this->maximumPrice($category),
@@ -168,11 +186,11 @@ final readonly class StorefrontFilterOptionsQuery
             ->with([
                 'values' => function (Relation $relation) use ($category): void {
                     /*
-                    * ProductAttribute::values() is a HasMany relation.
-                    * Laravel's with() callback is statically typed as the
-                    * broader Relation contract, so we intentionally work
-                    * through that contract here.
-                    */
+                     * ProductAttribute::values() is a HasMany relation.
+                     * Laravel's with() callback is statically typed as the
+                     * broader Relation contract, so we intentionally work
+                     * through that contract here.
+                     */
 
                     /** @var Builder<AttributeValue> $valueQuery */
                     $valueQuery = $relation->getQuery();
@@ -209,9 +227,7 @@ final readonly class StorefrontFilterOptionsQuery
 
         return $attributes
             ->map(
-                static function (
-                    ProductAttribute $attribute,
-                ): StorefrontAttributeFilterData {
+                static function (ProductAttribute $attribute): StorefrontAttributeFilterData {
                     return new StorefrontAttributeFilterData(
                         id: $attribute->id,
                         name: $attribute->name,

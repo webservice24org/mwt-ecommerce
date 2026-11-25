@@ -7,6 +7,7 @@ import type {
 } from '@/types/catalog'
 import { Link, useForm } from '@inertiajs/react'
 import type { FormEvent } from 'react'
+import { emptyEntitySeoFormData } from '@/types/seo'
 
 type Props = {
     brands: ProductBrandOption[]
@@ -32,6 +33,7 @@ export default function Create({ brands, categories, statuses }: Props) {
         published_at: '',
         meta_title: '',
         meta_description: '',
+        seo: emptyEntitySeoFormData(),
         category_ids: [],
     })
 
@@ -65,7 +67,7 @@ export default function Create({ brands, categories, statuses }: Props) {
                 onSubmit={submit}
             />
 
-            <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-5">
+            <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-5 mt-5">
                 <h3 className="font-medium text-neutral-900">Media & Variants</h3>
 
                 <p className="mt-1 text-sm text-neutral-500">

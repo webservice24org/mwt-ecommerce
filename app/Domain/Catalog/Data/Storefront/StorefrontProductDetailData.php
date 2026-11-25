@@ -22,6 +22,8 @@ final readonly class StorefrontProductDetailData
         public ?string $shortDescription,
         public ?string $description,
         public StorefrontPricingData $pricing,
+        public bool $trackInventory,
+        public int $stockQuantity,
         public ?StorefrontBrandData $brand,
         public array $categories,
         public array $images,
@@ -36,6 +38,7 @@ final readonly class StorefrontProductDetailData
      */
     public function toArray(): array
     {
+        // Inventory facts remain available to server-side SEO resolvers only.
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -71,6 +74,7 @@ final readonly class StorefrontProductDetailData
             'meta_title' => $this->metaTitle,
             'meta_description' => $this->metaDescription,
             'video' => $this->video?->toArray(),
+
         ];
     }
 }

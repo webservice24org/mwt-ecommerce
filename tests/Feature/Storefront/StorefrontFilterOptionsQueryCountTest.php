@@ -288,8 +288,8 @@ final class StorefrontFilterOptionsQueryCountTest extends TestCase
             fn () => app(
                 StorefrontFilterOptionsQuery::class,
             )->get(
-                $category,
-                $includeCategories,
+                category: $category,
+                includeCategories: $includeCategories,
             ),
         );
 

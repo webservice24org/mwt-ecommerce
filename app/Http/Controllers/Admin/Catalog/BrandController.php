@@ -88,6 +88,9 @@ final class BrandController extends Controller
         $action->execute(
             data: $request->toData(),
             logo: $request->logo(),
+            seo: $request->hasSeoPayload()
+            ? $request->toSeoData()
+            : null,
         );
 
         return to_route(
@@ -102,6 +105,8 @@ final class BrandController extends Controller
         Brand $brand,
     ): Response {
         $this->authorize('update', $brand);
+
+        $brand->load('seoMeta');
 
         return Inertia::render(
             'Admin/Catalog/Brands/Edit',
@@ -121,6 +126,43 @@ final class BrandController extends Controller
                     'is_active' => $brand->is_active,
                     'meta_title' => $brand->meta_title,
                     'meta_description' => $brand->meta_description,
+                    'seo' => [
+                        'canonical_url' => $brand
+                            ->seoMeta
+                            ?->canonical_url,
+
+                        'robots_index' => $brand
+                            ->seoMeta
+                            ?->robots_index,
+
+                        'robots_follow' => $brand
+                            ->seoMeta
+                            ?->robots_follow,
+
+                        'og_title' => $brand
+                            ->seoMeta
+                            ?->og_title,
+
+                        'og_description' => $brand
+                            ->seoMeta
+                            ?->og_description,
+
+                        'og_image' => $brand
+                            ->seoMeta
+                            ?->og_image,
+
+                        'twitter_title' => $brand
+                            ->seoMeta
+                            ?->twitter_title,
+
+                        'twitter_description' => $brand
+                            ->seoMeta
+                            ?->twitter_description,
+
+                        'twitter_image' => $brand
+                            ->seoMeta
+                            ?->twitter_image,
+                    ],
                 ],
             ],
         );
@@ -138,6 +180,9 @@ final class BrandController extends Controller
             data: $request->toData(),
             logo: $request->logo(),
             removeLogo: $request->shouldRemoveLogo(),
+            seo: $request->hasSeoPayload()
+            ? $request->toSeoData()
+            : null,
         );
 
         return to_route(

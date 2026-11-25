@@ -6,6 +6,9 @@ namespace App\Domain\Catalog\Actions;
 
 use App\Domain\Catalog\Data\UpdateCategoryData;
 use App\Domain\Catalog\Services\CategoryHierarchyService;
+use App\Domain\Seo\Data\EntitySeoData;
+use App\Domain\Seo\Redirects\Services\SeoSlugRedirectHistory;
+use App\Domain\Seo\Repositories\EntitySeoRepository;
 use App\Models\Category;
 use App\Support\Cache\StorefrontCatalogCache;
 use App\Support\Media\ImageStorageService;
@@ -21,6 +24,8 @@ final readonly class UpdateCategoryAction
         private CategoryHierarchyService $hierarchyService,
         private ImageStorageService $imageStorage,
         private StorefrontCatalogCache $storefrontCache,
+        private ?EntitySeoRepository $seoRepository = null,
+        private ?SeoSlugRedirectHistory $slugRedirects = null,
     ) {}
 
     public function execute(
@@ -28,6 +33,7 @@ final readonly class UpdateCategoryAction
         UpdateCategoryData $data,
         ?UploadedFile $image = null,
         bool $removeImage = false,
+        ?EntitySeoData $seo = null,
     ): Category {
         $oldImagePath = $category->image_path;
         $newImagePath = null;
@@ -51,24 +57,31 @@ final readonly class UpdateCategoryAction
                     $category,
                     $data,
                     $finalImagePath,
+                    $seo,
                 ): Category {
+                    $lockedCategory = Category::query()
+                        ->whereKey($category->id)
+                        ->lockForUpdate()
+                        ->firstOrFail();
+
+                    $oldSlug = $lockedCategory->slug;
+
                     $this->hierarchyService
                         ->ensureCanAssignParent(
-                            category: $category,
+                            category: $lockedCategory,
                             parentId: $data->parentId,
                         );
 
-                    $slugSource =
-                        $data->slug ?: $data->name;
+                    $slugSource = $data->slug ?: $data->name;
 
                     $slug = $this->slugGenerator
                         ->generate(
                             table: 'categories',
                             value: $slugSource,
-                            ignoreId: $category->id,
+                            ignoreId: $lockedCategory->id,
                         );
 
-                    $category->update([
+                    $lockedCategory->update([
                         'parent_id' => $data->parentId,
                         'name' => $data->name,
                         'slug' => $slug,
@@ -80,7 +93,25 @@ final readonly class UpdateCategoryAction
                         'meta_description' => $data->metaDescription,
                     ]);
 
-                    return $category->refresh();
+                    if ($seo !== null) {
+                        ($this->seoRepository
+                            ?? app(EntitySeoRepository::class))
+                            ->save(
+                                $lockedCategory,
+                                $seo,
+                            );
+                    }
+
+                    ($this->slugRedirects
+                        ?? app(SeoSlugRedirectHistory::class))
+                        ->record(
+                            entityType: SeoSlugRedirectHistory::CATEGORY,
+                            entityId: $lockedCategory->id,
+                            oldSlug: $oldSlug,
+                            newSlug: $slug,
+                        );
+
+                    return $lockedCategory->refresh();
                 },
             );
         } catch (Throwable $exception) {
@@ -93,8 +124,6 @@ final readonly class UpdateCategoryAction
             throw $exception;
         }
 
-        $this->storefrontCache->invalidate();
-
         if (
             $oldImagePath !== null
             && $oldImagePath !== $updatedCategory->image_path
@@ -103,6 +132,8 @@ final readonly class UpdateCategoryAction
                 $oldImagePath,
             );
         }
+
+        $this->storefrontCache->invalidate();
 
         return $updatedCategory;
     }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Domain\Seo\Concerns\HasSeoMeta;
+use App\Domain\Seo\Contracts\Seoable;
 use Database\Factories\CategoryFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,10 +25,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $meta_title
  * @property string|null $meta_description
  */
-class Category extends Model
+class Category extends Model implements Seoable
 {
     /** @use HasFactory<CategoryFactory> */
-    use HasFactory;
+    use HasFactory, HasSeoMeta;
 
     protected $fillable = [
         'parent_id',

@@ -1,6 +1,7 @@
 import BrandForm, { type BrandFormData } from '@/Components/Admin/Catalog/BrandForm'
 import AdminLayout from '@/Layouts/Admin/AdminLayout'
 import { Link, useForm } from '@inertiajs/react'
+import { emptyEntitySeoFormData } from '@/types/seo'
 
 export default function Create() {
     const form = useForm<BrandFormData>({
@@ -13,6 +14,7 @@ export default function Create() {
         is_active: true,
         meta_title: '',
         meta_description: '',
+        seo: emptyEntitySeoFormData(),
     })
 
     return (

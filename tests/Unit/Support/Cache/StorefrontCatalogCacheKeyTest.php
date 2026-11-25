@@ -44,9 +44,15 @@ final class StorefrontCatalogCacheKeyTest extends TestCase
         $this->assertNotSame(
             StorefrontCatalogCacheKey::filterOptions(
                 'phones',
+                null,
+                true,
+                true,
             ),
             StorefrontCatalogCacheKey::filterOptions(
                 'laptops',
+                null,
+                true,
+                true,
             ),
         );
     }
@@ -56,11 +62,15 @@ final class StorefrontCatalogCacheKeyTest extends TestCase
         $this->assertNotSame(
             StorefrontCatalogCacheKey::filterOptions(
                 'phones',
+                null,
+                true,
                 true,
             ),
             StorefrontCatalogCacheKey::filterOptions(
                 'phones',
+                null,
                 false,
+                true,
             ),
         );
     }
@@ -68,8 +78,18 @@ final class StorefrontCatalogCacheKeyTest extends TestCase
     public function test_global_filter_option_key_is_deterministic(): void
     {
         $this->assertSame(
-            StorefrontCatalogCacheKey::filterOptions(),
-            StorefrontCatalogCacheKey::filterOptions(),
+            StorefrontCatalogCacheKey::filterOptions(null, null, true, true),
+            StorefrontCatalogCacheKey::filterOptions(null, null, true, true),
+        );
+
+        $this->assertNotSame(
+            StorefrontCatalogCacheKey::filterOptions(null, 'brand-one', true, true),
+            StorefrontCatalogCacheKey::filterOptions(null, 'brand-two', true, true),
+        );
+
+        $this->assertNotSame(
+            StorefrontCatalogCacheKey::filterOptions(null, 'brand-one', true, true),
+            StorefrontCatalogCacheKey::filterOptions(null, 'brand-one', true, false),
         );
     }
 }

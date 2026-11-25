@@ -1,3 +1,4 @@
+import type { EntitySeoData } from '@/types/seo'
 export type CategoryParent = {
     id: number
     name: string
@@ -15,6 +16,7 @@ export type Category = {
     is_active: boolean
     meta_title?: string | null
     meta_description?: string | null
+    seo?: EntitySeoData | null
     parent?: CategoryParent | null
     created_at?: string | null
 }
@@ -49,6 +51,7 @@ export type Brand = {
     is_active: boolean
     meta_title?: string | null
     meta_description?: string | null
+    seo?: EntitySeoData | null
 }
 
 export type BrandListItem = {
@@ -113,6 +116,7 @@ export type ProductFormProduct = {
     published_at: string | null
     meta_title: string | null
     meta_description: string | null
+    seo: EntitySeoData | null
     category_ids: number[]
 }
 

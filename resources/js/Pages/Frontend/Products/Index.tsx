@@ -5,9 +5,9 @@ import StorefrontFilterPanel from '@/Components/Frontend/Catalog/StorefrontFilte
 import StorefrontListingControls from '@/Components/Frontend/Catalog/StorefrontListingControls'
 import StorefrontBreadcrumbs from '@/Components/Frontend/Navigation/StorefrontBreadcrumbs'
 import StorefrontSeo from '@/Components/Frontend/Seo/StorefrontSeo'
+
 import { useStorefrontFilters } from '@/hooks/useStorefrontFilters'
 import FrontendLayout from '@/Layouts/Frontend/FrontendLayout'
-import { buildBreadcrumbJsonLd } from '@/lib/storefrontSeo'
 import type {
     PaginatedStorefrontProducts,
     StorefrontBreadcrumbItem,
@@ -15,16 +15,34 @@ import type {
     StorefrontProductFilters,
 } from '@/types/storefront'
 import { Link } from '@inertiajs/react'
+import type {
+    StructuredDataDocument,
+} from '@/types/structured-data'
 
 interface ProductsIndexProps {
     products: PaginatedStorefrontProducts
+
     filters: StorefrontProductFilters & {
         q?: string
     }
+    breadcrumbStructuredData:
+            | StructuredDataDocument
+            | null
     filterOptions: StorefrontFilterOptions
+
+    robots: {
+        index: boolean
+        follow: boolean
+    }
 }
 
-export default function Index({ products, filters, filterOptions }: ProductsIndexProps) {
+export default function Index({
+    products,
+    filters,
+    filterOptions,
+    robots,
+    breadcrumbStructuredData,
+}: ProductsIndexProps) {
     const storefrontFilters = useStorefrontFilters({
         url: '/products',
         filters,
@@ -42,7 +60,6 @@ export default function Index({ products, filters, filterOptions }: ProductsInde
         },
     ]
 
-    const breadcrumbJsonLd = buildBreadcrumbJsonLd(breadcrumbs)
 
     const pageTitle = searchQuery !== '' ? `Search results for "${searchQuery}"` : 'Shop'
 
@@ -57,7 +74,10 @@ export default function Index({ products, filters, filterOptions }: ProductsInde
                 title={pageTitle}
                 description={pageDescription}
                 canonicalPath="/products"
-                jsonLd={breadcrumbJsonLd}
+                robots={robots}
+                jsonLd={
+                    breadcrumbStructuredData
+                }
             />
 
             <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">

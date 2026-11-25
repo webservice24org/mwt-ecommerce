@@ -1,59 +1,108 @@
-import StorefrontSectionRenderer from '@/Components/Frontend/PageBuilder/StorefrontSectionRenderer'
 import StorefrontPageLayout from '@/Components/Frontend/PageBuilder/StorefrontPageLayout'
+import StorefrontSectionRenderer from '@/Components/Frontend/PageBuilder/StorefrontSectionRenderer'
 import StorefrontBreadcrumbs from '@/Components/Frontend/Navigation/StorefrontBreadcrumbs'
 import StorefrontSeo from '@/Components/Frontend/Seo/StorefrontSeo'
 import FrontendLayout from '@/Layouts/Frontend/FrontendLayout'
-import { buildBreadcrumbJsonLd } from '@/lib/storefrontSeo'
-import type { StorefrontBreadcrumbItem } from '@/types/storefront'
-import type { StorefrontPage } from '@/types/storefront-page'
+
+import type {
+    ResolvedSeo,
+} from '@/types/seo'
+
+import type {
+    StructuredDataDocument,
+} from '@/types/structured-data'
+
+import type {
+    StorefrontBreadcrumbItem,
+} from '@/types/storefront'
+
+import type {
+    StorefrontPage,
+} from '@/types/storefront-page'
 
 interface Props {
     page: StorefrontPage
+    seo: ResolvedSeo
+    breadcrumbStructuredData:
+        | StructuredDataDocument
+        | null
 }
+
 interface BuilderPageProps {
     page: StorefrontPage
 }
 
-export default function Show({ page }: Props) {
-    const title = page.seo.meta_title ?? page.title
+export default function Show({
+    page,
+    seo,
+    breadcrumbStructuredData,
+}: Props) {
+    const breadcrumbs:
+        StorefrontBreadcrumbItem[] = [
+            {
+                label:
+                    'Home',
 
-    const description = page.seo.meta_description ?? `Learn more about ${page.title}.`
+                href:
+                    '/',
+            },
 
-    const canonicalPath = `/pages/${page.slug}`
-
-    const breadcrumbs: StorefrontBreadcrumbItem[] = [
-        {
-            label: 'Home',
-            href: '/',
-        },
-        {
-            label: page.title,
-        },
-    ]
-
-    const breadcrumbJsonLd = page.show_breadcrumbs ? buildBreadcrumbJsonLd(breadcrumbs) : undefined
+            {
+                label:
+                    page.title,
+            },
+        ]
 
     return (
         <FrontendLayout>
+            {/*
+             * SEO values are now resolved by Laravel.
+             *
+             * React no longer determines:
+             * - title fallback
+             * - description fallback
+             * - social-image fallback
+             */}
             <StorefrontSeo
-                title={title}
-                description={description}
-                canonicalPath={canonicalPath}
-                jsonLd={breadcrumbJsonLd}
+                seo={seo}
+                jsonLd={
+                    breadcrumbStructuredData
+                }
             />
 
             <main className="w-full min-w-0">
                 {page.show_breadcrumbs && (
                     <div className="mx-auto w-full max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
-                        <StorefrontBreadcrumbs items={breadcrumbs} />
+                        <StorefrontBreadcrumbs
+                            items={
+                                breadcrumbs
+                            }
+                        />
                     </div>
                 )}
 
-                <StorefrontPageLayout layout={page.layout}>
-                    {page.content_mode === 'classic' ? (
-                        <ClassicPage page={page} constrained={page.layout === 'full_width'} />
+                <StorefrontPageLayout
+                    layout={
+                        page.layout
+                    }
+                >
+                    {page.content_mode ===
+                    'classic' ? (
+                        <ClassicPage
+                            page={
+                                page
+                            }
+                            constrained={
+                                page.layout ===
+                                'full_width'
+                            }
+                        />
                     ) : (
-                        <BuilderPage page={page} />
+                        <BuilderPage
+                            page={
+                                page
+                            }
+                        />
                     )}
                 </StorefrontPageLayout>
             </main>
@@ -66,9 +115,13 @@ interface PageBodyProps {
     constrained: boolean
 }
 
-function ClassicPage({ page, constrained }: PageBodyProps) {
+function ClassicPage({
+    page,
+    constrained,
+}: PageBodyProps) {
     return (
         <article
+            aria-labelledby="storefront-page-title"
             className={
                 constrained
                     ? 'mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8'
@@ -76,13 +129,20 @@ function ClassicPage({ page, constrained }: PageBodyProps) {
             }
         >
             <header className="mb-8">
-                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{page.title}</h1>
+                <h1
+                    id="storefront-page-title"
+                    className="text-3xl font-bold tracking-tight sm:text-4xl"
+                >
+                    {page.title}
+                </h1>
             </header>
 
             {page.featured_image && (
                 <img
-                    src={page.featured_image}
-                    alt=""
+                    src={
+                        page.featured_image
+                    }
+                    alt={page.title}
                     className="mb-8 h-auto w-full rounded-xl object-cover"
                 />
             )}
@@ -91,7 +151,8 @@ function ClassicPage({ page, constrained }: PageBodyProps) {
                 <div
                     className="prose max-w-none dark:prose-invert"
                     dangerouslySetInnerHTML={{
-                        __html: page.content,
+                        __html:
+                            page.content,
                     }}
                 />
             )}
@@ -99,12 +160,19 @@ function ClassicPage({ page, constrained }: PageBodyProps) {
     )
 }
 
-function BuilderPage({ page }: BuilderPageProps) {
-    if (page.sections.length === 0) {
+function BuilderPage({
+    page,
+}: BuilderPageProps) {
+    if (
+        page.sections.length ===
+        0
+    ) {
         return (
             <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
                 <div className="rounded-xl border border-dashed border-neutral-300 p-8 text-center text-sm text-neutral-500">
-                    This page does not contain any visible sections yet.
+                    This page does not
+                    contain any visible
+                    sections yet.
                 </div>
             </div>
         )
@@ -112,9 +180,20 @@ function BuilderPage({ page }: BuilderPageProps) {
 
     return (
         <div className="w-full min-w-0">
-            {page.sections.map((section) => (
-                <StorefrontSectionRenderer key={section.id} section={section} />
-            ))}
+            {page.sections.map(
+                (
+                    section,
+                ) => (
+                    <StorefrontSectionRenderer
+                        key={
+                            section.id
+                        }
+                        section={
+                            section
+                        }
+                    />
+                ),
+            )}
         </div>
     )
 }

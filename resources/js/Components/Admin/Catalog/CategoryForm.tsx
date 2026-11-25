@@ -1,4 +1,5 @@
-import SeoFields from '@/Components/Admin/SeoFields'
+import SeoFormSection from '@/Components/Admin/Seo/SeoFormSection'
+import type { EntitySeoFormData } from '@/types/seo'
 import type { CategoryParentOption } from '@/types/catalog'
 import type { InertiaFormProps } from '@inertiajs/react'
 import { useEffect, useState } from 'react'
@@ -14,6 +15,7 @@ export type CategoryFormData = {
     is_active: boolean
     meta_title: string
     meta_description: string
+    seo: EntitySeoFormData
 }
 
 type Props = {
@@ -35,6 +37,8 @@ export default function CategoryForm({
         'mt-1 block w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500'
 
     const errorClass = 'mt-1 text-sm text-red-600'
+
+    const seoErrors = form.errors as Record<string, string | undefined>
 
     const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
@@ -290,13 +294,35 @@ export default function CategoryForm({
                         </div>
                     </section>
 
-                    <SeoFields
+                    <SeoFormSection
                         metaTitle={form.data.meta_title}
                         metaDescription={form.data.meta_description}
-                        titleError={form.errors.meta_title}
-                        descriptionError={form.errors.meta_description}
-                        onTitleChange={(value) => form.setData('meta_title', value)}
-                        onDescriptionChange={(value) => form.setData('meta_description', value)}
+                        seo={form.data.seo}
+                        errors={{
+                            meta_title: form.errors.meta_title,
+                            meta_description: form.errors.meta_description,
+                            canonical_url: seoErrors['seo.canonical_url'],
+                            robots_index: seoErrors['seo.robots_index'],
+                            robots_follow: seoErrors['seo.robots_follow'],
+                            og_title: seoErrors['seo.og_title'],
+                            og_description: seoErrors['seo.og_description'],
+                            og_image: seoErrors['seo.og_image'],
+                            twitter_title: seoErrors['seo.twitter_title'],
+                            twitter_description: seoErrors['seo.twitter_description'],
+                            twitter_image: seoErrors['seo.twitter_image'],
+                        }}
+                        onMetaTitleChange={(value) => form.setData('meta_title', value)}
+                        onMetaDescriptionChange={(value) =>
+                            form.setData('meta_description', value)
+                        }
+                        onSeoChange={(key, value) =>
+                            form.setData('seo', {
+                                ...form.data.seo,
+                                [key]: value,
+                            })
+                        }
+                        titleMaxLength={180}
+                        descriptionMaxLength={320}
                     />
                 </div>
 

@@ -55,6 +55,7 @@ final readonly class StorefrontWishlistQuery
                 'images' => static fn (
                     $query,
                 ) => $query
+                    ->reorder()
                     ->orderByDesc(
                         'is_primary',
                     )

@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Http\Middleware\AppendAiCrawlerPolicyToRobotsResponse;
 use App\Http\Middleware\EnsureAdminHasRole;
 use App\Http\Middleware\EnsureAdminIsActive;
 use App\Http\Middleware\EnsureCustomerIsActive;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\ShareMerchantPolicyStructuredData;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -46,6 +48,8 @@ return Application::configure(
                 append: [
                     HandleInertiaRequests::class,
                     AddLinkHeadersForPreloadedAssets::class,
+                    AppendAiCrawlerPolicyToRobotsResponse::class,
+                    ShareMerchantPolicyStructuredData::class,
                 ],
             );
 

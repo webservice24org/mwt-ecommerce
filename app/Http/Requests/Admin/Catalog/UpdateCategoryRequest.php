@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Admin\Catalog;
 
 use App\Domain\Catalog\Data\UpdateCategoryData;
+use App\Http\Requests\Admin\Catalog\Concerns\InteractsWithCategorySeo;
 use App\Models\Category;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\UploadedFile;
@@ -15,6 +16,8 @@ use Illuminate\Validation\Rules\Unique;
 
 final class UpdateCategoryRequest extends FormRequest
 {
+    use InteractsWithCategorySeo;
+
     public function authorize(): bool
     {
         return true;
@@ -94,6 +97,7 @@ final class UpdateCategoryRequest extends FormRequest
                 'string',
                 'max:320',
             ],
+            ...$this->categorySeoRules(),
         ];
     }
 
@@ -120,6 +124,7 @@ final class UpdateCategoryRequest extends FormRequest
                 $this->input('meta_description'),
             ),
         ]);
+        $this->prepareCategorySeoForValidation();
     }
 
     private function nullableTrimmedString(
@@ -142,28 +147,28 @@ final class UpdateCategoryRequest extends FormRequest
             name: $this->string('name')->toString(),
 
             slug: $this->filled('slug')
-                ? $this->string('slug')->toString()
-                : null,
+            ? $this->string('slug')->toString()
+            : null,
 
             parentId: $this->filled('parent_id')
-                ? $this->integer('parent_id')
-                : null,
+            ? $this->integer('parent_id')
+            : null,
 
             description: $this->filled('description')
-                ? $this->string('description')->toString()
-                : null,
+            ? $this->string('description')->toString()
+            : null,
 
             position: $this->integer('position'),
 
             isActive: $this->boolean('is_active'),
 
             metaTitle: $this->filled('meta_title')
-                ? $this->string('meta_title')->toString()
-                : null,
+            ? $this->string('meta_title')->toString()
+            : null,
 
             metaDescription: $this->filled('meta_description')
-                ? $this->string('meta_description')->toString()
-                : null,
+            ? $this->string('meta_description')->toString()
+            : null,
         );
     }
 

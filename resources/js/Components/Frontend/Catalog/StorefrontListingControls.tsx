@@ -6,6 +6,7 @@ import StorefrontSortSelect from './StorefrontSortSelect'
 interface StorefrontListingControlsProps {
     filters: StorefrontProductFilters
     options: StorefrontFilterOptions
+    showBrands?: boolean
     showCategories?: boolean
     onSortChange: (sort: StorefrontProductFilters['sort']) => void
     onBrandChange: (slug: string | null) => void
@@ -18,6 +19,7 @@ interface StorefrontListingControlsProps {
 export default function StorefrontListingControls({
     filters,
     options,
+    showBrands = true,
     showCategories = true,
     onSortChange,
     onBrandChange,
@@ -32,6 +34,7 @@ export default function StorefrontListingControls({
                 <StorefrontMobileFilters
                     filters={filters}
                     options={options}
+                    showBrands={showBrands}
                     showCategories={showCategories}
                     onBrandChange={onBrandChange}
                     onCategoryChange={onCategoryChange}

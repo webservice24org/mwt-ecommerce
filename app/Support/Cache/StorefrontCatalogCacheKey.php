@@ -28,20 +28,34 @@ final class StorefrontCatalogCacheKey
     }
 
     public static function filterOptions(
-        ?string $categorySlug = null,
-        bool $includeCategories = true,
+        ?string $categorySlug,
+        ?string $brandSlug,
+        bool $includeCategories,
+        bool $includeBrands,
     ): string {
-        $scope = $categorySlug === null
-            ? 'all'
-            : sprintf(
-                'category:%s',
-                self::segment($categorySlug),
-            );
+        return implode(
+            ':',
+            [
+                'storefront',
+                'catalog',
+                'filter-options',
 
-        return sprintf(
-            'filter-options:%s:categories:%s',
-            $scope,
-            $includeCategories ? 'yes' : 'no',
+                'category',
+                $categorySlug ?? 'all',
+
+                'brand',
+                $brandSlug ?? 'all',
+
+                'categories',
+                $includeCategories
+                ? '1'
+                : '0',
+
+                'brands',
+                $includeBrands
+                ? '1'
+                : '0',
+            ],
         );
     }
 

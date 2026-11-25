@@ -178,6 +178,7 @@ final readonly class CartService
                     'images' => static fn (
                         $query,
                     ) => $query
+                        ->reorder()
                         ->orderByDesc(
                             'is_primary',
                         )

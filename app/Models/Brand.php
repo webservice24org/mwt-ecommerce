@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Domain\Seo\Concerns\HasSeoMeta;
+use App\Domain\Seo\Contracts\Seoable;
 use Database\Factories\BrandFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -20,10 +22,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $meta_title
  * @property string|null $meta_description
  */
-class Brand extends Model
+class Brand extends Model implements Seoable
 {
     /** @use HasFactory<BrandFactory> */
-    use HasFactory;
+    use HasFactory, HasSeoMeta;
 
     protected $fillable = [
         'name',

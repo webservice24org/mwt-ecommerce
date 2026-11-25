@@ -47,8 +47,8 @@ final class CategoryController extends Controller
         $categories = $query
             ->paginate(
                 search: $search !== ''
-                    ? $search
-                    : null,
+                ? $search
+                : null,
                 isActive: $isActive,
             )
             ->through(
@@ -112,6 +112,9 @@ final class CategoryController extends Controller
             $action->execute(
                 data: $request->toData(),
                 image: $request->image(),
+                seo: $request->hasSeoPayload()
+                ? $request->toSeoData()
+                : null,
             );
         } catch (InvalidCategoryHierarchyException $exception) {
             return back()->with(
@@ -137,6 +140,8 @@ final class CategoryController extends Controller
             $category,
         );
 
+        $category->load('seoMeta');
+
         return Inertia::render(
             'Admin/Catalog/Categories/Edit',
             [
@@ -156,6 +161,43 @@ final class CategoryController extends Controller
                     'is_active' => $category->is_active,
                     'meta_title' => $category->meta_title,
                     'meta_description' => $category->meta_description,
+                    'seo' => [
+                        'canonical_url' => $category
+                            ->seoMeta
+                            ?->canonical_url,
+
+                        'robots_index' => $category
+                            ->seoMeta
+                            ?->robots_index,
+
+                        'robots_follow' => $category
+                            ->seoMeta
+                            ?->robots_follow,
+
+                        'og_title' => $category
+                            ->seoMeta
+                            ?->og_title,
+
+                        'og_description' => $category
+                            ->seoMeta
+                            ?->og_description,
+
+                        'og_image' => $category
+                            ->seoMeta
+                            ?->og_image,
+
+                        'twitter_title' => $category
+                            ->seoMeta
+                            ?->twitter_title,
+
+                        'twitter_description' => $category
+                            ->seoMeta
+                            ?->twitter_description,
+
+                        'twitter_image' => $category
+                            ->seoMeta
+                            ?->twitter_image,
+                    ],
                 ],
 
                 'parentCategories' => $parentOptions
@@ -180,6 +222,9 @@ final class CategoryController extends Controller
                 data: $request->toData(),
                 image: $request->image(),
                 removeImage: $request->shouldRemoveImage(),
+                seo: $request->hasSeoPayload()
+                ? $request->toSeoData()
+                : null,
             );
         } catch (InvalidCategoryHierarchyException $exception) {
             return back()->with(

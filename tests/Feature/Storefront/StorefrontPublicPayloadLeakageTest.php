@@ -368,6 +368,8 @@ final class StorefrontPublicPayloadLeakageTest extends TestCase
             $payload,
             [
                 'cost_price',
+                'track_inventory',
+                'stock_quantity',
                 'barcode',
                 'weight',
                 'position',

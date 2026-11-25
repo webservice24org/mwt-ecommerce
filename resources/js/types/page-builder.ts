@@ -1,3 +1,7 @@
+import type {
+    EntitySeoData,
+    EntitySeoFormData,
+} from '@/types/seo'
 export type PageType = 'standard' | 'home'
 
 export type PageStatus = 'draft' | 'published' | 'archived'
@@ -65,7 +69,8 @@ export interface SectionDefinition {
     template_default_configs: Record<string, SectionConfig>
 }
 
-export interface PageSeoData {
+export interface PageSeoData
+    extends EntitySeoData {
     meta_title: string | null
     meta_description: string | null
 }
@@ -97,6 +102,7 @@ export interface PageFormValues {
     content: string
     meta_title: string
     meta_description: string
+    seo_meta: EntitySeoFormData
     published_at: string
 }
 

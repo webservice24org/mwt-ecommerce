@@ -6,6 +6,8 @@ namespace App\Domain\PageBuilder\Actions;
 
 use App\Domain\PageBuilder\Data\CreatePageData;
 use App\Domain\PageBuilder\Services\PageIntegrityService;
+use App\Domain\Seo\Data\EntitySeoData;
+use App\Domain\Seo\Repositories\EntitySeoRepository;
 use App\Models\Page;
 use App\Support\Slugs\UniqueSlugGenerator;
 use Illuminate\Support\Facades\DB;
@@ -15,37 +17,75 @@ final readonly class CreatePageAction
     public function __construct(
         private UniqueSlugGenerator $slugGenerator,
         private PageIntegrityService $integrity,
+        private EntitySeoRepository $seoRepository,
     ) {}
 
     public function execute(
         CreatePageData $data,
+        ?EntitySeoData $seo = null,
     ): Page {
         return DB::transaction(
-            function () use ($data): Page {
-                $this->integrity
+            function () use ($data, $seo): Page {
+                $this
+                    ->integrity
                     ->assertTypeIsAvailable(
                         $data->type,
                     );
 
-                $slug = $this->slugGenerator->generate(
-                    table: 'pages',
-                    column: 'slug',
-                    value: $data->slug ?? $data->title,
-                );
+                $slug =
+                    $this
+                        ->slugGenerator
+                        ->generate(
+                            table: 'pages',
 
-                return Page::query()->create([
-                    'type' => $data->type,
-                    'layout' => $data->layout,
-                    'show_breadcrumbs' => $data->showBreadcrumbs,
-                    'title' => $data->title,
-                    'slug' => $slug,
-                    'status' => $data->status,
-                    'content_mode' => $data->contentMode,
-                    'content' => $data->content,
-                    'meta_title' => $data->metaTitle,
-                    'meta_description' => $data->metaDescription,
-                    'published_at' => $data->publishedAt,
-                ]);
+                            column: 'slug',
+
+                            value: $data->slug ??
+                            $data->title,
+                        );
+
+                $page =
+                    Page::query()
+                        ->create([
+                            'type' => $data->type,
+
+                            'layout' => $data->layout,
+
+                            'show_breadcrumbs' => $data->showBreadcrumbs,
+
+                            'title' => $data->title,
+
+                            'slug' => $slug,
+
+                            'status' => $data->status,
+
+                            'content_mode' => $data->contentMode,
+
+                            'content' => $data->content,
+
+                            'meta_title' => $data->metaTitle,
+
+                            'meta_description' => $data->metaDescription,
+
+                            'published_at' => $data->publishedAt,
+                        ]);
+
+                if (
+                    $seo !== null
+                ) {
+                    $this
+                        ->seoRepository
+                        ->save(
+                            $page,
+                            $seo,
+                        );
+                }
+
+                return $page
+                    ->refresh()
+                    ->load([
+                        'seoMeta',
+                    ]);
             },
         );
     }

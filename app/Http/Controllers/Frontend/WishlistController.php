@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Frontend;
 
+use App\Domain\Seo\Services\SeoSettingsService;
+use App\Domain\Seo\StructuredData\Data\BreadcrumbStructuredDataItemData;
+use App\Domain\Seo\StructuredData\Services\BreadcrumbStructuredDataResolver;
 use App\Domain\Wishlist\Queries\StorefrontWishlistQuery;
 use App\Domain\Wishlist\Services\WishlistService;
 use App\Http\Controllers\Controller;
@@ -21,6 +24,8 @@ final class WishlistController extends Controller
         Request $request,
         StorefrontWishlistQuery $query,
         WishlistService $wishlist,
+        BreadcrumbStructuredDataResolver $breadcrumbs,
+        SeoSettingsService $seoSettings,
     ): Response {
         $user =
             $this->customer(
@@ -33,12 +38,32 @@ final class WishlistController extends Controller
             );
         }
 
+        $breadcrumbStructuredData =
+            $breadcrumbs->resolve(
+                settings: $seoSettings->get(),
+
+                items: [
+                    new BreadcrumbStructuredDataItemData(
+                        name: 'Home',
+
+                        path: '/',
+                    ),
+
+                    new BreadcrumbStructuredDataItemData(
+                        name: 'Wishlist',
+                    ),
+                ],
+            );
+
         return Inertia::render(
             'Frontend/Wishlist/Index',
             [
                 'items' => $query->get(
                     user: $user,
                 ),
+
+                'breadcrumbStructuredData' => $breadcrumbStructuredData
+                    ?->toArray(),
             ],
         );
     }

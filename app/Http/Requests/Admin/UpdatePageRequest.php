@@ -9,6 +9,7 @@ use App\Domain\PageBuilder\Enums\PageContentMode;
 use App\Domain\PageBuilder\Enums\PageLayout;
 use App\Domain\PageBuilder\Enums\PageStatus;
 use App\Domain\PageBuilder\Enums\PageType;
+use App\Http\Requests\Admin\Concerns\InteractsWithPageSeo;
 use App\Models\Page;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
@@ -16,16 +17,25 @@ use Illuminate\Validation\Rule;
 
 final class UpdatePageRequest extends FormRequest
 {
+    use InteractsWithPageSeo;
+
     public function authorize(): bool
     {
-        $page = $this->route('page');
+        $page =
+            $this->route(
+                'page',
+            );
 
         return $page instanceof Page
             && (
-                $this->user('admin')?->can(
-                    'update',
-                    $page,
-                ) ?? false
+                $this
+                    ->user(
+                        'admin',
+                    )
+                    ?->can(
+                        'update',
+                        $page,
+                    ) ?? false
             );
     }
 
@@ -37,7 +47,9 @@ final class UpdatePageRequest extends FormRequest
         return [
             'type' => [
                 'required',
-                Rule::enum(PageType::class),
+                Rule::enum(
+                    PageType::class,
+                ),
             ],
 
             'title' => [
@@ -54,12 +66,16 @@ final class UpdatePageRequest extends FormRequest
 
             'status' => [
                 'required',
-                Rule::enum(PageStatus::class),
+                Rule::enum(
+                    PageStatus::class,
+                ),
             ],
 
             'content_mode' => [
                 'required',
-                Rule::enum(PageContentMode::class),
+                Rule::enum(
+                    PageContentMode::class,
+                ),
             ],
 
             'layout' => [
@@ -96,6 +112,8 @@ final class UpdatePageRequest extends FormRequest
                 'nullable',
                 'date',
             ],
+
+            ...$this->pageSeoRules(),
         ];
     }
 
@@ -103,108 +121,188 @@ final class UpdatePageRequest extends FormRequest
     {
         $this->merge([
             'title' => $this->normalizeRequiredString(
-                $this->input('title'),
+                $this->input(
+                    'title',
+                ),
             ),
 
             'slug' => $this->normalizeNullableString(
-                $this->input('slug'),
+                $this->input(
+                    'slug',
+                ),
             ),
 
             'content' => $this->normalizeNullableContent(
-                $this->input('content'),
+                $this->input(
+                    'content',
+                ),
             ),
 
             'meta_title' => $this->normalizeNullableString(
-                $this->input('meta_title'),
+                $this->input(
+                    'meta_title',
+                ),
             ),
 
             'meta_description' => $this->normalizeNullableString(
-                $this->input('meta_description'),
+                $this->input(
+                    'meta_description',
+                ),
             ),
 
             'published_at' => $this->normalizeNullableString(
-                $this->input('published_at'),
+                $this->input(
+                    'published_at',
+                ),
             ),
         ]);
+
+        $this->preparePageSeoForValidation();
     }
 
     public function toData(): UpdatePageData
     {
-        $validated = $this->validated();
-        $page = $this->route('page');
+        $validated =
+            $this->validated();
 
-        if (! $page instanceof Page) {
-            abort(404);
+        $page =
+            $this->route(
+                'page',
+            );
+
+        if (
+            ! $page instanceof Page
+        ) {
+            abort(
+                404,
+            );
         }
 
         return new UpdatePageData(
             type: PageType::from(
-                (string) $validated['type'],
+                (string) $validated[
+                    'type'
+                ],
             ),
 
-            layout: isset($validated['layout'])
-                ? PageLayout::from(
-                    (string) $validated['layout'],
-                )
-                : null,
+            layout: isset(
+                $validated[
+                    'layout'
+                ],
+            )
+            ? PageLayout::from(
+                (string) $validated[
+                    'layout'
+                ],
+            )
+            : null,
 
             showBreadcrumbs: array_key_exists(
                 'show_breadcrumbs',
                 $validated,
             )
-                ? (bool) $validated['show_breadcrumbs']
-                : $page->show_breadcrumbs,
+            ? (bool) $validated[
+                'show_breadcrumbs'
+            ]
+            : $page->show_breadcrumbs,
 
-            title: (string) $validated['title'],
+            title: (string) $validated[
+                'title'
+            ],
 
-            slug: isset($validated['slug'])
-                ? (string) $validated['slug']
-                : null,
+            slug: isset(
+                $validated[
+                    'slug'
+                ],
+            )
+            ? (string) $validated[
+                'slug'
+            ]
+            : null,
 
             status: PageStatus::from(
-                (string) $validated['status'],
+                (string) $validated[
+                    'status'
+                ],
             ),
 
             contentMode: PageContentMode::from(
-                (string) $validated['content_mode'],
+                (string) $validated[
+                    'content_mode'
+                ],
             ),
 
-            content: isset($validated['content'])
-                ? (string) $validated['content']
-                : null,
+            content: isset(
+                $validated[
+                    'content'
+                ],
+            )
+            ? (string) $validated[
+                'content'
+            ]
+            : null,
 
-            metaTitle: isset($validated['meta_title'])
-                ? (string) $validated['meta_title']
-                : null,
+            metaTitle: isset(
+                $validated[
+                    'meta_title'
+                ],
+            )
+            ? (string) $validated[
+                'meta_title'
+            ]
+            : null,
 
-            metaDescription: isset($validated['meta_description'])
-                ? (string) $validated['meta_description']
-                : null,
+            metaDescription: isset(
+                $validated[
+                    'meta_description'
+                ],
+            )
+            ? (string) $validated[
+                'meta_description'
+            ]
+            : null,
 
-            publishedAt: isset($validated['published_at'])
-                ? CarbonImmutable::parse(
-                    (string) $validated['published_at'],
-                )
-                : null,
+            publishedAt: isset(
+                $validated[
+                    'published_at'
+                ],
+            )
+            ? CarbonImmutable::parse(
+                (string) $validated[
+                    'published_at'
+                ],
+            )
+            : null,
         );
     }
 
     private function normalizeRequiredString(
         mixed $value,
     ): mixed {
-        return is_string($value)
-            ? trim($value)
+        return is_string(
+            $value,
+        )
+            ? trim(
+                $value,
+            )
             : $value;
     }
 
     private function normalizeNullableString(
         mixed $value,
     ): mixed {
-        if (! is_string($value)) {
+        if (
+            ! is_string(
+                $value,
+            )
+        ) {
             return $value;
         }
 
-        $value = trim($value);
+        $value =
+            trim(
+                $value,
+            );
 
         return $value === ''
             ? null
@@ -214,11 +312,17 @@ final class UpdatePageRequest extends FormRequest
     private function normalizeNullableContent(
         mixed $value,
     ): mixed {
-        if (! is_string($value)) {
+        if (
+            ! is_string(
+                $value,
+            )
+        ) {
             return $value;
         }
 
-        return trim($value) === ''
+        return trim(
+            $value,
+        ) === ''
             ? null
             : $value;
     }
