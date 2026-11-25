@@ -7,6 +7,7 @@ namespace App\Domain\Catalog\Actions;
 use App\Domain\Catalog\Data\CreateProductData;
 use App\Domain\Catalog\Services\ProductCommercialIntegrityService;
 use App\Domain\Catalog\Services\ProductDescriptionContentService;
+use App\Domain\Catalog\Services\ProductShortDescriptionContent;
 use App\Domain\Seo\Data\EntitySeoData;
 use App\Domain\Seo\Repositories\EntitySeoRepository;
 use App\Models\Product;
@@ -72,7 +73,7 @@ final readonly class CreateProductAction
 
                         'slug' => $slug,
 
-                        'short_description' => $data->shortDescription,
+                        'short_description' => ProductShortDescriptionContent::prepare($data->shortDescription),
 
                         'description' => null,
 

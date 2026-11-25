@@ -9,6 +9,8 @@ use App\Domain\Catalog\Queries\Storefront\StorefrontFilterOptionsQuery;
 use App\Domain\Catalog\Queries\Storefront\StorefrontProductDetailQuery;
 use App\Domain\Catalog\Queries\Storefront\StorefrontProductIndexQuery;
 use App\Domain\Catalog\Queries\Storefront\StorefrontProductSearchSuggestionQuery;
+use App\Domain\Catalog\Queries\Storefront\StorefrontRelatedProductsQuery;
+use App\Domain\Catalog\Services\ProductShortDescriptionContent;
 use App\Domain\Catalog\Services\Storefront\StorefrontProductDataFactory;
 use App\Domain\Reviews\Queries\StorefrontProductReviewAggregateQuery;
 use App\Domain\Reviews\Queries\StorefrontProductReviewsQuery;
@@ -27,6 +29,7 @@ use App\Domain\Seo\StructuredData\Services\StructuredDataDocumentMerger;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Frontend\StorefrontProductFilterRequest;
 use App\Http\Requests\Frontend\StorefrontProductSearchSuggestionRequest;
+use App\Models\Product;
 use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
@@ -138,6 +141,32 @@ final class ProductController extends Controller
         ]);
     }
 
+    public function reviewPage(
+        Request $request,
+        string $slug,
+        StorefrontProductReviewsQuery $reviews,
+    ): JsonResponse {
+        $product = Product::query()
+            ->published()
+            ->where('slug', $slug)
+            ->firstOrFail();
+
+        $request->validate([
+            'page' => ['sometimes', 'required', 'integer', 'min:1', 'max:10000'],
+        ]);
+
+        $result = $reviews->get(
+            product: $product,
+            perPage: StorefrontProductReviewsQuery::STOREFRONT_PAGE_SIZE,
+            page: $request->integer('page', 1),
+        );
+
+        return response()->json($result['reviews'], 200, [
+            'Cache-Control' => 'private, no-store',
+            'X-Robots-Tag' => 'noindex, nofollow',
+        ]);
+    }
+
     public function show(
         Request $request,
         string $slug,
@@ -154,6 +183,7 @@ final class ProductController extends Controller
         StructuredDataDocumentMerger $structuredDataDocuments,
         AggregateRatingStructuredDataEnricher $aggregateRating,
         SeoSlugRedirectHistory $slugRedirects,
+        StorefrontRelatedProductsQuery $relatedProducts,
     ): Response|RedirectResponse {
         /*
          * ==================================================
@@ -375,6 +405,8 @@ final class ProductController extends Controller
                 'product' => $productDetail
                     ->toArray(),
 
+                'shortDescriptionHtml' => ProductShortDescriptionContent::richHtml($product->short_description),
+
                 'reviewState' => $reviewState
                     ->get(
                         user: $user instanceof User
@@ -387,7 +419,10 @@ final class ProductController extends Controller
                 'reviews' => $reviews
                     ->get(
                         product: $product,
+                        perPage: StorefrontProductReviewsQuery::STOREFRONT_PAGE_SIZE,
                     ),
+
+                'relatedProducts' => $relatedProducts->get($product),
 
                 'seo' => $resolvedSeo
                     ->toArray(),

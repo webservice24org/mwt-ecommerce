@@ -9,9 +9,24 @@ import type {
 import { TiptapEditor } from '@microweb/laravel-tiptap-editor'
 import '@microweb/laravel-tiptap-editor/editor.css'
 import type { InertiaFormProps } from '@inertiajs/react'
-import type { FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
+import './product-editor.css'
 import SeoFormSection from '@/Components/Admin/Seo/SeoFormSection'
 import type { EntitySeoFormData } from '@/types/seo'
+
+// Legacy plain text must be escaped before Tiptap interprets it as HTML.
+function shortEditorValue(value: string): string {
+    if (!value || /<(?:\/?[a-z][^>]*|!--[\s\S]*?)>/i.test(value)) {
+        return value
+    }
+
+    const escaped = value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    return `<p>${escaped.replace(/\r\n|\r|\n/g, '<br>')}</p>`
+}
+
+const rejectShortMedia = async (_file: File): Promise<never> => {
+    throw new Error('Please add media to the full product description.')
+}
 
 export type ProductFormData = {
     brand_id: number | null
@@ -52,6 +67,24 @@ export default function ProductForm({
     onSubmit,
 }: Props) {
     const seoErrors = form.errors as Record<string, string | undefined>
+    const [editorError, setEditorError] = useState('')
+
+    const submit = (event: FormEvent<HTMLFormElement>) => {
+        // The package commits HTML code edits when returning to Visual mode.
+        const codeEditor = event.currentTarget.querySelector<HTMLElement>(
+            '.mw-product-editor .mw-tiptap-editor[data-editor-mode="code"]',
+        )
+
+        if (codeEditor) {
+            event.preventDefault()
+            setEditorError('Switch both description editors back to Visual before saving to apply any code changes.')
+            codeEditor.querySelector<HTMLButtonElement>('[aria-label="Visual editor"]')?.focus()
+            return
+        }
+
+        setEditorError('')
+        onSubmit(event)
+    }
 
     const toggleCategory = (categoryId: number) => {
         if (form.data.category_ids.includes(categoryId)) {
@@ -67,7 +100,7 @@ export default function ProductForm({
     }
 
     return (
-        <form onSubmit={onSubmit} className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <form onSubmit={submit} className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
             <div className="min-w-0 space-y-6">
                 <section className="min-w-0 rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
                     
@@ -118,22 +151,21 @@ export default function ProductForm({
                         </div>
 
                         <div>
-                            <label
-                                htmlFor="short_description"
-                                className="text-sm font-medium text-neutral-900"
-                            >
+                            <p id="short-description-label" className="text-sm font-medium text-neutral-900">
                                 Short description
-                            </label>
-
-                            <textarea
-                                id="short_description"
-                                rows={3}
-                                value={form.data.short_description}
-                                onChange={(event) =>
-                                    form.setData('short_description', event.target.value)
-                                }
-                                className="mt-1 block w-full rounded-lg border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500"
-                            />
+                            </p>
+                            <div role="group" aria-labelledby="short-description-label" className="mw-product-editor mw-product-editor--short mt-1 min-w-0">
+                                <TiptapEditor
+                                    value={shortEditorValue(form.data.short_description)}
+                                    onChange={(html) => form.setData('short_description', html)}
+                                    minHeight={160}
+                                    imageUploadUrl={route('admin.products.description-media.store')}
+                                    onImageUpload={rejectShortMedia}
+                                />
+                            </div>
+                            <p className="mt-2 text-xs text-neutral-500">
+                                Format a concise summary with text, lists and links. Media, video and tables belong in the full description. Product cards use a plain-text excerpt.
+                            </p>
 
                             {form.errors.short_description && (
                                 <p className="mt-1 text-sm text-red-600">
@@ -145,7 +177,7 @@ export default function ProductForm({
                         <div className="min-w-0">
                             <p className="text-sm font-medium text-neutral-900">Description</p>
 
-                            <div className="mt-1 min-w-0">
+                            <div className="mw-product-editor mt-1 min-w-0">
                                 <TiptapEditor
                                     value={form.data.description}
                                     onChange={(html) => form.setData('description', html)}
@@ -156,7 +188,7 @@ export default function ProductForm({
 
                             <p className="mt-2 text-xs leading-5 text-neutral-500">
                                 Add formatted product content including headings, lists, links,
-                                images, videos and tables.
+                                images, videos and tables. Return to Visual mode before saving code changes.
                             </p>
 
                             {form.errors.description && (
@@ -165,6 +197,9 @@ export default function ProductForm({
                                 </p>
                             )}
                         </div>
+                        {editorError && (
+                            <p role="alert" className="text-sm text-red-600">{editorError}</p>
+                        )}
                     </div>
                 </section>
 

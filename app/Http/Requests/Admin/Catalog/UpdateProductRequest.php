@@ -116,6 +116,7 @@ final class UpdateProductRequest extends FormRequest
             'short_description' => [
                 'nullable',
                 'string',
+                'max:10000',
             ],
 
             'description' => [

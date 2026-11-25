@@ -1,3 +1,5 @@
+import { useProductCardTheme } from '@/lib/useProductCardTheme'
+import ProductCardPurchaseActions from '@/Components/Frontend/Catalog/ProductCardPurchaseActions'
 import ProductImage from '@/Components/Frontend/Catalog/ProductImage'
 import ProductPrice from '@/Components/Frontend/Catalog/ProductPrice'
 import type { StorefrontProductCard } from '@/types/storefront'
@@ -15,10 +17,11 @@ export default function ProductCollectionCard({
     showPrice,
     showBadges,
 }: ProductCollectionCardProps) {
+    const theme = useProductCardTheme()
     const productUrl = `/products/${product.slug}`
 
     return (
-        <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white transition duration-200 hover:border-neutral-300 hover:shadow-md focus-within:ring-2 focus-within:ring-neutral-950 focus-within:ring-offset-2">
+        <article style={theme.style} className={`${theme.className} group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white transition duration-200 hover:border-neutral-300 hover:shadow-md focus-within:ring-2 focus-within:ring-neutral-950 focus-within:ring-offset-2`}>
             <Link
                 href={productUrl}
                 className="relative block min-w-0 overflow-hidden focus-visible:outline-none"
@@ -43,7 +46,7 @@ export default function ProductCollectionCard({
             <div className="flex min-w-0 flex-1 flex-col p-5 sm:p-6">
                 {product.brand && (
                     <p
-                        className="min-w-0 truncate text-xs font-semibold uppercase tracking-wider text-neutral-500"
+                        className="mwt-card-copy min-w-0 truncate text-xs font-semibold uppercase tracking-wider text-neutral-500"
                         title={product.brand.name}
                     >
                         {product.brand.name}
@@ -59,14 +62,14 @@ export default function ProductCollectionCard({
                 >
                     <Link
                         href={productUrl}
-                        className="line-clamp-2 block min-w-0 break-words rounded-sm underline-offset-4 transition hover:text-neutral-600 hover:underline focus-visible:outline-none"
+                        className="mwt-card-title line-clamp-2 block min-w-0 break-words rounded-sm underline-offset-4 transition hover:text-neutral-600 hover:underline focus-visible:outline-none"
                     >
                         {product.name}
                     </Link>
                 </h3>
 
                 {product.short_description && (
-                    <p className="mt-3 min-w-0 line-clamp-3 break-words text-sm leading-6 text-neutral-600">
+                    <p className="mwt-card-copy mt-3 min-w-0 line-clamp-3 break-words text-sm leading-6 text-neutral-600">
                         {product.short_description}
                     </p>
                 )}
@@ -82,7 +85,7 @@ export default function ProductCollectionCard({
 
                     <Link
                         href={productUrl}
-                        className="inline-flex min-w-0 items-center gap-1.5 rounded-sm text-sm font-semibold text-neutral-700 transition hover:text-neutral-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2"
+                        className="mwt-card-copy inline-flex min-w-0 items-center gap-1.5 rounded-sm text-sm font-semibold text-neutral-700 transition hover:text-neutral-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2"
                     >
                         <span>View product</span>
 
@@ -91,6 +94,7 @@ export default function ProductCollectionCard({
                             aria-hidden="true"
                         />
                     </Link>
+                    <ProductCardPurchaseActions product={product} />
                 </div>
             </div>
         </article>

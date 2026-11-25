@@ -10,6 +10,9 @@ export default function ToastProvider() {
                 duration: 4000,
                 style: {
                     maxWidth: '420px',
+                    background: 'var(--mwt-surface)',
+                    color: 'var(--mwt-text)',
+                    border: '1px solid var(--mwt-border)',
                 },
                 success: {
                     duration: 3500,

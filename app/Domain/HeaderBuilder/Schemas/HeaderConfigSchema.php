@@ -7,6 +7,8 @@ namespace App\Domain\HeaderBuilder\Schemas;
 use App\Domain\HeaderBuilder\Enums\HeaderTemplate;
 use App\Domain\HeaderBuilder\Exceptions\InvalidHeaderConfiguration;
 use App\Domain\HeaderBuilder\HeaderConfigDefaults;
+use App\Domain\WebsiteSettings\BrandDisplaySchema;
+use App\Domain\WebsiteSettings\BuilderStyleSchema;
 
 final class HeaderConfigSchema
 {
@@ -59,6 +61,7 @@ final class HeaderConfigSchema
         $errors = [];
 
         $allowedKeys = [
+            'style',
             'announcement',
             'brand',
             'search',
@@ -130,6 +133,12 @@ final class HeaderConfigSchema
             errors: $errors,
         );
 
+        $style = (new BuilderStyleSchema)->normalize(
+            array_key_exists('style', $config) ? $config['style'] : [],
+            ['announcement', 'main', 'navigation'],
+            $errors,
+        );
+
         if ($errors !== []) {
             throw new InvalidHeaderConfiguration(
                 $errors,
@@ -150,6 +159,8 @@ final class HeaderConfigSchema
             'mega_menu' => $megaMenu,
 
             'mobile' => $mobile,
+
+            ...($style === [] ? [] : ['style' => $style]),
         ];
     }
 
@@ -269,11 +280,16 @@ final class HeaderConfigSchema
                 'accent',
                 'home_url',
                 'logo_url',
+                'display_mode',
                 'fallback_mark',
             ],
             prefix: $path,
             errors: $errors,
         );
+
+        $display = array_key_exists('display_mode', $array)
+            ? (new BrandDisplaySchema)->normalize($array, $errors)
+            : [];
 
         return [
             'name' => $this->shortText(
@@ -313,6 +329,7 @@ final class HeaderConfigSchema
                 errors: $errors,
                 nullable: true,
             ),
+            ...$display,
         ];
     }
 

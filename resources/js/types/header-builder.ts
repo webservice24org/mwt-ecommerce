@@ -1,3 +1,5 @@
+import type { BuilderStyle } from '@/lib/builderStyle'
+
 export type HeaderTemplateKey = 'mega_menu'
 
 export interface HeaderTemplateOption {
@@ -37,6 +39,7 @@ export interface HeaderBrandConfig {
     accent: string | null
     home_url: string
     logo_url: string | null
+    display_mode?: 'text' | 'logo'
     fallback_mark: string | null
 }
 
@@ -98,6 +101,7 @@ export interface HeaderMobileConfig {
 }
 
 export interface HeaderConfig {
+    style?: BuilderStyle
     announcement: HeaderAnnouncementConfig
     brand: HeaderBrandConfig
     search: HeaderSearchConfig

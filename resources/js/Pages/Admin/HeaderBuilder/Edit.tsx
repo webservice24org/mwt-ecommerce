@@ -27,6 +27,7 @@ import AccountMenuEditor from '@/Components/Admin/HeaderBuilder/AccountMenuEdito
 import MobileNavigationEditor from '@/Components/Admin/HeaderBuilder/MobileNavigationEditor'
 import HeaderDesign1Preview from '@/Components/Admin/HeaderBuilder/Preview/HeaderDesign1Preview'
 import HeaderTemplateSelector from '@/Components/Admin/HeaderBuilder/HeaderTemplateSelector'
+import BuilderStyleEditor from '@/Components/Admin/WebsiteSettings/BuilderStyleEditor'
 import AdminLayout from '@/Layouts/Admin/AdminLayout'
 import type {
     HeaderAbilities,
@@ -323,6 +324,18 @@ export default function Edit({ header, templates, abilities }: Props) {
                         readOnly={readOnly}
                         processing={processing}
                         onToggle={toggleEnabled}
+                    />
+
+                    <BuilderStyleEditor
+                        kind="header"
+                        value={config.style}
+                        disabled={readOnly || processing}
+                        onChange={(style) => setConfig((current) => {
+                            const next = { ...current }
+                            if (style) next.style = style
+                            else delete next.style
+                            return next
+                        })}
                     />
 
                     <AnnouncementBarEditor

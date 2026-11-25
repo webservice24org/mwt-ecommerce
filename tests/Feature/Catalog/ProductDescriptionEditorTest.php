@@ -602,6 +602,75 @@ HTML;
             );
     }
 
+    public function test_short_description_is_sanitized_on_create_and_update_and_rendered_separately(): void
+    {
+        $admin = Admin::factory()->create(['role' => AdminRole::Admin]);
+
+        $this->actingAs($admin, 'admin')->post(
+            route('admin.products.store'),
+            $this->productPayload([
+                'short_description' => '<p onclick="alert(1)"><strong>Short &amp; safe</strong></p><img src="/storage/editor/tmp/not-allowed.jpg">',
+            ]),
+        )->assertRedirect();
+
+        $product = Product::query()->where('sku', 'TIPTAP-PRODUCT-001')->firstOrFail();
+        $this->assertSame('<p><strong>Short &amp; safe</strong></p>', $product->short_description);
+
+        $this->actingAs($admin, 'admin')->put(
+            route('admin.products.update', $product),
+            $this->productPayload([
+                'slug' => $product->slug,
+                'short_description' => '<p><em>Updated summary</em></p><p>Second line</p><script>bad()</script>',
+                'status' => ProductStatus::Published->value,
+            ]),
+        )->assertRedirect();
+
+        $product->refresh();
+        $html = '<p><em>Updated summary</em></p><p>Second line</p>';
+        $this->assertSame($html, $product->short_description);
+
+        $this->get('/products/'.$product->slug)->assertOk()->assertInertia(
+            fn (Assert $page) => $page->component('Frontend/Products/Show')
+                ->where('product.short_description', 'Updated summary Second line')
+                ->where('shortDescriptionHtml', $html),
+        );
+
+        $this->get('/products')->assertOk()->assertInertia(
+            fn (Assert $page) => $page->component('Frontend/Products/Index')
+                ->where('products.data.0.short_description', 'Updated summary Second line'),
+        );
+    }
+
+    public function test_legacy_short_description_remains_plain_and_clearable(): void
+    {
+        $admin = Admin::factory()->create(['role' => AdminRole::Admin]);
+        $product = Product::factory()->create([
+            'type' => ProductType::Simple,
+            'sku' => 'LEGACY-SHORT-001',
+            'price' => 25000,
+            'compare_at_price' => null,
+            'status' => ProductStatus::Published,
+            'published_at' => null,
+            'short_description' => 'Legacy & plain',
+        ]);
+
+        $this->get('/products/'.$product->slug)->assertOk()->assertInertia(
+            fn (Assert $page) => $page->where('product.short_description', 'Legacy & plain')
+                ->where('shortDescriptionHtml', null),
+        );
+
+        $this->actingAs($admin, 'admin')->put(
+            route('admin.products.update', $product),
+            $this->productPayload([
+                'sku' => $product->sku,
+                'slug' => $product->slug,
+                'short_description' => '<p><br></p>',
+            ]),
+        )->assertRedirect();
+
+        $this->assertNull($product->refresh()->short_description);
+    }
+
     /**
      * @param  array<string, mixed>  $overrides
      * @return array<string, mixed>

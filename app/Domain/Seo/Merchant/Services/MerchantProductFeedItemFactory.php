@@ -6,6 +6,7 @@ namespace App\Domain\Seo\Merchant\Services;
 
 use App\Domain\Catalog\Enums\ProductType;
 use App\Domain\Catalog\Services\ProductPricingResolver;
+use App\Domain\Catalog\Services\ProductShortDescriptionContent;
 use App\Domain\Seo\Merchant\Data\MerchantFeedBuildResultData;
 use App\Domain\Seo\Merchant\Data\MerchantFeedItemData;
 use App\Domain\Seo\Merchant\Data\MerchantListingCandidateData;
@@ -694,11 +695,13 @@ final readonly class MerchantProductFeedItemFactory
     private function description(
         Product $product,
     ): ?string {
-        $source =
-            $product
-                ->short_description
-            ?? $product
-                ->description;
+        $shortDescription = ProductShortDescriptionContent::plainText($product->short_description);
+
+        if ($shortDescription !== null) {
+            return trim(preg_replace('/\s+/u', ' ', $shortDescription) ?? $shortDescription);
+        }
+
+        $source = $product->description;
 
         if ($source === null) {
             return null;

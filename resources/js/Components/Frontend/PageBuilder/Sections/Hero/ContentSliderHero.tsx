@@ -128,6 +128,7 @@ function ContentSlide({
             aria-roledescription="slide"
             aria-label={`${activeIndex + 1} of ${slideCount}`}
             className="relative isolate min-h-[420px] overflow-hidden sm:min-h-[500px] lg:min-h-[560px]"
+            data-mwt-theme-fixed="true"
             style={{
                 backgroundColor: slide.background_color ?? '#171717',
             }}

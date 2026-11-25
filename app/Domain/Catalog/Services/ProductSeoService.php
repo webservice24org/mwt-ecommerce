@@ -35,13 +35,11 @@ final class ProductSeoService
             );
         }
 
-        $description = $this->clean(
-            $product->short_description,
-        );
+        $description = ProductShortDescriptionContent::plainText($product->short_description);
 
         if ($description !== null) {
             return Str::limit(
-                $this->plainText($description),
+                trim(preg_replace('/\s+/u', ' ', $description) ?? $description),
                 $limit,
                 '',
             );

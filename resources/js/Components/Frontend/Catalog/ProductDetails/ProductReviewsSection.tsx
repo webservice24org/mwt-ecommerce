@@ -1,16 +1,19 @@
-import { Link } from '@inertiajs/react'
+import { useEffect, useRef, useState } from 'react'
 
 import type {
     PublicProductReview,
+    ProductReviewPaginator,
     StorefrontProductReviews,
 } from '@/types/product-review'
 
 interface Props {
     reviews: StorefrontProductReviews
+    productSlug?: string
 }
 
 export default function ProductReviewsSection({
     reviews,
+    productSlug,
 }: Props) {
     const {
         summary,
@@ -108,34 +111,11 @@ export default function ProductReviewsSection({
                 )}
             </div>
 
-            {paginator.data.length >
-                0 && (
-                <>
-                    <div className="divide-y divide-neutral-100">
-                        {paginator.data.map(
-                            (review) => (
-                                <ReviewCard
-                                    key={
-                                        review.id
-                                    }
-                                    review={
-                                        review
-                                    }
-                                />
-                            ),
-                        )}
-                    </div>
-
-                    <ReviewPagination
-                        currentPage={
-                            paginator.current_page
-                        }
-                        lastPage={
-                            paginator.last_page
-                        }
-                    />
-                </>
-            )}
+            <ReviewFeed
+                key={`${productSlug ?? ''}:${paginator.current_page}:${paginator.total}:${paginator.data.map((review) => review.id).join(',')}`}
+                productSlug={productSlug}
+                initial={paginator}
+            />
         </section>
     )
 }
@@ -231,58 +211,97 @@ function RatingStars({
     )
 }
 
-function ReviewPagination({
-    currentPage,
-    lastPage,
+function ReviewFeed({
+    productSlug,
+    initial,
 }: {
-    currentPage: number
-    lastPage: number
+    productSlug?: string
+    initial: ProductReviewPaginator
 }) {
-    if (lastPage <= 1) {
-        return null
+    const [additional, setAdditional] = useState<PublicProductReview[]>([])
+    const [page, setPage] = useState(initial.current_page)
+    const [lastPage, setLastPage] = useState(initial.last_page)
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+    const request = useRef<AbortController | null>(null)
+
+    useEffect(() => () => request.current?.abort(), [])
+
+    const visible = Array.from(
+        new Map([...initial.data, ...additional].map((review) => [review.id, review])).values(),
+    )
+    const hasMore = Boolean(productSlug) && page < lastPage && page < 10000
+
+    async function loadMore() {
+        if (!productSlug || request.current || !hasMore) return
+
+        const controller = new AbortController()
+        request.current = controller
+        setLoading(true)
+        setError(null)
+
+        try {
+            const nextPage = page + 1
+            const response = await fetch(
+                `/products/${encodeURIComponent(productSlug)}/reviews?page=${nextPage}`,
+                {
+                    headers: { Accept: 'application/json' },
+                    credentials: 'same-origin',
+                    signal: controller.signal,
+                },
+            )
+            if (!response.ok) throw new Error('Unable to load reviews.')
+
+            const result: ProductReviewPaginator = await response.json()
+            if (result.current_page !== nextPage || !Array.isArray(result.data)) {
+                throw new Error('Unexpected review response.')
+            }
+            if (controller.signal.aborted) return
+
+            setAdditional((previous) => [...previous, ...result.data])
+            setPage(result.current_page)
+            setLastPage(result.last_page)
+        } catch {
+            if (!controller.signal.aborted) {
+                setError('Could not load more reviews. Please try again.')
+            }
+        } finally {
+            if (request.current === controller) request.current = null
+            if (!controller.signal.aborted) setLoading(false)
+        }
     }
 
     return (
-        <nav
-            aria-label="Review pagination"
-            className="mt-6 flex items-center justify-between gap-4 border-t border-neutral-200 pt-5"
-        >
-            {currentPage > 1 ? (
-                <Link
-                    href={`?reviews_page=${
-                        currentPage - 1
-                    }`}
-                    preserveScroll
-                    preserveState
-                    className="inline-flex min-h-10 items-center rounded-lg border border-neutral-300 px-4 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50"
-                >
-                    Previous
-                </Link>
-            ) : (
-                <span />
+        <>
+            <div id="customer-review-list" className="divide-y divide-neutral-100" aria-busy={loading}>
+                {visible.map((review) => <ReviewCard key={review.id} review={review} />)}
+            </div>
+            {productSlug && initial.current_page > 1 && (
+                <a href={`/products/${encodeURIComponent(productSlug)}#customer-reviews-heading`} className="mt-4 inline-block text-sm font-medium underline">
+                    Back to newest reviews
+                </a>
             )}
-
-            <span className="text-sm text-neutral-500">
-                Page {currentPage} of{' '}
-                {lastPage}
-            </span>
-
-            {currentPage <
-            lastPage ? (
-                <Link
-                    href={`?reviews_page=${
-                        currentPage + 1
-                    }`}
-                    preserveScroll
-                    preserveState
-                    className="inline-flex min-h-10 items-center rounded-lg border border-neutral-300 px-4 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50"
-                >
-                    Next
-                </Link>
-            ) : (
-                <span />
+            {visible.length > 0 && (
+                <div className="mt-6 flex flex-col items-center gap-3 border-t border-neutral-200 pt-5">
+                    <p role="status" className="text-sm text-neutral-500">
+                        {visible.length} {visible.length === 1 ? 'review' : 'reviews'} displayed
+                    </p>
+                    {hasMore && (
+                        <button
+                            type="button"
+                            onClick={loadMore}
+                            disabled={loading}
+                            aria-controls="customer-review-list"
+                            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-neutral-300 bg-white px-8 py-2.5 text-sm font-semibold text-neutral-950 transition hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-wait disabled:opacity-60 sm:w-auto"
+                        >
+                            {loading ? 'Loading reviews…' : 'View more reviews'}
+                            {!loading && <span aria-hidden="true">⌄</span>}
+                        </button>
+                    )}
+                    {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+                </div>
             )}
-        </nav>
+        </>
     )
 }
 

@@ -48,6 +48,7 @@ export default function HighImpact({ config }: Props) {
         <section aria-labelledby={headingId} className="min-w-0 max-w-full py-5 sm:py-7 lg:py-8">
             <div
                 className="relative isolate max-w-full overflow-hidden rounded-2xl shadow-xl sm:rounded-3xl"
+                data-mwt-theme-fixed="true"
                 style={{
                     backgroundColor: config.background_color,
                 }}

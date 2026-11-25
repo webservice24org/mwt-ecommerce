@@ -1,3 +1,5 @@
+import BrandLogoImage from '@/Components/Frontend/BrandLogoImage'
+import { builderStyleProps } from '@/lib/builderStyle'
 import { Coins, Languages } from 'lucide-react'
 
 import SharedBottomFooter from '@/Components/FooterBuilder/SharedBottomFooter'
@@ -33,15 +35,19 @@ export default function MinimalLocalizationFooter({ config }: Props) {
     return (
         <footer
             aria-label="Store footer"
-            className="w-full min-w-0 max-w-full overflow-x-clip bg-black text-neutral-100"
+            className="mwt-adaptive-chrome w-full min-w-0 max-w-full overflow-x-clip bg-black text-neutral-100"
         >
-            <div className="w-full min-w-0 max-w-full bg-black">
+            <div {...builderStyleProps(config.style, 'main')} className="w-full min-w-0 max-w-full bg-black">
                 <div className="mx-auto w-full min-w-0 max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
                     <div className="grid min-w-0 grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-12">
                         <div className="min-w-0 max-w-full lg:col-span-4">
-                            <h2 className="max-w-full [overflow-wrap:anywhere] text-2xl font-black uppercase tracking-[0.12em] text-white">
+                            {brand.display_mode === 'logo' && brand.logo_url ? (
+                                <BrandLogoImage key={brand.logo_url} url={brand.logo_url} name={brandName} className="h-14 w-auto max-w-full object-contain object-left sm:h-16" />
+                            ) : (
+                                <h2 className="max-w-full [overflow-wrap:anywhere] text-2xl font-black uppercase tracking-[0.12em] text-white">
                                 {brandName}
                             </h2>
+                            )}
 
                             {brand.description !== '' && (
                                 <p className="mt-4 max-w-md [overflow-wrap:anywhere] text-xs leading-6 text-neutral-500">
@@ -120,6 +126,7 @@ export default function MinimalLocalizationFooter({ config }: Props) {
             </div>
 
             <SharedBottomFooter
+                builderStyle={config.style}
                 template="minimal_localized"
                 copyright={copyright}
                 socialLinks={socialLinks}

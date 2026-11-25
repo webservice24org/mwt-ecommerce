@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Seo\Services;
 
+use App\Domain\Catalog\Services\ProductShortDescriptionContent;
 use App\Domain\Seo\Data\EntitySeoData;
 use App\Domain\Seo\Data\SeoEntitySourceData;
 use App\Models\Brand;
@@ -78,7 +79,7 @@ final readonly class SeoEntitySourceFactory
             metaDescription: $product->meta_description,
 
             fallbackDescription: $this->firstText([
-                $product->short_description,
+                ProductShortDescriptionContent::plainText($product->short_description),
                 $product->description,
             ]),
 

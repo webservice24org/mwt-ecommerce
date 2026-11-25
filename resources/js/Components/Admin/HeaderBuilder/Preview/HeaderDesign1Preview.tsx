@@ -1,3 +1,5 @@
+import BrandLogoImage from '@/Components/Frontend/BrandLogoImage'
+import { builderStyleProps } from '@/lib/builderStyle'
 import { ChevronDown, Heart, Menu, Search, ShoppingBag, X } from 'lucide-react'
 import { Link } from '@inertiajs/react'
 import { type ReactNode, type RefObject, useEffect, useId, useRef, useState } from 'react'
@@ -181,7 +183,7 @@ function AnnouncementBar({
     }
 
     return (
-        <div className="w-full border-b border-indigo-500/30 bg-gradient-to-r from-indigo-700 via-violet-700 to-indigo-800 text-white">
+        <div {...builderStyleProps(config.style, 'announcement')} className="w-full border-b border-indigo-500/30 bg-gradient-to-r from-indigo-700 via-violet-700 to-indigo-800 text-white">
             <div
                 className={[
                     'mx-auto flex w-full max-w-7xl min-w-0 items-center py-2',
@@ -287,7 +289,7 @@ function MainHeader({
     const compact = device === 'tablet' || device === 'mobile'
 
     return (
-        <div className="relative z-30 w-full border-b border-neutral-800 bg-neutral-900">
+        <div {...builderStyleProps(config.style, 'main')} className="relative z-30 w-full border-b border-neutral-800 bg-neutral-900">
             <div
                 className={[
                     'mx-auto flex w-full max-w-7xl min-w-0 items-center',
@@ -348,6 +350,13 @@ function Brand({ config, device }: { config: HeaderConfig; device: HeaderPreview
 
     return (
         <div className="flex min-w-0 shrink-0 items-center gap-2.5">
+            {config.brand.display_mode === 'logo' && config.brand.logo_url ? (
+                <BrandLogoImage key={config.brand.logo_url} url={config.brand.logo_url} name={config.brand.name} className={device === 'mobile' ? 'h-9 w-auto max-w-[96px] object-contain' : 'h-10 w-auto max-w-[160px] object-contain'} />
+            ) : config.brand.display_mode ? (
+                <span className={device === 'mobile' ? 'max-w-[96px] truncate text-sm font-black text-white' : 'max-w-[160px] truncate text-lg font-black text-white'} title={config.brand.name}>
+                    {config.brand.name}<span className="text-indigo-500">{config.brand.accent ?? ''}</span>
+                </span>
+            ) : (<>
             {config.brand.logo_url ? (
                 <div
                     className={[
@@ -381,6 +390,7 @@ function Brand({ config, device }: { config: HeaderConfig; device: HeaderPreview
                     <span className="text-indigo-500">{config.brand.accent ?? ''}</span>
                 </p>
             )}
+            </>)}
         </div>
     )
 }
@@ -659,6 +669,7 @@ function MobileMenu({
     return (
         <div
             id={id}
+            {...builderStyleProps(config.style, 'navigation')}
             className="max-h-[min(32rem,70dvh)] w-full overflow-y-auto overscroll-contain border-b border-neutral-800 bg-neutral-950 p-3"
         >
             <div className="mb-3 flex items-center justify-between gap-3">
@@ -766,7 +777,7 @@ function DesktopNavigation({
 
     if (device === 'tablet') {
         return (
-            <div className="w-full border-b border-neutral-800 bg-neutral-950 px-4 py-2">
+            <div {...builderStyleProps(config.style, 'navigation')} className="w-full border-b border-neutral-800 bg-neutral-950 px-4 py-2">
                 <button
                     type="button"
                     aria-expanded={mobileMenuOpen}
@@ -790,7 +801,7 @@ function DesktopNavigation({
     }
 
     return (
-        <div className="w-full border-b border-neutral-800 bg-neutral-950">
+        <div {...builderStyleProps(config.style, 'navigation')} className="w-full border-b border-neutral-800 bg-neutral-950">
             <div className="mx-auto flex min-h-12 w-full max-w-7xl min-w-0 items-center gap-7 px-4 sm:px-6 lg:px-8">
                 {config.mega_menu.enabled && (
                     <button
@@ -865,6 +876,7 @@ function MegaMenu({
         <div
             id={id}
             aria-label="Product categories preview"
+            {...builderStyleProps(config.style, 'navigation')}
             className="w-full border-b border-neutral-800 bg-neutral-900"
         >
             <div className="mx-auto grid w-full max-w-7xl grid-cols-12 gap-8 px-4 py-7 sm:px-6 lg:px-8">

@@ -16,6 +16,7 @@ use App\Domain\Catalog\Data\Storefront\StorefrontVariantData;
 use App\Domain\Catalog\Data\Storefront\StorefrontVideoData;
 use App\Domain\Catalog\Enums\ProductVideoType;
 use App\Domain\Catalog\Services\ProductPricingResolver;
+use App\Domain\Catalog\Services\ProductShortDescriptionContent;
 use App\Models\AttributeValue;
 use App\Models\Brand;
 use App\Models\Category;
@@ -47,7 +48,7 @@ final readonly class StorefrontProductDataFactory
             name: $product->name,
             slug: $product->slug,
             type: $product->type,
-            shortDescription: $product->short_description,
+            shortDescription: ProductShortDescriptionContent::plainText($product->short_description),
             isFeatured: $product->is_featured,
             pricing: $pricing,
             image: $image instanceof ProductImage
@@ -72,7 +73,7 @@ final readonly class StorefrontProductDataFactory
             slug: $product->slug,
             type: $product->type,
             sku: $product->sku,
-            shortDescription: $product->short_description,
+            shortDescription: ProductShortDescriptionContent::plainText($product->short_description),
             description: $product->description,
             pricing: $this->pricing($pricing),
             trackInventory: $product->track_inventory,

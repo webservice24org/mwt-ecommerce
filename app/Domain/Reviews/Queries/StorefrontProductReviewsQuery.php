@@ -11,6 +11,8 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 final readonly class StorefrontProductReviewsQuery
 {
+    public const STOREFRONT_PAGE_SIZE = 3;
+
     /**
      * @return array{
      *     summary: array{
@@ -42,6 +44,7 @@ final readonly class StorefrontProductReviewsQuery
     public function get(
         Product $product,
         int $perPage = 10,
+        ?int $page = null,
     ): array {
         /*
          * ==================================================
@@ -155,6 +158,8 @@ final readonly class StorefrontProductReviewsQuery
                     perPage: $perPage,
 
                     pageName: 'reviews_page',
+
+                    page: $page,
                 );
 
         return [

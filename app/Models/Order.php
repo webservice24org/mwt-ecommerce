@@ -34,6 +34,7 @@ use Illuminate\Support\Carbon;
  * @property int $grand_total
  * @property Carbon|null $payment_due_at
  * @property Carbon|null $paid_at
+ * @property Carbon|null $trashed_at
  * @property Carbon|null $placed_at
  */
 final class Order extends Model
@@ -77,6 +78,17 @@ final class Order extends Model
         'shipping_rate_code',
         'shipping_rate_name',
     ];
+
+    /** @var list<string> */
+    protected $hidden = ['trashed_at'];
+
+    /**
+     * @return HasMany<ProductReview, $this>
+     */
+    public function verifiedReviews(): HasMany
+    {
+        return $this->hasMany(ProductReview::class, 'verified_order_id');
+    }
 
     /**
      * @return BelongsTo<User, $this>
@@ -154,6 +166,8 @@ final class Order extends Model
             'grand_total' => 'integer',
 
             'placed_at' => 'datetime',
+
+            'trashed_at' => 'datetime',
         ];
     }
 

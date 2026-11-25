@@ -1,3 +1,5 @@
+import BrandLogoImage from '@/Components/Frontend/BrandLogoImage'
+import { builderStyleProps } from '@/lib/builderStyle'
 import {
     Award,
     BadgeCheck,
@@ -80,6 +82,7 @@ export default function LuxeNewsletterPreview({ config, device }: Props) {
         >
             {valueProps.length > 0 && (
                 <div
+                    {...builderStyleProps(config.style, 'top')}
                     className={['border-b border-neutral-800 bg-neutral-900', valuePadding].join(
                         ' ',
                     )}
@@ -123,7 +126,7 @@ export default function LuxeNewsletterPreview({ config, device }: Props) {
                 </div>
             )}
 
-            <div className={['border-b border-neutral-800 bg-neutral-900', mainPadding].join(' ')}>
+            <div {...builderStyleProps(config.style, 'main')} className={['border-b border-neutral-800 bg-neutral-900', mainPadding].join(' ')}>
                 <div
                     className={[
                         'grid min-w-0 gap-10',
@@ -131,7 +134,7 @@ export default function LuxeNewsletterPreview({ config, device }: Props) {
                     ].join(' ')}
                 >
                     <div className="min-w-0">
-                        <BrandMark initial={brandInitial} name={brandName} />
+                        {brand.display_mode === 'logo' && brand.logo_url ? (<BrandLogoImage key={brand.logo_url} url={brand.logo_url} name={brandName} className="h-14 w-auto max-w-full object-contain object-left sm:h-16" />) : brand.display_mode === 'text' ? (<span className="text-lg font-bold text-white">{brandName}</span>) : (<BrandMark initial={brandInitial} name={brandName} />)}
 
                         {newsletter.enabled ? (
                             <>
@@ -238,6 +241,7 @@ export default function LuxeNewsletterPreview({ config, device }: Props) {
             </div>
 
             <SharedBottomFooter
+                builderStyle={config.style}
                 template="luxe_newsletter"
                 copyright={copyright}
                 socialLinks={socialLinks}

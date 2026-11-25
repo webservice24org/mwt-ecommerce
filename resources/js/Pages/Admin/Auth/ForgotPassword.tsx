@@ -1,3 +1,4 @@
+import AppearanceSwitcher from '@/Components/Appearance/AppearanceSwitcher'
 import { Head, useForm } from '@inertiajs/react'
 import type { FormEvent } from 'react'
 
@@ -20,7 +21,8 @@ export default function ForgotPassword({ status }: Props) {
         <>
             <Head title="Admin Password Reset" />
 
-            <main className="flex min-h-screen items-center justify-center bg-neutral-100 px-4">
+            <main className="mwt-auth-surface relative flex min-h-screen items-center justify-center bg-neutral-100 px-4">
+                <div className="mwt-auth-appearance"><AppearanceSwitcher /></div>
                 <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm">
                     <h1 className="text-2xl font-semibold text-neutral-900">
                         Reset admin password

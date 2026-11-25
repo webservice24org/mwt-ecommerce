@@ -1,4 +1,7 @@
-import { Head, Link, useForm } from '@inertiajs/react'
+import AppearanceSwitcher from '@/Components/Appearance/AppearanceSwitcher'
+import AdminBrandImage from '@/Components/Admin/AdminBrandImage'
+import { adminLoginBackground, normalizeAdminBranding } from '@/lib/adminBranding'
+import { Head, Link, useForm, usePage } from '@inertiajs/react'
 import type { FormEvent } from 'react'
 
 type LoginForm = {
@@ -8,6 +11,7 @@ type LoginForm = {
 }
 
 export default function Login() {
+    const branding = normalizeAdminBranding(usePage().props.adminBranding)
     const { data, setData, post, processing, errors } = useForm<LoginForm>({
         email: '',
         password: '',
@@ -29,9 +33,11 @@ export default function Login() {
         <>
             <Head title="Admin Login" />
 
-            <main className="flex min-h-screen items-center justify-center bg-neutral-100 px-4">
+            <main className="mwt-auth-surface relative flex min-h-screen items-center justify-center bg-neutral-100 px-4 pb-6" style={adminLoginBackground(branding)}>
+                <div className="mwt-auth-appearance"><AppearanceSwitcher /></div>
                 <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm">
                     <div className="mb-8">
+                        <AdminBrandImage url={branding.login_logo} alt="Brand logo" className="mx-auto mb-5 max-h-24 max-w-full object-contain" />
                         <h1 className="text-2xl font-semibold text-neutral-900">Admin Login</h1>
 
                         <p className="mt-2 text-sm text-neutral-500">

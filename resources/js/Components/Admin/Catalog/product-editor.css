@@ -1,0 +1,49 @@
+/* Product-form overrides for the MicroWeb Tiptap package, not global editor styles. */
+.mw-product-editor {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.mw-product-editor .mw-tiptap-toolbar-main,
+.mw-product-editor .mw-tiptap-toolbar {
+    flex-wrap: nowrap;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    align-items: center;
+    scrollbar-width: thin;
+}
+
+.mw-product-editor .mw-tiptap-toolbar-main {
+    gap: 6px;
+    padding: 8px;
+}
+
+.mw-product-editor .mw-tiptap-toolbar-main .mw-tiptap-format-select {
+    flex: 0 0 124px;
+    width: 124px;
+    min-width: 124px;
+    padding-inline: 8px 24px;
+    font-size: 13px;
+}
+
+.mw-product-editor .mw-tiptap-toolbar-main .mw-tiptap-action-button,
+.mw-product-editor .mw-editor-mode-switch button {
+    flex: 0 0 auto;
+    gap: 5px;
+    padding-inline: 8px;
+    white-space: nowrap;
+    font-size: 12px;
+}
+
+.mw-product-editor .mw-tiptap-toolbar-main .mw-editor-mode-switch {
+    flex: 0 0 auto;
+    width: auto;
+    margin-inline-start: auto;
+}
+
+/* The short summary is text-only, including in code/pasted-content sanitization. */
+.mw-product-editor--short .mw-tiptap-toolbar-main .mw-tiptap-action-button {
+    display: none;
+}

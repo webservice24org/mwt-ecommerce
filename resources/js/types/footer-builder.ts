@@ -39,6 +39,8 @@ export interface FooterEditorSection {
 }
 
 export interface FooterBrandConfig {
+    display_mode?: 'text' | 'logo'
+    logo_url?: string | null
     name: string
     description: string
 }
@@ -210,6 +212,8 @@ export function readFooterBrand(config: FooterConfig): FooterBrandConfig {
         name: readString(value.name),
 
         description: readString(value.description),
+        ...(value.display_mode === 'text' || value.display_mode === 'logo' ? { display_mode: value.display_mode } : {}),
+        ...(typeof value.logo_url === 'string' || value.logo_url === null ? { logo_url: value.logo_url } : {}),
     }
 }
 

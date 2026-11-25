@@ -1,3 +1,5 @@
+import BrandLogoImage from '@/Components/Frontend/BrandLogoImage'
+import { builderStyleProps } from '@/lib/builderStyle'
 import { BadgeCheck } from 'lucide-react'
 
 import {
@@ -49,7 +51,7 @@ export default function MarketplaceTrustPreview({ config, device }: Props) {
             className="overflow-hidden bg-neutral-900 text-neutral-100"
         >
             {promotion.enabled && (
-                <div className="bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 px-4 py-4 text-white sm:px-6">
+                <div {...builderStyleProps(config.style, 'top')} className="bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 px-4 py-4 text-white sm:px-6">
                     <div
                         className={[
                             'flex min-w-0 gap-3',
@@ -101,11 +103,13 @@ export default function MarketplaceTrustPreview({ config, device }: Props) {
             )}
 
             <div
+                {...builderStyleProps(config.style, 'main')}
                 className={[
                     'space-y-9 border-b border-neutral-800 bg-neutral-900',
                     mainPadding,
                 ].join(' ')}
             >
+                {brand.display_mode && (brand.display_mode === 'logo' && brand.logo_url ? (<BrandLogoImage key={brand.logo_url} url={brand.logo_url} name={brandName} className="h-14 w-auto max-w-full object-contain object-left sm:h-16" />) : (<h2 className="text-2xl font-black text-white break-words">{brandName}</h2>))}
                 {popularLinks.length > 0 && (
                     <div className="border-b border-neutral-800 pb-7">
                         <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-neutral-400">
@@ -201,6 +205,7 @@ export default function MarketplaceTrustPreview({ config, device }: Props) {
             </div>
 
             <SharedBottomFooter
+                builderStyle={config.style}
                 template="marketplace_trust"
                 copyright={copyright}
                 socialLinks={socialLinks}

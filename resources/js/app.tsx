@@ -1,4 +1,5 @@
 import '../css/app.css'
+import '../css/appearance.css'
 import './bootstrap'
 
 import ToastProvider from '@/Components/ToastProvider'

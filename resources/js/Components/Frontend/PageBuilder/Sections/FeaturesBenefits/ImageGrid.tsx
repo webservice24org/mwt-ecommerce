@@ -20,6 +20,7 @@ export default function ImageGrid({ config }: Props) {
             aria-labelledby={config.heading ? headingId : undefined}
             aria-describedby={config.description ? descriptionId : undefined}
             className="overflow-x-clip py-8 sm:py-12 lg:py-16"
+            data-mwt-theme-fixed="true"
             style={{
                 backgroundColor: config.background_color,
             }}

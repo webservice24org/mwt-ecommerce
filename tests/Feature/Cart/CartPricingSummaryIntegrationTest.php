@@ -8,6 +8,7 @@ use App\Domain\Cart\Services\CartPromoSession;
 use App\Models\Product;
 use App\Models\PromoCode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 final class CartPricingSummaryIntegrationTest extends TestCase
@@ -71,6 +72,13 @@ final class CartPricingSummaryIntegrationTest extends TestCase
 
                 'grand_total' => 4000,
             ]);
+
+        $this->get(route('cart.show'))->assertInertia(fn (Assert $page) => $page
+            ->component('Frontend/Cart/Index')
+            ->where('storefrontCart.promo.code', 'SAVE20')
+            ->where('storefrontCart.subtotal', 5000)
+            ->where('storefrontCart.discount_total', 1000)
+            ->where('storefrontCart.grand_total', 4000));
     }
 
     public function test_quantity_update_recalculates_discount_and_grand_total(): void

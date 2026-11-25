@@ -6,12 +6,14 @@ interface AddToCartInput {
     productId: number
     variantId?: number | null
     quantity?: number
+    openDrawer?: boolean
 }
 
 export async function addToCart({
     productId,
     variantId = null,
     quantity = 1,
+    openDrawer = false,
 }: AddToCartInput): Promise<StorefrontCart> {
     const response = await fetch('/cart/items', {
         method: 'POST',
@@ -35,7 +37,8 @@ export async function addToCart({
 
     const cart = (await response.json()) as StorefrontCart
 
-    dispatchCartChanged(cart)
+    const itemAdded = cart.items.some(item => item.product_id === productId && item.variant_id === variantId)
+    dispatchCartChanged(cart, openDrawer && itemAdded)
 
     return cart
 }

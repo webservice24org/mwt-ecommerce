@@ -22,10 +22,10 @@ export default function AdminLayout({ title, description, actions, children }: P
             <div className="min-h-screen overflow-x-hidden bg-neutral-50 dark:bg-neutral-950">
                 <AdminSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-                <div className="min-w-0 lg:pl-72">
+                <div className="flex min-h-screen min-w-0 flex-col lg:pl-72">
                     <AdminHeader title={title} onMenuClick={() => setSidebarOpen(true)} />
 
-                    <main className="min-w-0">
+                    <main className="min-w-0 flex-1">
                         <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
                             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="min-w-0">
@@ -50,6 +50,11 @@ export default function AdminLayout({ title, description, actions, children }: P
                             <div className="min-w-0">{children}</div>
                         </div>
                     </main>
+
+                    <footer className="border-t border-neutral-200 px-4 py-4 text-center text-sm text-neutral-600 dark:border-neutral-800 dark:text-neutral-300">
+                        Website Developed by{' '}
+                        <a href="https://webservicebd.org" target="_blank" rel="noopener noreferrer" className="font-semibold text-indigo-600 underline-offset-4 hover:underline dark:text-indigo-300">MicroWeb Technology</a>
+                    </footer>
                 </div>
             </div>
         </>

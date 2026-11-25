@@ -1,3 +1,4 @@
+import AppearanceSwitcher from '@/Components/Appearance/AppearanceSwitcher'
 import { router } from '@inertiajs/react'
 
 type Props = {
@@ -11,8 +12,8 @@ export default function AdminHeader({ title, onMenuClick }: Props) {
     }
 
     return (
-        <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur">
-            <div className="flex h-16 min-w-0 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <header className="mwt-admin-header sticky top-0 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur">
+            <div className="flex h-16 min-w-0 items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6 lg:px-8">
                 <div className="flex min-w-0 items-center gap-3">
                     <button
                         type="button"
@@ -42,6 +43,7 @@ export default function AdminHeader({ title, onMenuClick }: Props) {
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2">
+                    <AppearanceSwitcher />
                     <button
                         type="button"
                         onClick={logout}

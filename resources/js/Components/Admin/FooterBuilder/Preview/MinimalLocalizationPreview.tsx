@@ -1,3 +1,5 @@
+import BrandLogoImage from '@/Components/Frontend/BrandLogoImage'
+import { builderStyleProps } from '@/lib/builderStyle'
 import { ChevronDown, Coins, Languages } from 'lucide-react'
 
 import {
@@ -49,7 +51,7 @@ export default function MinimalLocalizationPreview({ config, device }: Props) {
             aria-label="Minimal Localization footer preview"
             className="overflow-hidden bg-black text-neutral-100"
         >
-            <div className={['border-b border-neutral-900 bg-black', mainPadding].join(' ')}>
+            <div {...builderStyleProps(config.style, 'main')} className={['border-b border-neutral-900 bg-black', mainPadding].join(' ')}>
                 <div
                     className={[
                         'grid min-w-0 gap-10',
@@ -58,9 +60,13 @@ export default function MinimalLocalizationPreview({ config, device }: Props) {
                 >
                     <div className="min-w-0">
                         <div>
-                            <h3 className="break-words text-2xl font-black uppercase tracking-[0.12em] text-white">
+                            {brand.display_mode === 'logo' && brand.logo_url ? (
+                                <BrandLogoImage key={brand.logo_url} url={brand.logo_url} name={brandName} className="h-14 w-auto max-w-full object-contain object-left sm:h-16" />
+                            ) : (
+                                <h3 className="break-words text-2xl font-black uppercase tracking-[0.12em] text-white">
                                 {brandName}
                             </h3>
+                            )}
 
                             {brand.description !== '' && (
                                 <p className="mt-3 max-w-md break-words text-xs leading-6 text-neutral-500">
@@ -163,6 +169,7 @@ export default function MinimalLocalizationPreview({ config, device }: Props) {
             </div>
 
             <SharedBottomFooter
+                builderStyle={config.style}
                 template="minimal_localized"
                 copyright={copyright}
                 socialLinks={socialLinks}

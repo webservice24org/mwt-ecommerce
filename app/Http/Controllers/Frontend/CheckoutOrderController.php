@@ -51,12 +51,21 @@ final class CheckoutOrderController extends Controller
                     idempotencyKey: $idempotencyKey,
                 );
         } catch (ValidationException $exception) {
+            $errors = $exception->errors();
+            if (isset($errors['order_submission'])) {
+                // The old submission is permanently retired. Require an
+                // explicit fresh checkout instead of silently retrying it.
+                $checkoutSession->rotateOrderSubmissionToken();
+                $errors['cart'] = $errors['order_submission'];
+                unset($errors['order_submission']);
+            }
+
             return redirect()
                 ->route(
                     'checkout.index',
                 )
                 ->withErrors(
-                    $exception->errors(),
+                    $errors,
                 );
         }
 

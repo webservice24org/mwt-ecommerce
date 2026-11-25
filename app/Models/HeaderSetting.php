@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Domain\HeaderBuilder\Enums\HeaderTemplate;
 use App\Domain\HeaderBuilder\HeaderConfigDefaults;
+use App\Domain\WebsiteSettings\BuilderStyleSchema;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -56,7 +57,24 @@ final class HeaderSetting extends Model
     public function resolvedConfig(): array
     {
         if ($this->config !== []) {
-            return $this->config;
+            $config = $this->config;
+
+            if (array_key_exists('style', $config)) {
+                $errors = [];
+                $style = (new BuilderStyleSchema)->normalize(
+                    $config['style'],
+                    ['announcement', 'main', 'navigation'],
+                    $errors,
+                );
+
+                unset($config['style']);
+
+                if ($errors === [] && $style !== []) {
+                    $config['style'] = $style;
+                }
+            }
+
+            return $config;
         }
 
         return (

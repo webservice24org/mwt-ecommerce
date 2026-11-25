@@ -3,10 +3,18 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Customer\CustomerAddressController;
+use App\Http\Controllers\Customer\CustomerAvatarController;
 use App\Http\Controllers\Customer\CustomerDashboardController;
 use App\Http\Controllers\Customer\CustomerOrderController;
 use App\Http\Controllers\Customer\InvoiceController;
 use Illuminate\Support\Facades\Route;
+
+// Profile photos remain accessible to active, unverified customers editing their account.
+Route::middleware(['auth', 'customer.active'])->group(function (): void {
+    Route::get('/avatar', [CustomerAvatarController::class, 'show'])->name('avatar.show');
+    Route::post('/avatar', [CustomerAvatarController::class, 'store'])->middleware('throttle:10,1')->name('avatar.store');
+    Route::delete('/avatar', [CustomerAvatarController::class, 'destroy'])->middleware('throttle:10,1')->name('avatar.destroy');
+});
 
 Route::middleware([
     'auth',

@@ -1,3 +1,4 @@
+import { builderStyleProps } from '@/lib/builderStyle'
 import { footerSocialPlatforms } from '@/types/footer-builder'
 import type {
     FooterCopyrightConfig,
@@ -13,6 +14,7 @@ import type { ReactNode } from 'react'
 type FooterRenderMode = 'preview' | 'storefront'
 
 interface Props {
+    builderStyle?: unknown
     template: FooterTemplateKey
 
     copyright: FooterCopyrightConfig
@@ -158,6 +160,7 @@ export default function SharedBottomFooter({
     device,
     mode,
     contentClassName = '',
+    builderStyle,
 }: Props) {
     const theme = themes[template]
 
@@ -199,6 +202,7 @@ export default function SharedBottomFooter({
     return (
         <div
             data-footer-bottom
+            {...builderStyleProps(builderStyle, 'bottom')}
             className={[
                 'w-full min-w-0 max-w-full overflow-x-clip border-t bg-neutral-950',
                 theme.border,

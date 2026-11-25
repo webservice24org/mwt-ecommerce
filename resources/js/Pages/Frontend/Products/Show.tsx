@@ -3,6 +3,7 @@ import ProductDetailsLayout from '@/Components/Frontend/Catalog/ProductDetails/P
 import ProductGallery from '@/Components/Frontend/Catalog/ProductDetails/ProductGallery'
 import ProductReviewForm from '@/Components/Frontend/Catalog/ProductDetails/ProductReviewForm'
 import ProductReviewsSection from '@/Components/Frontend/Catalog/ProductDetails/ProductReviewsSection'
+import RelatedProductsSection from '@/Components/Frontend/Catalog/ProductDetails/RelatedProductsSection'
 import ProductSummary from '@/Components/Frontend/Catalog/ProductDetails/ProductSummary'
 import StorefrontBreadcrumbs from '@/Components/Frontend/Navigation/StorefrontBreadcrumbs'
 import StorefrontSeo from '@/Components/Frontend/Seo/StorefrontSeo'
@@ -26,12 +27,15 @@ import type {
 import type {
     StorefrontBreadcrumbItem,
     StorefrontProductDetail,
+    StorefrontProductCard,
 } from '@/types/storefront'
 
 interface Props {
     product: StorefrontProductDetail
+    shortDescriptionHtml?: string | null
     reviewState: StorefrontProductReviewState
     reviews: StorefrontProductReviews
+    relatedProducts: StorefrontProductCard[]
     seo: ResolvedSeo
 
     structuredData:
@@ -44,8 +48,10 @@ interface Props {
 
 export default function Show({
     product,
+    shortDescriptionHtml = null,
     reviewState,
     reviews,
+    relatedProducts,
     seo,
     structuredData,
     selectedVariantId,
@@ -156,6 +162,7 @@ export default function Show({
                                 initialVariantId={
                                     selectedVariantId
                                 }
+                                shortDescriptionHtml={shortDescriptionHtml}
                             />
                         </div>
                     }
@@ -179,6 +186,8 @@ export default function Show({
 
                 <div className="mt-12 lg:mt-16">
                     <ProductReviewsSection
+                        key={product.id}
+                        productSlug={product.slug}
                         reviews={
                             reviews
                         }
@@ -195,6 +204,7 @@ export default function Show({
                         }
                     />
                 </div>
+                <RelatedProductsSection products={relatedProducts} />
             </main>
         </FrontendLayout>
     )

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Seo\Ai\Services;
 
+use App\Domain\Catalog\Services\ProductShortDescriptionContent;
 use App\Domain\Seo\Ai\Data\AiSeoEntitySnapshotData;
 use App\Domain\Seo\Ai\Enums\AiSeoEntityType;
 use App\Models\Brand;
@@ -84,8 +85,7 @@ final readonly class AiSeoEntitySnapshotBuilder
 
             content: [
                 'summary' => $this->text->normalize(
-                    $product
-                        ->short_description,
+                    ProductShortDescriptionContent::plainText($product->short_description),
                     self::SUMMARY_LIMIT,
                 ),
 

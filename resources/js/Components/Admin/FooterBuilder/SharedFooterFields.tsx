@@ -1,3 +1,4 @@
+import BuilderBrandControls from '@/Components/Admin/BuilderBrandControls'
 import { Building2, Copyright } from 'lucide-react'
 
 import type { FooterBrandConfig, FooterCopyrightConfig } from '@/types/footer-builder'
@@ -74,6 +75,9 @@ export default function SharedFooterFields({
                             </span>
                         </div>
                     </div>
+
+                    <BuilderBrandControls section="footer" mode={brand.display_mode} url={brand.logo_url} disabled={disabled}
+                        onChange={(display_mode, logo_url) => onBrandChange({ ...brand, display_mode, logo_url })} />
 
                     <div>
                         <label

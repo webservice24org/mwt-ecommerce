@@ -9,6 +9,8 @@
     <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
 
+    @include('partials.appearance-bootstrap')
+
     @routes
     @viteReactRefresh
     @vite(['resources/js/app.tsx'])

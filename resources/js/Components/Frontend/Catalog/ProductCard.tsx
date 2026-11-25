@@ -1,3 +1,5 @@
+import { useProductCardTheme } from '@/lib/useProductCardTheme'
+import ProductCardPurchaseActions from '@/Components/Frontend/Catalog/ProductCardPurchaseActions'
 import ProductImage from '@/Components/Frontend/Catalog/ProductImage'
 import ProductPrice from '@/Components/Frontend/Catalog/ProductPrice'
 import WishlistToggleButton from '@/Components/Frontend/Wishlist/WishlistToggleButton'
@@ -15,10 +17,11 @@ export default function ProductCard({
     showPrice = true,
     showBadges = true,
 }: ProductCardProps) {
+    const theme = useProductCardTheme()
     const productUrl = `/products/${product.slug}`
 
     return (
-        <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white transition-shadow duration-200 hover:shadow-sm focus-within:ring-2 focus-within:ring-neutral-950 focus-within:ring-offset-2">
+        <article style={theme.style} className={`${theme.className} group flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white transition-shadow duration-200 hover:shadow-sm focus-within:ring-2 focus-within:ring-neutral-950 focus-within:ring-offset-2`}>
             <div className="relative min-w-0">
                 <Link
                     href={productUrl}
@@ -50,7 +53,7 @@ export default function ProductCard({
             <div className="flex min-w-0 flex-1 flex-col p-4">
                 {product.brand && (
                     <p
-                        className="min-w-0 truncate text-xs font-medium uppercase tracking-wide text-neutral-500"
+                        className="mwt-card-copy min-w-0 truncate text-xs font-medium uppercase tracking-wide text-neutral-500"
                         title={product.brand.name}
                     >
                         {product.brand.name}
@@ -60,14 +63,14 @@ export default function ProductCard({
                 <h2 className="mt-1 min-w-0 text-base font-medium leading-6 text-neutral-950">
                     <Link
                         href={productUrl}
-                        className="line-clamp-2 block min-w-0 break-words rounded-sm underline-offset-4 transition hover:text-neutral-600 hover:underline focus-visible:outline-none"
+                        className="mwt-card-title line-clamp-2 block min-w-0 break-words rounded-sm underline-offset-4 transition hover:text-neutral-600 hover:underline focus-visible:outline-none"
                     >
                         {product.name}
                     </Link>
                 </h2>
 
                 {product.short_description && (
-                    <p className="mt-2 min-w-0 line-clamp-2 break-words text-sm leading-5 text-neutral-600">
+                    <p className="mwt-card-copy mt-2 min-w-0 line-clamp-2 break-words text-sm leading-5 text-neutral-600">
                         {product.short_description}
                     </p>
                 )}
@@ -79,6 +82,8 @@ export default function ProductCard({
                         className="mt-auto min-w-0 pt-4"
                     />
                 )}
+
+                <ProductCardPurchaseActions product={product} />
             </div>
         </article>
     )

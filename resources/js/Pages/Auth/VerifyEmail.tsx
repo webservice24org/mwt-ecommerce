@@ -1,3 +1,4 @@
+import AppearanceSwitcher from '@/Components/Appearance/AppearanceSwitcher'
 import { Head, Link, useForm } from '@inertiajs/react'
 import { CheckCircle2, MailCheck, RefreshCw } from 'lucide-react'
 
@@ -21,7 +22,8 @@ export default function VerifyEmail({ email, status = null }: Props) {
         <>
             <Head title="Verify email" />
 
-            <main className="flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10 text-white sm:px-6">
+            <main className="mwt-adaptive-chrome mwt-auth-surface relative flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10 text-white sm:px-6">
+                <div className="mwt-auth-appearance"><AppearanceSwitcher /></div>
                 <section
                     aria-labelledby="verify-email-heading"
                     className="w-full max-w-lg overflow-hidden rounded-3xl border border-neutral-800 bg-neutral-900 shadow-2xl"

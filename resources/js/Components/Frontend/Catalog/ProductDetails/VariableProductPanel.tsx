@@ -1,13 +1,12 @@
 import {
     useEffect,
     useRef,
-    useState,
 } from 'react'
 
 import ProductPrice from '@/Components/Frontend/Catalog/ProductPrice'
 import ProductVariantSelector from '@/Components/Frontend/Catalog/ProductDetails/ProductVariantSelector'
 import { useStorefrontVariantSelection } from '@/hooks/useStorefrontVariantSelection'
-import { addToCart } from '@/lib/addToCart'
+import ProductPurchaseActions from '@/Components/Frontend/Catalog/ProductPurchaseActions'
 import type {
     StorefrontProductDetail,
     StorefrontVariant,
@@ -197,91 +196,7 @@ export default function VariableProductPanel({
             )
         }
 
-    const [
-        processing,
-        setProcessing,
-    ] =
-        useState(
-            false,
-        )
-
-    const [
-        message,
-        setMessage,
-    ] =
-        useState<string | null>(
-            null,
-        )
-
-    const [
-        failed,
-        setFailed,
-    ] =
-        useState(
-            false,
-        )
-
-    const canAdd =
-        complete
-        && selectedVariant !==
-            null
-        && selectedVariant
-            .pricing
-            .price !==
-            null
-        && !processing
-
-    const handleAddToCart =
-        async () => {
-            if (
-                !canAdd
-                || selectedVariant ===
-                    null
-            ) {
-                return
-            }
-
-            setProcessing(
-                true,
-            )
-
-            setMessage(
-                null,
-            )
-
-            setFailed(
-                false,
-            )
-
-            try {
-                await addToCart({
-                    productId:
-                        product.id,
-
-                    variantId:
-                        selectedVariant.id,
-
-                    quantity:
-                        1,
-                })
-
-                setMessage(
-                    'Added to cart.',
-                )
-            } catch {
-                setFailed(
-                    true,
-                )
-
-                setMessage(
-                    'Unable to add this option to the cart.',
-                )
-            } finally {
-                setProcessing(
-                    false,
-                )
-            }
-        }
+    const canAdd = complete && selectedVariant !== null && selectedVariant.pricing.price !== null
 
     if (
         product.variants.length ===
@@ -301,7 +216,7 @@ export default function VariableProductPanel({
     }
 
     return (
-        <div className="space-y-6">
+        <div id="product-purchase" className="space-y-6">
             <ProductVariantSelector
                 attributes={
                     attributes
@@ -329,44 +244,15 @@ export default function VariableProductPanel({
                     <IncompleteSelection />
                 )}
 
-                <button
-                    type="button"
-                    disabled={
-                        !canAdd
-                    }
-                    onClick={() => {
-                        void handleAddToCart()
-                    }}
-                    className="mt-4 min-h-11 w-full rounded-lg bg-neutral-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                    {processing
-                        ? 'Adding…'
-                        : 'Add to cart'}
-                </button>
+                <ProductPurchaseActions
+                    productId={product.id}
+                    variantId={selectedVariant?.id ?? null}
+                    available={canAdd}
+                />
 
                 {!complete && (
                     <p className="mt-2 text-sm font-medium text-amber-700">
                         Select all required options.
-                    </p>
-                )}
-
-                {message && (
-                    <p
-                        className={[
-                            'mt-2 text-xs',
-                            failed
-                                ? 'text-red-600'
-                                : 'text-emerald-700',
-                        ].join(
-                            ' ',
-                        )}
-                        role={
-                            failed
-                                ? 'alert'
-                                : 'status'
-                        }
-                    >
-                        {message}
                     </p>
                 )}
             </div>

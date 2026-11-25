@@ -1,3 +1,4 @@
+import CustomerAvatar from '@/Components/Customer/CustomerAvatar'
 import { Link, usePage } from '@inertiajs/react'
 
 type Props = {
@@ -27,17 +28,25 @@ const navigation: NavigationItem[] = [
         href: route('customer.orders.index'),
         match: '/account/orders',
     },
+    {
+        label: 'Profile',
+        href: route('profile.edit'),
+        match: '/profile',
+    },
 ]
 
 export default function CustomerSidebar({ open, onClose }: Props) {
-    const { url } = usePage()
+    const { url, props } = usePage()
+    const user = props.auth.user
+    const avatarUrl = typeof props.customerAvatar === 'string' ? props.customerAvatar : null
 
     const isActive = (item: NavigationItem) => {
         if (item.match === '/account') {
-            return url === '/account'
+            return url.split('?')[0] === '/account'
         }
 
-        return url.startsWith(item.match)
+        const pathname = url.split('?')[0]
+        return pathname === item.match || pathname.startsWith(`${item.match}/`)
     }
 
     return (
@@ -90,7 +99,15 @@ export default function CustomerSidebar({ open, onClose }: Props) {
                     </button>
                 </div>
 
-                <nav className="flex-1 overflow-y-auto p-4">
+                <Link href={route('profile.edit')} onClick={onClose} className="flex items-center gap-3 border-b border-neutral-200 p-4 hover:bg-neutral-50">
+                    <CustomerAvatar name={user.name} src={avatarUrl} />
+                    <span className="min-w-0">
+                        <span className="block truncate text-sm font-semibold text-neutral-900">{user.name}</span>
+                        <span className="block text-xs text-neutral-500">Edit profile</span>
+                    </span>
+                </Link>
+
+                <nav className="flex-1 overflow-y-auto p-4" aria-label="Customer account">
                     <div className="space-y-1">
                         {navigation.map((item) => (
                             <Link
@@ -108,16 +125,6 @@ export default function CustomerSidebar({ open, onClose }: Props) {
                                 {item.label}
                             </Link>
                         ))}
-                    </div>
-
-                    <p className="mb-2 mt-8 px-3 text-xs font-semibold uppercase tracking-wider text-neutral-400">
-                        Shopping
-                    </p>
-
-                    <div className="space-y-1">
-                        <span className="block cursor-default rounded-lg px-3 py-2.5 text-sm text-neutral-400">
-                            Profile
-                        </span>
                     </div>
                 </nav>
 

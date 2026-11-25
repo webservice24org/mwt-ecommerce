@@ -13,6 +13,7 @@ use App\Domain\Orders\Enums\FulfilmentStatus;
 use App\Domain\Orders\Enums\OrderStatus;
 use App\Domain\Orders\Enums\PaymentStatus;
 use App\Domain\Orders\Services\OrderNumberGenerator;
+use App\Domain\Orders\Services\OrderTrashLedger;
 use App\Domain\Promotion\Exceptions\PromoRedemptionException;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
@@ -43,6 +44,8 @@ final readonly class CreateOrderAction
         $idempotencyKey ??= $this
             ->checkoutSession
             ->orderSubmissionToken();
+
+        OrderTrashLedger::assertSubmissionAvailable($user->id, $idempotencyKey);
 
         /*
          * ==================================================
@@ -87,6 +90,9 @@ final readonly class CreateOrderAction
         try {
             $order = DB::transaction(
                 function () use ($user, $checkout, $itemSnapshots, $idempotencyKey): Order {
+                    User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+                    OrderTrashLedger::assertSubmissionAvailable($user->id, $idempotencyKey, locked: true);
+
                     $this->stock->execute(
                         $checkout->cart,
                     );

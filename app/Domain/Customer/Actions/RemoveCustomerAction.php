@@ -8,6 +8,7 @@ use App\Domain\Customer\Enums\CustomerRemovalOutcome;
 use App\Domain\Customer\Enums\CustomerStatus;
 use App\Models\Admin;
 use App\Models\CustomerAccountAudit;
+use App\Models\CustomerAvatar;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -174,6 +175,8 @@ final class RemoveCustomerAction
                 (string) Str::ulid(),
             ),
         );
+
+        CustomerAvatar::query()->whereKey($customer->id)->delete();
 
         $customer->forceFill([
             'name' => sprintf(

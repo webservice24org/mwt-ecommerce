@@ -23,6 +23,7 @@ use App\Http\Controllers\Admin\InvoiceSettingController;
 use App\Http\Controllers\Admin\MailSettingController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\OrderPaymentController;
+use App\Http\Controllers\Admin\OrderTrashController;
 use App\Http\Controllers\Admin\PageBuilderBrandSearchController;
 use App\Http\Controllers\Admin\PageBuilderController;
 use App\Http\Controllers\Admin\PageBuilderImageController;
@@ -81,9 +82,13 @@ use App\Http\Controllers\Admin\ShipmentController;
 use App\Http\Controllers\Admin\Shipping\ShippingProviderAccountController;
 use App\Http\Controllers\Admin\Shipping\ShippingRateController;
 use App\Http\Controllers\Admin\Shipping\ShippingZoneController;
+use App\Http\Controllers\Admin\WebsiteSettings\AdminBrandingController;
+use App\Http\Controllers\Admin\WebsiteSettings\BuilderLogoUploadController;
 use App\Http\Controllers\Admin\WebsiteSettings\HeaderBuilderController;
+use App\Http\Controllers\Admin\WebsiteSettings\ThemeSettingsController;
 use App\Models\FooterSetting;
 use App\Models\HeaderSetting;
+use App\Models\ThemeSetting;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest:admin')->group(
@@ -188,6 +193,14 @@ Route::middleware([
     Route::get('website-settings/header-builder', [HeaderBuilderController::class, 'edit'])->middleware('can:viewAny,'.HeaderSetting::class)->name('website-settings.header-builder.edit');
     Route::put('website-settings/header-builder', [HeaderBuilderController::class, 'update'])->middleware('can:updateAny,'.HeaderSetting::class)->name('website-settings.header-builder.update');
 
+    Route::post('website-settings/header-builder/logo', [BuilderLogoUploadController::class, 'header'])->middleware(['can:updateAny,'.HeaderSetting::class, 'throttle:20,1'])->name('website-settings.header-builder.logo.store');
+    Route::post('website-settings/footer-builder/logo', [BuilderLogoUploadController::class, 'footer'])->middleware(['can:updateAny,'.FooterSetting::class, 'throttle:20,1'])->name('website-settings.footer-builder.logo.store');
+
+    Route::get('website-settings/theme-settings', [ThemeSettingsController::class, 'edit'])->middleware('can:viewAny,'.ThemeSetting::class)->name('website-settings.theme-settings.edit');
+    Route::put('website-settings/theme-settings/product-cards', [ThemeSettingsController::class, 'updateProductCards'])->middleware('can:updateAny,'.ThemeSetting::class)->name('website-settings.theme-settings.product-cards.update');
+    Route::put('website-settings/theme-settings/admin-branding', [AdminBrandingController::class, 'update'])->middleware('can:updateAny,'.ThemeSetting::class)->name('website-settings.theme-settings.admin-branding.update');
+    Route::post('website-settings/theme-settings/admin-branding/{kind}', [AdminBrandingController::class, 'upload'])->whereIn('kind', ['login_logo', 'sidebar_logo', 'background_image'])->middleware(['can:updateAny,'.ThemeSetting::class, 'throttle:20,1'])->name('website-settings.theme-settings.admin-branding.upload');
+
     Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->whereNumber('invoice')->name('invoices.show');
     Route::get('website-settings/invoice', [InvoiceSettingController::class, 'edit'])->name('website-settings.invoice.edit');
     Route::post('website-settings/invoice', [InvoiceSettingController::class, 'update'])->name('website-settings.invoice.update');
@@ -214,6 +227,9 @@ Route::middleware([
 
     Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('orders/{order}', [OrderController::class, 'show'])->whereNumber('order')->name('orders.show');
+    Route::delete('orders/{order}', [OrderTrashController::class, 'destroy'])->whereNumber('order')->name('orders.destroy');
+    Route::post('orders/{order}/restore', [OrderTrashController::class, 'restore'])->whereNumber('order')->name('orders.restore');
+    Route::delete('orders/{order}/purge', [OrderTrashController::class, 'purge'])->whereNumber('order')->name('orders.purge');
     Route::post('orders/{order}/confirm', [OrderController::class, 'confirm'])->whereNumber('order')->name('orders.confirm');
     Route::post('orders/{order}/start-processing', [OrderController::class, 'startProcessing'])->whereNumber('order')->name('orders.start-processing');
     Route::post('orders/{order}/ship', [OrderController::class, 'ship'])->whereNumber('order')->name('orders.ship');

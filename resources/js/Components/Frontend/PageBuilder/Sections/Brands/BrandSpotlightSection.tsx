@@ -39,6 +39,7 @@ export default function BrandSpotlightSection({ section }: Props) {
                         'p-5 text-white shadow-xl',
                         'sm:p-10 lg:p-12',
                     ].join(' ')}
+                    data-mwt-theme-fixed="true"
                     style={{
                         backgroundColor: config.background_color,
 

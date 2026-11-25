@@ -12,6 +12,7 @@ import MarketplaceTrustEditor from '@/Components/Admin/FooterBuilder/Marketplace
 import MinimalLocalizationEditor from '@/Components/Admin/FooterBuilder/MinimalLocalizationEditor'
 import SharedFooterFields from '@/Components/Admin/FooterBuilder/SharedFooterFields'
 import SocialLinkEditor from '@/Components/Admin/FooterBuilder/SocialLinkEditor'
+import BuilderStyleEditor from '@/Components/Admin/WebsiteSettings/BuilderStyleEditor'
 import AdminLayout from '@/Layouts/Admin/AdminLayout'
 import {
     readFooterBrand,
@@ -59,6 +60,7 @@ export default function Edit({ footer, templates, abilities }: Props) {
     const [isEnabled, setIsEnabled] = useState(footer.is_enabled)
 
     const [processing, setProcessing] = useState(false)
+    const [errors, setErrors] = useState<Record<string, string>>({})
 
     const readOnly = !abilities.update
 
@@ -98,6 +100,7 @@ export default function Edit({ footer, templates, abilities }: Props) {
         }
 
         setProcessing(true)
+        setErrors({})
 
         router.put(
             route('admin.website-settings.footer-builder.update'),
@@ -110,6 +113,8 @@ export default function Edit({ footer, templates, abilities }: Props) {
             },
             {
                 preserveScroll: true,
+
+                onError: (responseErrors) => setErrors(responseErrors),
 
                 onFinish: () => {
                     setProcessing(false)
@@ -142,11 +147,7 @@ export default function Edit({ footer, templates, abilities }: Props) {
         setConfig((current) => ({
             ...current,
 
-            brand: {
-                name: value.name,
-
-                description: value.description,
-            },
+            brand: { ...value },
         }))
     }
 
@@ -479,6 +480,27 @@ export default function Edit({ footer, templates, abilities }: Props) {
                             />
                         </div>
                     </section>
+
+                    {Object.keys(errors).length > 0 && (
+                        <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+                            <p className="font-semibold">Please correct the following settings:</p>
+                            <ul className="mt-2 list-disc space-y-1 pl-5">
+                                {Object.entries(errors).map(([key, message]) => <li key={key}>{key}: {message}</li>)}
+                            </ul>
+                        </div>
+                    )}
+
+                    <BuilderStyleEditor
+                        kind="footer"
+                        value={config.style}
+                        disabled={readOnly || processing}
+                        onChange={(style) => setConfig((current) => {
+                            const next = { ...current }
+                            if (style) next.style = style
+                            else delete next.style
+                            return next
+                        })}
+                    />
 
                     <LinkGroupEditor
                         groups={linkGroups}

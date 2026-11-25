@@ -1,7 +1,10 @@
+import ConfirmDialog from '@/Components/Admin/ConfirmDialog'
+import { notify } from '@/lib/toast'
 import AdminLayout from '@/Layouts/Admin/AdminLayout'
 import { formatMoney } from '@/lib/money'
-import { Head, Link } from '@inertiajs/react'
-import { ChevronLeft, ChevronRight, Eye, PackageSearch } from 'lucide-react'
+import { Head, Link, router } from '@inertiajs/react'
+import { useState } from 'react'
+import { ChevronLeft, ChevronRight, Eye, PackageSearch, RotateCcw, Trash2 } from 'lucide-react'
 
 interface StatusValue {
     value: string
@@ -24,6 +27,8 @@ interface AdminOrderListItem {
     currency_code: string
     grand_total: number
     placed_at: string | null
+    can_trash: boolean
+    can_purge: boolean
 }
 
 interface PaginationLink {
@@ -50,9 +55,34 @@ interface OrdersPaginator {
 
 interface Props {
     orders: OrdersPaginator
+    tabs: { value: string; label: string; count: number }[]
+    tab: string
+    can_manage_trash: boolean
 }
 
-export default function Index({ orders }: Props) {
+type OrderAction = { order: AdminOrderListItem; type: 'trash' | 'purge' | 'restore' }
+
+export default function Index({ orders, tabs, tab, can_manage_trash }: Props) {
+    const [action, setAction] = useState<OrderAction | null>(null)
+    const [processing, setProcessing] = useState(false)
+    const inTrash = tab === 'trash'
+
+    function submitAction() {
+        if (!action || processing) return
+        setProcessing(true)
+        const options = {
+            preserveScroll: true,
+            onSuccess: () => setAction(null),
+            onError: (errors: Record<string, string>) => { notify.error(errors.order_trash || 'The order action could not be completed.') },
+            onFinish: () => setProcessing(false),
+        }
+        if (action.type === 'restore') {
+            router.post(route('admin.orders.restore', action.order.id), {}, options)
+        } else {
+            router.delete(route(action.type === 'purge' ? 'admin.orders.purge' : 'admin.orders.destroy', action.order.id), options)
+        }
+    }
+
     return (
         <AdminLayout title="Orders" description="Manage Orders.">
             <Head title="Orders" />
@@ -69,6 +99,27 @@ export default function Index({ orders }: Props) {
                                 </p>
                             </div>
                         </div>
+                        <nav aria-label="Order status" className="mt-4 flex flex-wrap gap-2">
+                            {tabs.map((item) => (
+                                <Link
+                                    key={item.value}
+                                    href={route('admin.orders.index', { tab: item.value })}
+                                    aria-current={tab === item.value ? 'page' : undefined}
+                                    className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition ${tab === item.value ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                                >
+                                    {item.value === 'trash' && <Trash2 className="h-4 w-4" aria-hidden="true" />}
+                                    {item.label}
+                                    <span className={`rounded-full px-2 py-0.5 text-xs tabular-nums ${tab === item.value ? 'bg-white/20' : 'bg-slate-100 text-slate-600'}`}>
+                                        {item.count}
+                                    </span>
+                                </Link>
+                            ))}
+                        </nav>
+                        {inTrash && (
+                            <p className="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+                                Restore orders to undo deletion. Permanent deletion is restricted to cancelled, unpaid, unfulfilled orders with no protected records. Archived orders remain in customer history and reports until permanently deleted.
+                            </p>
+                        )}
                     </div>
 
                     {orders.data.length === 0 ? (
@@ -77,10 +128,10 @@ export default function Index({ orders }: Props) {
                                 <PackageSearch className="h-6 w-6" aria-hidden="true" />
                             </div>
 
-                            <h3 className="mt-4 font-semibold text-slate-900">No orders yet</h3>
+                            <h3 className="mt-4 font-semibold text-slate-900">{inTrash ? 'Trash is empty' : 'No orders in this view'}</h3>
 
                             <p className="mt-1 max-w-md text-sm text-slate-500">
-                                Customer orders will appear here after successful checkout.
+                                {inTrash ? 'Orders moved to Trash will appear here.' : 'There are no orders matching this status.'}
                             </p>
                         </div>
                     ) : (
@@ -181,6 +232,7 @@ export default function Index({ orders }: Props) {
                                                 </td>
 
                                                 <td className="whitespace-nowrap px-5 py-4 text-right">
+                                                    <div className="flex flex-wrap justify-end gap-2">
                                                     <Link
                                                         href={route('admin.orders.show', order.id)}
                                                         className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 font-medium text-slate-700 transition hover:bg-slate-50"
@@ -191,6 +243,21 @@ export default function Index({ orders }: Props) {
                                                         />
                                                         View
                                                     </Link>
+                                                    {can_manage_trash && (inTrash ? (
+                                                        <>
+                                                            <button type="button" disabled={processing} onClick={() => setAction({ order, type: 'restore' })} className="inline-flex h-9 items-center gap-1 rounded-lg border border-emerald-200 px-3 font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50">
+                                                                <RotateCcw className="h-4 w-4" aria-hidden="true" /> Restore / Undo
+                                                            </button>
+                                                            <button type="button" disabled={processing || !order.can_purge} title={order.can_purge ? 'Permanently delete this order' : 'Protected records or order state prevent permanent deletion'} onClick={() => setAction({ order, type: 'purge' })} className="inline-flex h-9 items-center gap-1 rounded-lg border border-red-200 px-3 font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50">
+                                                                <Trash2 className="h-4 w-4" aria-hidden="true" /> Delete permanently
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <button type="button" disabled={processing || !order.can_trash} title={order.can_trash ? 'Move to Trash' : 'Cancel or complete this order before moving it to Trash'} onClick={() => setAction({ order, type: 'trash' })} className="inline-flex h-9 items-center gap-1 rounded-lg border border-red-200 px-3 font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50">
+                                                            <Trash2 className="h-4 w-4" aria-hidden="true" /> Delete
+                                                        </button>
+                                                    ))}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
@@ -203,6 +270,19 @@ export default function Index({ orders }: Props) {
                     )}
                 </div>
             </div>
+            <ConfirmDialog
+                open={action !== null}
+                title={action?.type === 'purge' ? 'Permanently delete order?' : action?.type === 'restore' ? 'Restore order?' : 'Move order to Trash?'}
+                description={action ? action.type === 'purge'
+                    ? `${action.order.order_number} and its eligible order details will be permanently removed. This cannot be undone.`
+                    : action.type === 'restore'
+                        ? `${action.order.order_number} will return to the normal orders list.`
+                        : `${action.order.order_number} will be moved to Trash. You can restore it later. Inventory and payment states will not change.` : ''}
+                confirmLabel={action?.type === 'purge' ? 'Delete permanently' : action?.type === 'restore' ? 'Restore' : 'Move to Trash'}
+                processing={processing}
+                onConfirm={submitAction}
+                onCancel={() => { if (!processing) setAction(null) }}
+            />
         </AdminLayout>
     )
 }

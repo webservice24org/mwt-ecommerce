@@ -13,19 +13,31 @@ use App\Http\Requests\Frontend\UpdateCartItemRequest;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
+use Symfony\Component\HttpFoundation\Response;
 
 final class CartController extends Controller
 {
     public function show(
+        Request $request,
         CartService $cart,
         CartPromoPricingService $pricing,
-    ): JsonResponse {
-        return $this->cartResponse(
-            summary: $cart->summary(),
+    ): Response {
+        // Keep the existing JSON contract for the drawer and API callers.
+        // Browser and Inertia visits render the same session's cart.
+        $response = $request->expectsJson() && ! $request->header('X-Inertia')
+            ? $this->cartResponse(
+                summary: $cart->summary(),
+                pricing: $pricing,
+            )
+            : Inertia::render('Frontend/Cart/Index')->toResponse($request);
 
-            pricing: $pricing,
-        );
+        $response->headers->set('Cache-Control', 'private, no-store');
+        $response->headers->set('X-Robots-Tag', 'noindex, nofollow');
+
+        return $response;
     }
 
     public function store(

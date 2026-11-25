@@ -58,6 +58,7 @@ export default function ContactGrid({ config }: Props) {
         <section aria-labelledby={headingId} className="min-w-0 max-w-full py-5 sm:py-7 lg:py-8">
             <div
                 className="relative isolate max-w-full overflow-hidden rounded-2xl border border-neutral-200 shadow-sm sm:rounded-3xl"
+                data-mwt-theme-fixed="true"
                 style={{
                     backgroundColor: config.background_color,
                 }}

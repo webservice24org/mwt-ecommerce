@@ -9,7 +9,10 @@ use App\Domain\FooterBuilder\Storefront\FooterStorefrontResolver;
 use App\Domain\Seo\Services\SeoSettingsService;
 use App\Domain\Seo\StructuredData\Services\GlobalStructuredDataResolver;
 use App\Domain\Wishlist\Services\WishlistService;
+use App\Domain\WebsiteSettings\AdminBrandingSchema;
+use App\Models\CustomerAvatar;
 use App\Models\HeaderSetting;
+use App\Models\ThemeSetting;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -73,6 +76,23 @@ class HandleInertiaRequests extends Middleware
                 },
             ],
 
+            'customerAvatar' => static function () use ($request): ?string {
+                if (! $request->routeIs('customer.*', 'profile.edit')) {
+                    return null;
+                }
+
+                $user = $request->user();
+                if (! $user instanceof User || ! $user->isActive() || $user->isAnonymized()) {
+                    return null;
+                }
+
+                $version = CustomerAvatar::query()->whereKey($user->id)->value('version');
+
+                return is_string($version)
+                    ? route('customer.avatar.show', ['v' => $version], false)
+                    : null;
+            },
+
             'flash' => [
                 'success' => fn () => $request
                     ->session()
@@ -131,6 +151,14 @@ class HandleInertiaRequests extends Middleware
                         ->is_enabled,
                 ];
             },
+
+            'adminBranding' => static fn (): ?array => $request->routeIs('admin.*')
+                ? AdminBrandingSchema::saved()
+                : null,
+
+            'storefrontTheme' => static fn (): ?array => $request->routeIs('admin.*')
+                ? null
+                : ['product_cards' => ThemeSetting::productCardStyles()],
 
             'storefrontFooter' => static function () use ($request): ?array {
                 /*

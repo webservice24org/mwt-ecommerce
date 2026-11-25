@@ -8,6 +8,7 @@ use App\Domain\Orders\Actions\CancelOrderAction;
 use App\Domain\Orders\Actions\CompleteOrderAction;
 use App\Domain\Orders\Actions\ConfirmOrderAction;
 use App\Domain\Orders\Actions\DeliverOrderAction;
+use App\Domain\Orders\Actions\ManageOrderTrashAction;
 use App\Domain\Orders\Actions\ShipOrderAction;
 use App\Domain\Orders\Actions\StartOrderProcessingAction;
 use App\Domain\Orders\Enums\FulfilmentStatus;
@@ -34,7 +35,40 @@ final class OrderController extends Controller
     public function index(
         Request $request,
     ): Response {
-        $orders = Order::query()
+        $admin = $request->user('admin');
+        $canManageTrash = $admin instanceof Admin && $admin->is_active && $admin->isSuperAdmin();
+        $tab = $request->query('tab', 'all');
+        $tab = is_string($tab) ? $tab : 'all';
+        $status = OrderStatus::tryFrom($tab);
+        if ($tab !== 'all' && $tab !== 'trash' && $status === null) {
+            $tab = 'all';
+        }
+        abort_if($tab === 'trash' && ! $canManageTrash, 403);
+
+        $active = Order::query()->whereNull('trashed_at');
+        $tabs = [
+            ['value' => 'all', 'label' => 'All orders', 'count' => (clone $active)->count()],
+        ];
+        foreach (OrderStatus::cases() as $case) {
+            $tabs[] = [
+                'value' => $case->value,
+                'label' => $case->label(),
+                'count' => (clone $active)->where('status', $case->value)->count(),
+            ];
+        }
+        if ($canManageTrash) {
+            $tabs[] = ['value' => 'trash', 'label' => 'Trash', 'count' => Order::query()->whereNotNull('trashed_at')->count()];
+        }
+
+        $query = $tab === 'trash' ? Order::query()->whereNotNull('trashed_at') : $active;
+        if ($status !== null) {
+            $query->where('status', $status->value);
+        }
+        if ($tab === 'trash') {
+            $query->withExists(['invoice', 'shipments', 'promoCodeUsages', 'verifiedReviews']);
+        }
+
+        $orders = $query
             ->with([
                 'user:id,name,email',
             ])
@@ -113,6 +147,13 @@ final class OrderController extends Controller
                     'placed_at' => $order
                         ->placed_at
                         ?->toISOString(),
+
+                    'can_trash' => $canManageTrash && $order->trashed_at === null && $order->status->isTerminal(),
+                    'can_purge' => $canManageTrash && ManageOrderTrashAction::meetsBasicPurgeRequirements($order)
+                        && ! $order->getAttribute('invoice_exists')
+                        && ! $order->getAttribute('shipments_exists')
+                        && ! $order->getAttribute('promo_code_usages_exists')
+                        && ! $order->getAttribute('verified_reviews_exists'),
                 ],
             );
 
@@ -120,6 +161,9 @@ final class OrderController extends Controller
             'Admin/Orders/Index',
             [
                 'orders' => $orders,
+                'tabs' => $tabs,
+                'tab' => $tab,
+                'can_manage_trash' => $canManageTrash,
             ],
         );
     }
@@ -634,19 +678,19 @@ final class OrderController extends Controller
                 true,
             )
                 ? [
-                [
-                    'key' => 'complete',
+                    [
+                        'key' => 'complete',
 
-                    'label' => 'Complete Order',
+                        'label' => 'Complete Order',
 
-                    'description' => 'Close the successfully delivered order.',
+                        'description' => 'Close the successfully delivered order.',
 
-                    'url' => route(
-                        'admin.orders.complete',
-                        $order,
-                    ),
-                ],
-            ]
+                        'url' => route(
+                            'admin.orders.complete',
+                            $order,
+                        ),
+                    ],
+                ]
                 : [],
 
             default => [],

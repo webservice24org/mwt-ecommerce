@@ -106,6 +106,8 @@ Route::middleware(['auth', 'customer.active', 'verified'])->group(function (): v
 
 Route::get('/products/{slug}', [ProductController::class, 'show'])->name('products.show');
 
+Route::get('/products/{slug}/reviews', [ProductController::class, 'reviewPage'])->middleware('throttle:60,1')->name('products.reviews.index');
+
 Route::get('/category/{slug}', [CategoryController::class, 'show'])->name('categories.show');
 
 Route::get('/brand/{slug}', [BrandController::class, 'show'])->name('brands.show');
@@ -139,7 +141,7 @@ Route::post('/newsletter/subscribe', [NewsletterSubscriberController::class, 'st
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth')->group(function (): void {
+Route::middleware(['auth', 'customer.active'])->group(function (): void {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
 
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

@@ -1,4 +1,6 @@
-import { ExternalLink, Image, Store } from 'lucide-react'
+import BuilderBrandControls from '@/Components/Admin/BuilderBrandControls'
+import BrandLogoImage from '@/Components/Frontend/BrandLogoImage'
+import { ExternalLink, Store } from 'lucide-react'
 
 import HeaderEditorAccordion from '@/Components/Admin/HeaderBuilder/HeaderEditorAccordion'
 import type { HeaderBrandConfig } from '@/types/header-builder'
@@ -104,34 +106,8 @@ export default function BrandLogoEditor({ value, disabled = false, onChange }: P
                     </Field>
                 </div>
 
-                <div className="border-t border-neutral-100 pt-6">
-                    <Field
-                        label="Logo image URL"
-                        description="Optional image URL. When supplied, the logo image replaces the fallback mark."
-                    >
-                        <div className="relative">
-                            <input
-                                type="text"
-                                value={value.logo_url ?? ''}
-                                disabled={disabled}
-                                maxLength={2048}
-                                onChange={(event) => update('logo_url', event.target.value || null)}
-                                placeholder="/storage/branding/logo.svg"
-                                className={`${inputClass} pl-10`}
-                            />
-
-                            <Image
-                                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400"
-                                aria-hidden="true"
-                            />
-                        </div>
-                    </Field>
-
-                    <p className="mt-2 text-xs leading-5 text-neutral-400">
-                        Direct media upload is not wired in this step. Existing storage URLs and
-                        external image URLs can be used.
-                    </p>
-                </div>
+                <BuilderBrandControls section="header" mode={value.display_mode} url={value.logo_url} disabled={disabled}
+                    onChange={(display_mode, logo_url) => onChange({ ...value, display_mode, logo_url })} />
 
                 <div className="border-t border-neutral-100 pt-6">
                     <h3 className="text-sm font-semibold text-neutral-950">Brand preview</h3>
@@ -141,7 +117,9 @@ export default function BrandLogoEditor({ value, disabled = false, onChange }: P
                     </p>
 
                     <div className="mt-4 flex min-w-0 items-center gap-3 rounded-xl border border-neutral-800 bg-neutral-950 p-4">
-                        {logoUrl ? (
+                        {value.display_mode === 'logo' && logoUrl ? (
+                            <BrandLogoImage key={logoUrl} url={logoUrl} name={value.name} className="h-12 max-w-[180px] object-contain" />
+                        ) : value.display_mode === 'text' || value.display_mode === 'logo' ? null : logoUrl ? (
                             <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white">
                                 <img
                                     src={logoUrl}
@@ -156,11 +134,11 @@ export default function BrandLogoEditor({ value, disabled = false, onChange }: P
                         )}
 
                         <div className="min-w-0">
-                            <p className="truncate text-xl font-black tracking-tight text-white">
+                            {(value.display_mode !== 'logo' || !logoUrl) && <p className="truncate text-xl font-black tracking-tight text-white">
                                 {value.name}
 
                                 <span className="text-indigo-500">{value.accent ?? ''}</span>
-                            </p>
+                            </p>}
 
                             <p className="mt-1 truncate text-xs text-neutral-500">
                                 {value.home_url || '/'}

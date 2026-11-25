@@ -7,6 +7,7 @@ namespace App\Domain\Catalog\Actions;
 use App\Domain\Catalog\Data\UpdateProductData;
 use App\Domain\Catalog\Services\ProductCommercialIntegrityService;
 use App\Domain\Catalog\Services\ProductDescriptionContentService;
+use App\Domain\Catalog\Services\ProductShortDescriptionContent;
 use App\Domain\Seo\Data\EntitySeoData;
 use App\Domain\Seo\Redirects\Services\SeoSlugRedirectHistory;
 use App\Domain\Seo\Repositories\EntitySeoRepository;
@@ -82,7 +83,7 @@ final readonly class UpdateProductAction
                     'cost_price' => $data->costPrice,
                     'name' => $data->name,
                     'slug' => $slug,
-                    'short_description' => $data->shortDescription,
+                    'short_description' => ProductShortDescriptionContent::prepare($data->shortDescription),
                     'description' => $this->descriptionContent->prepare(
                         html: $data->description,
                         productId: $lockedProduct->id,

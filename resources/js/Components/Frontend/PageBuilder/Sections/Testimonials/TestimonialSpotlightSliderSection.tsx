@@ -74,6 +74,7 @@ export default function TestimonialSpotlightSliderSection({ section }: Props) {
                         'p-5 shadow-xl',
                         'sm:p-8 lg:p-14',
                     ].join(' ')}
+                    data-mwt-theme-fixed="true"
                     style={{
                         backgroundColor: config.background_color,
 

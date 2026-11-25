@@ -1,3 +1,5 @@
+import AdminBrandImage from '@/Components/Admin/AdminBrandImage'
+import { normalizeAdminBranding } from '@/lib/adminBranding'
 import { Link, usePage } from '@inertiajs/react'
 import {
     ChevronDown,
@@ -182,8 +184,9 @@ const websiteSettingsNavigation: NavigationGroup =
             },
             {
                 label: 'Theme Settings',
+                href: route('admin.website-settings.theme-settings.edit'),
+                match: '/admin/website-settings/theme-settings',
                 icon: Palette,
-                disabled: true,
             },
         ],
     }
@@ -256,7 +259,8 @@ export default function AdminSidebar({
     open,
     onClose,
 }: Props) {
-    const { url } = usePage()
+    const { url, props } = usePage()
+    const branding = normalizeAdminBranding(props.adminBranding)
 
     /*
      * ==================================================
@@ -492,6 +496,7 @@ export default function AdminSidebar({
                 onClick={
                     onClose
                 }
+                aria-current={active ? 'page' : undefined}
                 className={[
                     'group relative flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-150',
 
@@ -546,7 +551,7 @@ export default function AdminSidebar({
 
             <aside
                 className={[
-                    'fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-neutral-200 bg-white shadow-xl transition-transform duration-200 lg:shadow-none',
+                    'mwt-admin-sidebar fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-neutral-200 bg-white shadow-xl transition-transform duration-200 lg:shadow-none',
 
                     'lg:translate-x-0',
 
@@ -564,28 +569,31 @@ export default function AdminSidebar({
                         onClick={
                             onClose
                         }
-                        className="group flex min-w-0 items-center gap-3"
+                        className="group flex min-w-0 flex-1 items-center gap-3"
+                        aria-label="Admin dashboard"
                     >
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neutral-900 text-white shadow-sm">
-                            <Store
-                                className="h-5 w-5"
-                                strokeWidth={
-                                    1.9
-                                }
-                                aria-hidden="true"
-                            />
-                        </div>
-
-                        <div className="min-w-0">
-                            <div className="truncate text-sm font-bold text-neutral-950">
-                                MWT Admin
+                        <AdminBrandImage url={branding.sidebar_logo} alt="Brand logo" className="max-h-12 max-w-full object-contain" fallback={<>
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neutral-900 text-white shadow-sm">
+                                <Store
+                                    className="h-5 w-5"
+                                    strokeWidth={
+                                        1.9
+                                    }
+                                    aria-hidden="true"
+                                />
                             </div>
 
-                            <div className="truncate text-[11px] text-neutral-400">
-                                Ecommerce
-                                Control
+                            <div className="min-w-0">
+                                <div className="truncate text-sm font-bold text-neutral-950">
+                                    MWT Admin
+                                </div>
+
+                                <div className="truncate text-[11px] text-neutral-400">
+                                    Ecommerce
+                                    Control
+                                </div>
                             </div>
-                        </div>
+                        </>} />
                     </Link>
 
                     <button
@@ -723,6 +731,154 @@ export default function AdminSidebar({
                         </div>
                     </div>
 
+{/* Store */}
+                    <div className="mt-7">
+                        <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-neutral-400">
+                            Store
+                        </p>
+
+                        <div className="space-y-1">
+                            {/* Store dropdown */}
+                            <button
+                                type="button"
+                                aria-expanded={
+                                    showStore
+                                }
+                                aria-controls="admin-store-navigation"
+                                onClick={() =>
+                                    setStoreOpen(
+                                        (
+                                            current,
+                                        ) =>
+                                            !current,
+                                    )
+                                }
+                                className={[
+                                    'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
+
+                                    storeSectionActive
+                                        ? 'bg-neutral-100 text-neutral-950'
+                                        : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950',
+                                ].join(
+                                    ' ',
+                                )}
+                            >
+                                <Store
+                                    className={[
+                                        'h-4 w-4 shrink-0',
+
+                                        storeSectionActive
+                                            ? 'text-neutral-900'
+                                            : 'text-neutral-400',
+                                    ].join(
+                                        ' ',
+                                    )}
+                                    strokeWidth={
+                                        1.9
+                                    }
+                                    aria-hidden="true"
+                                />
+
+                                <span className="flex-1 text-left">
+                                    Store
+                                </span>
+
+                                <ChevronDown
+                                    className={[
+                                        'h-4 w-4 text-neutral-400 transition-transform duration-200',
+
+                                        showStore
+                                            ? 'rotate-180'
+                                            : '',
+                                    ].join(
+                                        ' ',
+                                    )}
+                                    aria-hidden="true"
+                                />
+                            </button>
+
+                            <div
+                                id="admin-store-navigation"
+                                className={[
+                                    'grid transition-all duration-200',
+
+                                    showStore
+                                        ? 'grid-rows-[1fr]'
+                                        : 'grid-rows-[0fr]',
+                                ].join(
+                                    ' ',
+                                )}
+                            >
+                                <div className="overflow-hidden">
+                                    <div className="relative ml-5 mt-1 space-y-1 border-l border-neutral-200 pl-3">
+                                        {renderNavigationItem(
+                                            {
+                                                label: 'Orders',
+                                                href: route(
+                                                    'admin.orders.index',
+                                                ),
+                                                match:
+                                                    '/admin/orders',
+                                                icon: Layers3,
+                                            },
+                                            true,
+                                        )}
+
+                                        <ShippingSidebarLinks
+                                            onClose={
+                                                onClose
+                                            }
+                                        />
+
+                                        {renderNavigationItem(
+                                            {
+                                                label: 'Promotions',
+                                                href: route('admin.promotions.index'),
+                                                match: '/admin/promotions',
+                                                icon: Percent,
+                                            },
+                                            true,
+                                        )}
+
+                                        {renderNavigationItem(
+                                            {
+                                                label: 'Promo Codes',
+                                                href: route('admin.promo-codes.index'),
+                                                match: '/admin/promo-codes',
+                                                icon: Ticket,
+                                            },
+                                            true,
+                                        )}
+
+                                        {renderNavigationItem(
+                                            {
+                                                label: 'Customers',
+                                                href: route(
+                                                    'admin.customers.index',
+                                                ),
+                                                match:
+                                                    '/admin/customers',
+                                                icon: CircleUserRound,
+                                            },
+                                            true,
+                                        )}
+                                        {renderNavigationItem(
+                                            {
+                                                label: 'Reviews',
+                                                href: route(
+                                                    'admin.reviews.index',
+                                                ),
+                                                match:
+                                                    '/admin/reviews',
+                                                icon: ReceiptText,
+                                            },
+                                            true,
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     {/* Website */}
                     <div className="mt-7">
                         <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-neutral-400">
@@ -914,154 +1070,7 @@ export default function AdminSidebar({
                             </div>
                         </div>
                     </div>
-                    {/* Store */}
-                    <div className="mt-7">
-                        <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-neutral-400">
-                            Store
-                        </p>
-
-                        <div className="space-y-1">
-                            {/* Store dropdown */}
-                            <button
-                                type="button"
-                                aria-expanded={
-                                    showStore
-                                }
-                                aria-controls="admin-store-navigation"
-                                onClick={() =>
-                                    setStoreOpen(
-                                        (
-                                            current,
-                                        ) =>
-                                            !current,
-                                    )
-                                }
-                                className={[
-                                    'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
-
-                                    storeSectionActive
-                                        ? 'bg-neutral-100 text-neutral-950'
-                                        : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950',
-                                ].join(
-                                    ' ',
-                                )}
-                            >
-                                <Store
-                                    className={[
-                                        'h-4 w-4 shrink-0',
-
-                                        storeSectionActive
-                                            ? 'text-neutral-900'
-                                            : 'text-neutral-400',
-                                    ].join(
-                                        ' ',
-                                    )}
-                                    strokeWidth={
-                                        1.9
-                                    }
-                                    aria-hidden="true"
-                                />
-
-                                <span className="flex-1 text-left">
-                                    Store
-                                </span>
-
-                                <ChevronDown
-                                    className={[
-                                        'h-4 w-4 text-neutral-400 transition-transform duration-200',
-
-                                        showStore
-                                            ? 'rotate-180'
-                                            : '',
-                                    ].join(
-                                        ' ',
-                                    )}
-                                    aria-hidden="true"
-                                />
-                            </button>
-
-                            <div
-                                id="admin-store-navigation"
-                                className={[
-                                    'grid transition-all duration-200',
-
-                                    showStore
-                                        ? 'grid-rows-[1fr]'
-                                        : 'grid-rows-[0fr]',
-                                ].join(
-                                    ' ',
-                                )}
-                            >
-                                <div className="overflow-hidden">
-                                    <div className="relative ml-5 mt-1 space-y-1 border-l border-neutral-200 pl-3">
-                                        {renderNavigationItem(
-                                            {
-                                                label: 'Orders',
-                                                href: route(
-                                                    'admin.orders.index',
-                                                ),
-                                                match:
-                                                    '/admin/orders',
-                                                icon: Layers3,
-                                            },
-                                            true,
-                                        )}
-
-                                        <ShippingSidebarLinks
-                                            onClose={
-                                                onClose
-                                            }
-                                        />
-
-                                        {renderNavigationItem(
-                                            {
-                                                label: 'Promotions',
-                                                href: route('admin.promotions.index'),
-                                                match: '/admin/promotions',
-                                                icon: Percent,
-                                            },
-                                            true,
-                                        )}
-
-                                        {renderNavigationItem(
-                                            {
-                                                label: 'Promo Codes',
-                                                href: route('admin.promo-codes.index'),
-                                                match: '/admin/promo-codes',
-                                                icon: Ticket,
-                                            },
-                                            true,
-                                        )}
-
-                                        {renderNavigationItem(
-                                            {
-                                                label: 'Customers',
-                                                href: route(
-                                                    'admin.customers.index',
-                                                ),
-                                                match:
-                                                    '/admin/customers',
-                                                icon: CircleUserRound,
-                                            },
-                                            true,
-                                        )}
-                                        {renderNavigationItem(
-                                            {
-                                                label: 'Reviews',
-                                                href: route(
-                                                    'admin.reviews.index',
-                                                ),
-                                                match:
-                                                    '/admin/reviews',
-                                                icon: ReceiptText,
-                                            },
-                                            true,
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    
 
                     {/* Reports */}
                     <div className="mt-7">

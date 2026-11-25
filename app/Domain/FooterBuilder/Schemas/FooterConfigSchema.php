@@ -7,6 +7,8 @@ namespace App\Domain\FooterBuilder\Schemas;
 use App\Domain\FooterBuilder\Enums\FooterTemplate;
 use App\Domain\FooterBuilder\Exceptions\InvalidFooterConfiguration;
 use App\Domain\FooterBuilder\FooterConfigDefaults;
+use App\Domain\WebsiteSettings\BrandDisplaySchema;
+use App\Domain\WebsiteSettings\BuilderStyleSchema;
 
 final class FooterConfigSchema
 {
@@ -70,6 +72,7 @@ final class FooterConfigSchema
         $errors = [];
 
         $allowedKeys = [
+            'style',
             'brand',
             'link_groups',
             'social_links',
@@ -190,6 +193,12 @@ final class FooterConfigSchema
                 errors: $errors,
             );
 
+        $style = (new BuilderStyleSchema)->normalize(
+            array_key_exists('style', $config) ? $config['style'] : [],
+            ['top', 'main', 'bottom'],
+            $errors,
+        );
+
         if (
             $errors !==
             []
@@ -223,6 +232,8 @@ final class FooterConfigSchema
             'popular_links' => $popularLinks,
 
             'certifications' => $certifications,
+
+            ...($style === [] ? [] : ['style' => $style]),
         ];
     }
 
@@ -253,6 +264,8 @@ final class FooterConfigSchema
             allowedKeys: [
                 'name',
                 'description',
+                'display_mode',
+                'logo_url',
             ],
             prefix: 'brand',
             errors: $errors,
@@ -274,6 +287,8 @@ final class FooterConfigSchema
                 maxLength: self::MAX_DESCRIPTION_LENGTH,
                 errors: $errors,
             ),
+
+            ...(new BrandDisplaySchema)->normalize($value, $errors),
         ];
     }
 

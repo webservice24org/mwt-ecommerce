@@ -1,7 +1,8 @@
 import { Link, usePage } from '@inertiajs/react'
-import { ArrowRight, MapPin, Package, ShoppingBag, UserRound } from 'lucide-react'
+import { ArrowRight, MapPin, Package, ShoppingBag } from 'lucide-react'
 import type { ReactNode } from 'react'
 
+import CustomerAvatar from '@/Components/Customer/CustomerAvatar'
 import CustomerLayout from '@/Layouts/Customer/CustomerLayout'
 import type { PageProps } from '@/types'
 
@@ -25,20 +26,18 @@ type DashboardPageProps = PageProps<
 >
 
 export default function Dashboard() {
-    const { customer, summary } = usePage<DashboardPageProps>().props
+    const { customer, summary, customerAvatar } = usePage<DashboardPageProps>().props
 
     return (
         <CustomerLayout
-            title="My Account"
-            description="Manage your orders, delivery addresses, and account details."
+            title=""
+            description=""
         >
             <div className="space-y-6">
                 <section className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
                     <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
                         <div className="flex min-w-0 items-center gap-4">
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-neutral-950 text-white">
-                                <UserRound className="h-5 w-5" aria-hidden="true" />
-                            </div>
+                            <CustomerAvatar name={customer.name} src={typeof customerAvatar === 'string' ? customerAvatar : null} />
 
                             <div className="min-w-0">
                                 <p className="text-sm text-neutral-500">Welcome back</p>

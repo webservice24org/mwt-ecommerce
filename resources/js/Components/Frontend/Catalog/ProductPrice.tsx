@@ -29,13 +29,13 @@ function ListingPrice({
     className?: string
 }) {
     if (pricing.min_price === null) {
-        return <p className={`text-sm text-neutral-500 ${className}`}>Price unavailable</p>
+        return <p className={`mwt-card-copy text-sm text-neutral-500 ${className}`}>Price unavailable</p>
     }
 
     if (pricing.varies && pricing.max_price !== null) {
         return (
             <p
-                className={`min-w-0 break-words text-base font-semibold leading-6 text-neutral-950 ${className}`}
+                className={`mwt-card-regular-price min-w-0 break-words text-base font-semibold leading-6 text-neutral-950 ${className}`}
             >
                 <span className="sr-only">Price range: </span>
                 {formatMoney(pricing.min_price)}
@@ -66,12 +66,12 @@ function ResolvedPrice({
     className?: string
 }) {
     if (pricing.price === null) {
-        return <p className={`text-sm text-neutral-500 ${className}`}>Price unavailable</p>
+        return <p className={`mwt-card-copy text-sm text-neutral-500 ${className}`}>Price unavailable</p>
     }
 
     return (
         <div className={`flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1 ${className}`}>
-            <span className="whitespace-nowrap text-base font-semibold text-neutral-950">
+            <span className={`${pricing.on_sale && pricing.compare_at_price !== null ? 'mwt-card-offer-price' : 'mwt-card-regular-price'} whitespace-nowrap text-base font-semibold text-neutral-950`}>
                 {formatMoney(pricing.price)}
             </span>
 
@@ -79,7 +79,7 @@ function ResolvedPrice({
                 <>
                     <span className="sr-only">Original price:</span>
 
-                    <del className="whitespace-nowrap text-sm font-normal text-neutral-500">
+                    <del className="mwt-card-original-price whitespace-nowrap text-sm font-normal text-neutral-500">
                         {formatMoney(pricing.compare_at_price)}
                     </del>
                 </>

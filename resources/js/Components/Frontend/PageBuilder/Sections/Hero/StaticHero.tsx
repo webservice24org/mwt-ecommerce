@@ -41,6 +41,7 @@ export default function StaticHero({ config }: Props) {
             data-storefront-section="hero"
             data-hero-template="static"
             className="relative isolate min-w-0 overflow-hidden rounded-2xl"
+            data-mwt-theme-fixed="true"
             style={{
                 backgroundColor: slide.background_color ?? '#171717',
             }}

@@ -1,3 +1,4 @@
+import AppearanceSwitcher from '@/Components/Appearance/AppearanceSwitcher'
 import { Head, Link, useForm } from '@inertiajs/react'
 import { Check, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck, X } from 'lucide-react'
 import { type FormEvent, type ReactNode, useMemo, useState } from 'react'
@@ -69,7 +70,8 @@ export default function ResetPassword({ token, email }: { token: string; email: 
         <>
             <Head title="Reset password" />
 
-            <main className="min-h-screen bg-neutral-950 px-4 py-8 text-white sm:px-6 lg:px-8">
+            <main className="mwt-adaptive-chrome mwt-auth-surface relative min-h-screen bg-neutral-950 px-4 py-8 text-white sm:px-6 lg:px-8">
+                <div className="mwt-auth-appearance"><AppearanceSwitcher /></div>
                 <div className="mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-5xl overflow-hidden rounded-3xl border border-neutral-800 bg-neutral-900 shadow-2xl lg:grid-cols-[0.9fr_1.1fr]">
                     <aside className="hidden border-r border-neutral-800 bg-gradient-to-br from-indigo-950 via-neutral-950 to-neutral-950 p-10 lg:flex lg:flex-col lg:justify-between">
                         <div>

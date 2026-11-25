@@ -1,3 +1,5 @@
+import BrandLogoImage from '@/Components/Frontend/BrandLogoImage'
+import { builderStyleProps } from '@/lib/builderStyle'
 import { BadgeCheck } from 'lucide-react'
 
 import SharedBottomFooter from '@/Components/FooterBuilder/SharedBottomFooter'
@@ -39,11 +41,12 @@ export default function MarketplaceTrustFooter({ config }: Props) {
     return (
         <footer
             aria-label="Store footer"
-            className="w-full min-w-0 max-w-full overflow-x-clip bg-neutral-900 text-neutral-100"
+            className="mwt-adaptive-chrome w-full min-w-0 max-w-full overflow-x-clip bg-neutral-900 text-neutral-100"
         >
             {promotion.enabled && (
                 <section
                     aria-label="Current promotion"
+                    {...builderStyleProps(config.style, 'top')}
                     className="w-full min-w-0 max-w-full bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 text-white"
                 >
                     <div className="mx-auto flex w-full min-w-0 max-w-7xl flex-col items-stretch justify-between gap-3 px-4 py-4 text-center sm:px-6 md:flex-row md:items-center md:text-left lg:px-8">
@@ -84,9 +87,10 @@ export default function MarketplaceTrustFooter({ config }: Props) {
                 </section>
             )}
 
-            <div className="w-full min-w-0 max-w-full bg-neutral-900">
+            <div {...builderStyleProps(config.style, 'main')} className="w-full min-w-0 max-w-full bg-neutral-900">
                 <div className="mx-auto w-full min-w-0 max-w-7xl space-y-9 px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
-                    {popularLinks.length > 0 && (
+                    {brand.display_mode && (brand.display_mode === 'logo' && brand.logo_url ? (<BrandLogoImage key={brand.logo_url} url={brand.logo_url} name={brandName} className="h-14 w-auto max-w-full object-contain object-left sm:h-16" />) : (<h2 className="text-2xl font-black text-white break-words">{brandName}</h2>))}
+                {popularLinks.length > 0 && (
                         <nav
                             aria-label="Popular searches and categories"
                             className="min-w-0 max-w-full border-b border-neutral-800 pb-7"
@@ -190,6 +194,7 @@ export default function MarketplaceTrustFooter({ config }: Props) {
             </div>
 
             <SharedBottomFooter
+                builderStyle={config.style}
                 template="marketplace_trust"
                 copyright={copyright}
                 socialLinks={socialLinks}

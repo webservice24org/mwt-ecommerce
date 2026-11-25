@@ -1,3 +1,6 @@
+import AppearanceSwitcher from '@/Components/Appearance/AppearanceSwitcher'
+import BrandLogoImage from '@/Components/Frontend/BrandLogoImage'
+import { builderStyleProps } from '@/lib/builderStyle'
 import { Link, router, usePage } from '@inertiajs/react'
 import { ChevronDown, Heart, Menu, Search, ShoppingBag, UserRound, X } from 'lucide-react'
 import { type FormEvent, type RefObject, useEffect, useId, useRef, useState } from 'react'
@@ -94,6 +97,14 @@ export default function MegaMenuHeader({ config, wishlist, cart }: Props) {
             const customEvent = event as CustomEvent<StorefrontCartChangedDetail>
 
             setCartState(customEvent.detail.cart)
+
+            if (customEvent.detail.openDrawer) {
+                setSearchOpen(false)
+                setMegaMenuOpen(false)
+                setAccountOpen(false)
+                setMobileMenuOpen(false)
+                setCartOpen(true)
+            }
         }
 
         window.addEventListener(STOREFRONT_CART_CHANGED, handleCartChanged)
@@ -216,7 +227,7 @@ export default function MegaMenuHeader({ config, wishlist, cart }: Props) {
     }
 
     return (
-        <header className="relative z-40 w-full min-w-0 bg-neutral-950 text-white">
+        <header className="mwt-adaptive-chrome relative z-40 w-full min-w-0 bg-neutral-950 text-white">
             <AnnouncementBar config={config} />
 
             <MainHeader
@@ -276,7 +287,7 @@ function AnnouncementBar({ config }: { config: HeaderConfig }) {
     }
 
     return (
-        <div className="min-w-0 border-b border-indigo-500/30 bg-gradient-to-r from-indigo-700 via-violet-700 to-indigo-800 text-white">
+        <div {...builderStyleProps(config.style, 'announcement')} className="min-w-0 border-b border-indigo-500/30 bg-gradient-to-r from-indigo-700 via-violet-700 to-indigo-800 text-white">
             <div className="mx-auto flex min-h-9 w-full max-w-7xl min-w-0 items-center justify-between gap-3 px-2 py-2 sm:gap-6 sm:px-6 lg:px-8">
                 <div className="flex min-w-0 flex-1 items-center gap-2">
                     {config.announcement.badge && (
@@ -378,7 +389,7 @@ function MainHeader({
     onCartToggle: () => void
 }) {
     return (
-        <div className="relative z-30 min-w-0 border-b border-neutral-800 bg-neutral-900">
+        <div {...builderStyleProps(config.style, 'main')} className="relative z-30 min-w-0 border-b border-neutral-800 bg-neutral-900">
             <div className="mx-auto flex min-h-16 w-full max-w-7xl min-w-0 items-center gap-1.5 px-2 sm:min-h-20 sm:gap-3 sm:px-6 lg:gap-5 lg:px-8">
                 <button
                     type="button"
@@ -435,6 +446,13 @@ function Brand({ config }: { config: HeaderConfig }) {
             aria-label={`${config.brand.name} home`}
             className="flex min-w-0 shrink-0 items-center gap-2.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
         >
+            {config.brand.display_mode === 'logo' && config.brand.logo_url ? (
+                <BrandLogoImage key={config.brand.logo_url} url={config.brand.logo_url} name={config.brand.name} className="h-9 w-auto max-w-[96px] object-contain sm:h-10 sm:max-w-[160px] lg:max-w-[220px]" />
+            ) : config.brand.display_mode ? (
+                <span className="max-w-[96px] truncate text-sm font-black tracking-tight text-white sm:max-w-[160px] sm:text-lg lg:max-w-64 lg:text-xl" title={config.brand.name}>
+                    {config.brand.name}<span className="text-indigo-500">{config.brand.accent ?? ''}</span>
+                </span>
+            ) : (<>
             {config.brand.logo_url ? (
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white sm:h-10 sm:w-10">
                     <img
@@ -453,6 +471,7 @@ function Brand({ config }: { config: HeaderConfig }) {
                 {config.brand.name}
                 <span className="text-indigo-500">{config.brand.accent ?? ''}</span>
             </span>
+            </>)}
         </Link>
     )
 }
@@ -961,6 +980,8 @@ function HeaderActions({
                     )}
                 </div>
             )}
+
+            <AppearanceSwitcher className="mwt-header-appearance" />
         </div>
     )
 }
@@ -1852,6 +1873,14 @@ function CartDrawer({
                             </p>
 
                             <Link
+                                href={route('cart.show')}
+                                onClick={onClose}
+                                className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-neutral-700 px-4 text-sm font-semibold text-white transition hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                            >
+                                View cart
+                            </Link>
+
+                            <Link
                                 href={route(
                                     'checkout.index',
                                 )}
@@ -2183,7 +2212,7 @@ function DesktopNavigation({
     }
 
     return (
-        <div className="hidden min-w-0 border-b border-neutral-800 bg-neutral-950 lg:block">
+        <div {...builderStyleProps(config.style, 'navigation')} className="hidden min-w-0 border-b border-neutral-800 bg-neutral-950 lg:block">
             <div className="mx-auto flex min-h-12 w-full max-w-7xl min-w-0 items-center gap-5 px-4 sm:px-6 lg:px-8 xl:gap-7">
                 {config.mega_menu.enabled && (
                     <button
@@ -2263,6 +2292,7 @@ function MegaMenu({
         <nav
             id={id}
             aria-label="Product categories"
+            {...builderStyleProps(config.style, 'navigation')}
             className="hidden min-w-0 border-b border-neutral-800 bg-neutral-900 lg:block"
         >
             <div className="mx-auto grid w-full max-w-7xl min-w-0 grid-cols-12 gap-6 px-4 py-7 sm:px-6 lg:px-8 xl:gap-8">
@@ -2417,6 +2447,7 @@ function MobileMenu({
     return (
         <div
             id={id}
+            {...builderStyleProps(config.style, 'navigation')}
             className="max-h-[calc(100dvh-4rem)] min-w-0 overflow-y-auto overscroll-contain border-b border-neutral-800 bg-neutral-950 p-3 sm:p-4 lg:hidden"
         >
             <div className="mx-auto w-full max-w-7xl min-w-0">
@@ -2591,6 +2622,7 @@ function MobileAccountSection({
     return (
         <section
             aria-labelledby="mobile-account-heading"
+            data-mwt-style-exempt
             className="mt-5 min-w-0 border-t border-neutral-800 pt-5"
         >
             <div className="mb-3 min-w-0">

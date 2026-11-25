@@ -125,6 +125,7 @@ export default function FaqAccordionSection({ section }: Props) {
 
                         lightTheme ? 'border-white/10' : 'border-slate-200/80',
                     ].join(' ')}
+                    data-mwt-theme-fixed="true"
                     style={{
                         backgroundColor: config.background_color,
                     }}

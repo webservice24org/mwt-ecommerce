@@ -159,3 +159,88 @@
         display: none;
     }
 }
+/* Optional Header/Footer Builder overrides; never global storefront CSS. */
+[data-mwt-style-region][data-mwt-style-color="true"] :is(p, h1, h2, h3, h4, h5, h6, a, span, strong, code, li, label, button, div[class*=" text-"]):not(
+    [data-mwt-style-exempt], [data-mwt-style-exempt] *,
+    [data-mwt-style-region] [class^="bg-"], [data-mwt-style-region] [class*=" bg-"],
+    [data-mwt-style-region] [class^="bg-"] *, [data-mwt-style-region] [class*=" bg-"] *,
+    [role="status"], [role="status"] *, [role="alert"], [role="alert"] *,
+    [class*="text-red-"], [class*="text-emerald-"], .sr-only
+) {
+    color: var(--mwt-builder-text-color);
+}
+
+[data-mwt-style-region][data-mwt-style-size="true"] :is(p, h1, h2, h3, h4, h5, h6, a, span, strong, code, li, label, button, div[class*=" text-"]):not(
+    [data-mwt-style-exempt], [data-mwt-style-exempt] *,
+    [data-mwt-style-region] [class^="bg-"], [data-mwt-style-region] [class*=" bg-"],
+    [data-mwt-style-region] [class^="bg-"] *, [data-mwt-style-region] [class*=" bg-"] *,
+    [role="status"], [role="status"] *, [role="alert"], [role="alert"] *,
+    [class*="text-red-"], [class*="text-emerald-"], .sr-only
+) {
+    font-size: var(--mwt-builder-text-size);
+    line-height: 1.5;
+}
+
+/* Theme Settings: product card overrides only, never detail/checkout controls. */
+.mwt-product-card.mwt-card-background-color {
+    background-color: var(--mwt-card-background-color);
+}
+.mwt-product-card.mwt-card-title-color .mwt-card-title {
+    color: var(--mwt-card-title-color);
+}
+/* Optional title hover overrides also apply to keyboard focus. */
+.mwt-product-card.mwt-card-title-hover-color .mwt-card-title:is(:hover, :focus-visible) {
+    color: var(--mwt-card-title-hover-color);
+}
+.mwt-product-card.mwt-card-title-hover-decoration .mwt-card-title:is(:hover, :focus-visible) {
+    text-decoration-line: var(--mwt-card-title-hover-decoration);
+}
+.mwt-product-card.mwt-card-text-color .mwt-card-copy {
+    color: var(--mwt-card-text-color);
+}
+.mwt-product-card.mwt-card-regular-price-color :is(.mwt-card-regular-price, .mwt-card-original-price) {
+    color: var(--mwt-card-regular-price-color);
+}
+.mwt-product-card.mwt-card-offer-price-color .mwt-card-offer-price {
+    color: var(--mwt-card-offer-price-color);
+}
+.mwt-product-card.mwt-card-add-background-color .mwt-card-add-button {
+    background-color: var(--mwt-card-add-background-color);
+}
+.mwt-product-card.mwt-card-add-text-color .mwt-card-add-button {
+    color: var(--mwt-card-add-text-color);
+}
+.mwt-product-card.mwt-card-add-border-color .mwt-card-add-button {
+    border-color: var(--mwt-card-add-border-color);
+    border-width: 1px;
+    border-style: solid;
+}
+.mwt-product-card.mwt-card-add-border-radius .mwt-card-add-button {
+    border-radius: var(--mwt-card-add-border-radius);
+}
+.mwt-product-card.mwt-card-add-hover-background-color .mwt-card-add-button:hover:not(:disabled) {
+    background-color: var(--mwt-card-add-hover-background-color);
+}
+.mwt-product-card.mwt-card-add-hover-text-color .mwt-card-add-button:hover:not(:disabled) {
+    color: var(--mwt-card-add-hover-text-color);
+}
+.mwt-product-card.mwt-card-order-background-color .mwt-card-order-button {
+    background-color: var(--mwt-card-order-background-color);
+}
+.mwt-product-card.mwt-card-order-text-color .mwt-card-order-button {
+    color: var(--mwt-card-order-text-color);
+}
+.mwt-product-card.mwt-card-order-border-color .mwt-card-order-button {
+    border-color: var(--mwt-card-order-border-color);
+    border-width: 1px;
+    border-style: solid;
+}
+.mwt-product-card.mwt-card-order-border-radius .mwt-card-order-button {
+    border-radius: var(--mwt-card-order-border-radius);
+}
+.mwt-product-card.mwt-card-order-hover-background-color .mwt-card-order-button:hover:not(:disabled) {
+    background-color: var(--mwt-card-order-hover-background-color);
+}
+.mwt-product-card.mwt-card-order-hover-text-color .mwt-card-order-button:hover:not(:disabled) {
+    color: var(--mwt-card-order-hover-text-color);
+}
